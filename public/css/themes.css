@@ -1,0 +1,226 @@
+/* themes.css - 7 Metal Themes + System Dark/Light Auto-Preference with Dynamic Tile Glow Backgrounds */
+
+/* ==========================================
+   SYSTEM AUTOMATIC PREFERENCE (Dark / Light)
+   ========================================== */
+@media (prefers-color-scheme: light) {
+  body:not([class*="theme-"]), body.theme-system {
+    --bg-dark: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f8fafc;
+    --bg-sidebar: #e2e8f0;
+    --bg-input: #ffffff;
+    --bg-code: #e2e8f0;
+    --border-color: rgba(79, 70, 229, 0.25);
+    --border-glow: rgba(79, 70, 229, 0.5);
+    --tile-glow-bg: rgba(79, 70, 229, 0.08);
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #6366f1;
+    --accent-cyan: #0284c7;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --accent-rose: #e11d48;
+    --text-main: #0f172a;
+    --text-muted: #334155;
+    --text-dim: #64748b;
+    --tile-shadow: 0 8px 24px rgba(79, 70, 229, 0.1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([class*="theme-"]), body.theme-system {
+    --bg-dark: #06080d;
+    --bg-card: rgba(18, 24, 38, 0.85);
+    --bg-card-hover: rgba(28, 38, 58, 0.95);
+    --bg-sidebar: #0a0d16;
+    --bg-input: rgba(10, 14, 23, 0.85);
+    --bg-code: rgba(5, 8, 15, 0.9);
+    --border-color: rgba(99, 102, 241, 0.25);
+    --border-glow: rgba(99, 102, 241, 0.6);
+    --tile-glow-bg: rgba(99, 102, 241, 0.15);
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-light: #818cf8;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-main: #ffffff;
+    --text-muted: #cbd5e1;
+    --text-dim: #94a3b8;
+    --tile-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ==========================================
+   7 OFFICIAL METAL THEMES (70% Variance Contrast & Dynamic Tile Glow)
+   ========================================== */
+
+/* 1. Platinum Light Metal */
+body.theme-platinum {
+  --bg-dark: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-sidebar: #e2e8f0;
+  --bg-input: #ffffff;
+  --bg-code: #e2e8f0;
+  --border-color: rgba(79, 70, 229, 0.3);
+  --border-glow: rgba(79, 70, 229, 0.6);
+  --tile-glow-bg: rgba(79, 70, 229, 0.1);
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #6366f1;
+  --accent-cyan: #0284c7;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --text-main: #0f172a;
+  --text-muted: #1e293b;
+  --text-dim: #475569;
+  --tile-shadow: 0 8px 24px rgba(79, 70, 229, 0.12);
+}
+
+/* 2. Gold Dark Metal */
+body.theme-gold {
+  --bg-dark: #120e04;
+  --bg-card: rgba(36, 27, 8, 0.92);
+  --bg-card-hover: rgba(52, 38, 12, 0.96);
+  --bg-sidebar: #1a1406;
+  --bg-input: rgba(26, 20, 6, 0.9);
+  --bg-code: rgba(16, 12, 3, 0.95);
+  --border-color: rgba(251, 191, 36, 0.35);
+  --border-glow: rgba(251, 191, 36, 0.75);
+  --tile-glow-bg: rgba(251, 191, 36, 0.18);
+  --primary: #d97706;
+  --primary-hover: #b45309;
+  --primary-light: #fbbf24;
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --text-main: #fffbeb;
+  --text-muted: #fef3c7;
+  --text-dim: #fde68a;
+  --tile-shadow: 0 8px 32px rgba(217, 119, 6, 0.3);
+}
+
+/* 3. Silver Light Metal */
+body.theme-silver {
+  --bg-dark: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-sidebar: #cbd5e1;
+  --bg-input: #ffffff;
+  --bg-code: #e2e8f0;
+  --border-color: rgba(71, 85, 105, 0.35);
+  --border-glow: rgba(71, 85, 105, 0.65);
+  --tile-glow-bg: rgba(71, 85, 105, 0.12);
+  --primary: #334155;
+  --primary-hover: #1e293b;
+  --primary-light: #475569;
+  --accent-cyan: #0284c7;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --text-main: #0f172a;
+  --text-muted: #1e293b;
+  --text-dim: #334155;
+  --tile-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+/* 4. Titanium Dark Metal */
+body.theme-titanium {
+  --bg-dark: #070a10;
+  --bg-card: rgba(22, 30, 44, 0.92);
+  --bg-card-hover: rgba(32, 44, 64, 0.96);
+  --bg-sidebar: #0c111a;
+  --bg-input: rgba(12, 17, 26, 0.9);
+  --bg-code: rgba(8, 12, 20, 0.95);
+  --border-color: rgba(56, 189, 248, 0.35);
+  --border-glow: rgba(56, 189, 248, 0.75);
+  --tile-glow-bg: rgba(56, 189, 248, 0.18);
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-light: #38bdf8;
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --text-main: #f8fafc;
+  --text-muted: #e2e8f0;
+  --text-dim: #cbd5e1;
+  --tile-shadow: 0 8px 32px rgba(2, 132, 199, 0.3);
+}
+
+/* 5. Bronze Dark Metal */
+body.theme-bronze {
+  --bg-dark: #180e08;
+  --bg-card: rgba(45, 26, 14, 0.92);
+  --bg-card-hover: rgba(62, 36, 20, 0.96);
+  --bg-sidebar: #22140b;
+  --bg-input: rgba(32, 18, 10, 0.9);
+  --bg-code: rgba(20, 10, 6, 0.95);
+  --border-color: rgba(217, 119, 6, 0.35);
+  --border-glow: rgba(217, 119, 6, 0.75);
+  --tile-glow-bg: rgba(217, 119, 6, 0.18);
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-light: #fb923c;
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #34d399;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --text-main: #fff7ed;
+  --text-muted: #ffedd5;
+  --text-dim: #fed7aa;
+  --tile-shadow: 0 8px 32px rgba(234, 88, 12, 0.3);
+}
+
+/* 6. Copper Dark Metal */
+body.theme-copper {
+  --bg-dark: #1c0d0a;
+  --bg-card: rgba(52, 25, 19, 0.92);
+  --bg-card-hover: rgba(70, 34, 26, 0.96);
+  --bg-sidebar: #26120e;
+  --bg-input: rgba(36, 17, 13, 0.9);
+  --bg-code: rgba(22, 10, 8, 0.95);
+  --border-color: rgba(249, 115, 22, 0.35);
+  --border-glow: rgba(249, 115, 22, 0.75);
+  --tile-glow-bg: rgba(249, 115, 22, 0.18);
+  --primary: #f97316;
+  --primary-hover: #ea580c;
+  --primary-light: #fb923c;
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --text-main: #fff5f5;
+  --text-muted: #fee2e2;
+  --text-dim: #fecaca;
+  --tile-shadow: 0 8px 32px rgba(249, 115, 22, 0.3);
+}
+
+/* 7. Obsidian Dark Metal */
+body.theme-obsidian {
+  --bg-dark: #06080d;
+  --bg-card: rgba(18, 24, 38, 0.92);
+  --bg-card-hover: rgba(28, 38, 58, 0.96);
+  --bg-sidebar: #0a0d16;
+  --bg-input: rgba(10, 14, 23, 0.9);
+  --bg-code: rgba(5, 8, 15, 0.95);
+  --border-color: rgba(99, 102, 241, 0.35);
+  --border-glow: rgba(99, 102, 241, 0.75);
+  --tile-glow-bg: rgba(99, 102, 241, 0.15);
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: #818cf8;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --text-main: #ffffff;
+  --text-muted: #e2e8f0;
+  --text-dim: #cbd5e1;
+  --tile-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+}

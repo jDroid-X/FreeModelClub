@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeModelsClub - Localhost Smart Chatbot & OpenAI Compatible Service</title>
+  <meta name="description" content="Localhost service provider smart chatbot using free models from Groq, OpenRouter, Gemini, Together, Mistral, and Ollama.">
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dark-theme">
+  <div id="app" class="app-container">
+    <!-- Rendered dynamically by app.js and views -->
+  </div>
+
+  <!-- Service Bridge -->
+  <script src="/js/services/api.js?v=1.0.2"></script>
+
+  <!-- UI Components & Helpers -->
+  <script src="/js/helpers/FormatHelper.js?v=1.0.2"></script>
+  <script src="/js/utils/ErrorDefinitionHelper.js?v=1.0.0"></script>
+  <script src="/js/helpers/TaxonomyHelper.js?v=1.0.0"></script>
+  <script src="/js/components/ModalDialog.js?v=1.0.2"></script>
+  <script src="/js/components/HeaderTelemetry.js?v=1.0.2"></script>
+  <script src="/js/components/UiComponents.js?v=1.0.0"></script>
+  <script src="/js/components/ListBoxComponent.js?v=1.0.0"></script>
+  <script src="/js/components/ValidationNotifier.js?v=1.0.0"></script>
+
+  <!-- Navigation & Helpers -->
+  <script src="/js/helpers/NavigationHelper.js?v=1.0.3"></script>
+  <script src="/js/helpers/AppRouterHelper.js?v=1.0.3"></script>
+
+  <!-- View Helpers -->
+  <script src="/js/views/DashboardViewHelper.js?v=1.0.3"></script>
+  <script src="/js/views/ModelClubViewHelper.js?v=1.0.3"></script>
+  <script src="/js/views/ModelClubComboModalRenderer.js?v=1.0.0"></script>
+  <script src="/js/views/ModelClubComboHelper.js?v=1.0.2"></script>
+  <script src="/js/views/ModelClubNavHelper.js?v=1.0.0"></script>
+  <script src="/js/views/ModelClubPanelRenderer.js?v=1.0.0"></script>
+  <script src="/js/views/ModelClubHierarchyHelper.js?v=1.0.0"></script>
+  <script src="/js/views/ModelClubStudioRenderer.js?v=1.0.0"></script>
+  <script src="/js/views/ModelClubComboStudioHelper.js?v=1.0.0"></script>
+  <script src="/js/helpers/PlaygroundInputHelper.js?v=1.0.0"></script>
+  <script src="/js/helpers/PlaygroundResponseHelper.js?v=1.0.0"></script>
+  <script src="/js/views/PlaygroundViewHelper.js?v=1.0.2"></script>
+  <script src="/js/views/RegistrationViewHelper.js?v=1.0.2"></script>
+  <script src="/js/views/RegistrationAgentHelper.js?v=1.0.0"></script>
+  <script src="/js/views/SettingsViewHelper.js?v=1.0.2"></script>
+  <script src="/js/views/SettingsAgentEngineRocasDb.js?v=1.0.0"></script>
+  <script src="/js/views/SettingsAgentEnterpriseRocasDb.js?v=1.0.0"></script>
+  <script src="/js/views/SettingsAgentRocasDb.js?v=1.0.0"></script>
+  <script src="/js/views/SettingsAgentHelper.js?v=1.0.2"></script>
+  <script src="/js/views/SettingsAgentRenderHelper.js?v=1.0.0"></script>
+  <script src="/js/views/SettingsToolConnectionHelper.js?v=1.0.2"></script>
+  <script src="/js/views/SettingsUiUxHelper.js?v=1.0.2"></script>
+  <script src="/js/views/ReportsViewHelper.js?v=1.0.2"></script>
+
+  <!-- Playground Decoupled Modules -->
+  <script src="/js/views/playground/ChatSession.js?v=1.0.0"></script>
+  <script src="/js/views/playground/ChatStreamView.js?v=1.0.0"></script>
+  <script src="/js/views/playground/ChatSessionViewModel.js?v=1.0.0"></script>
+  <script src="/js/views/playground/TerminalRenderView.js?v=1.0.0"></script>
+  <script src="/js/views/playground/OSCommandController.js?v=1.0.0"></script>
+  <script src="/js/views/playground/FolderTreeView.js?v=1.0.0"></script>
+  <script src="/js/views/playground/FileSystemController.js?v=1.0.0"></script>
+  <script src="/js/views/playground/ParametersDrawerView.js?v=1.0.0"></script>
+  <script src="/js/views/playground/ParametersViewModel.js?v=1.0.0"></script>
+  <script src="/js/views/playground/MediaDialogView.js?v=1.0.0"></script>
+  <script src="/js/views/playground/MediaController.js?v=1.0.0"></script>
+
+  <!-- Modular View Controllers -->
+  <script src="/js/views/LoginView.js?v=1.0.2"></script>
+  <script src="/js/views/DashboardView.js?v=1.0.2"></script>
+  <script src="/js/views/PlaygroundView.js?v=1.0.2"></script>
+  <script src="/js/views/RegistrationView.js?v=1.0.2"></script>
+  <script src="/js/views/ConfigView.js?v=1.0.2"></script>
+  <script src="/js/views/ProvidersView.js?v=1.0.2"></script>
+  <script src="/js/views/ModelClubView.js?v=1.0.2"></script>
+  <script src="/js/views/SettingsView.js?v=1.0.2"></script>
+  <script src="/js/views/ReportsView.js?v=1.0.2"></script>
+  <script src="/js/views/ManualView.js?v=1.0.2"></script>
+
+  <!-- System Agents -->
+  <script src="/js/agents/SearchAgent.js?v=1.0.0"></script>
+  <script src="/js/agents/MonitoringAgent.js?v=1.0.2"></script>
+  <script src="/js/agents/ProviderAgent.js?v=1.0.0"></script>
+
+  <!-- Master SPA Router -->
+  <script src="/js/app.js?v=1.0.2"></script>
+</body>
+</html>

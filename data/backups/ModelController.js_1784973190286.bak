@@ -1,0 +1,322 @@
+/**
+ * ModelController.js
+ * Purpose: Model Club API endpoints, taxonomy classification, and stats retrieval
+ * Dependencies: AIModel, ModelFamilyService
+ */
+
+const AIModel = require('../models/AIModel');
+const ComboModel = require('../models/ComboModel');
+const ModelFamilyService = require('../services/ModelFamilyService');
+const LogModel = require('../models/LogModel');
+
+class ModelController {
+  static getAll(req, res) {
+    const models = AIModel.getAll();
+    return res.json({
+      success: true,
+      count: models.length,
+      models
+    });
+  }
+
+  static getActive(req, res) {
+    const activeModels = AIModel.getActiveModels();
+    return res.json({
+      success: true,
+      count: activeModels.length,
+      models: activeModels
+    });
+  }
+
+  static getByFamily(req, res) {
+    const activeModels = AIModel.getActiveModels();
+    const grouped = ModelFamilyService.groupModelsByFamily(activeModels);
+    return res.json({
+      success: true,
+      viewType: 'Model Family',
+      groups: Object.keys(grouped).map((family) => ({
+        familyName: family,
+        count: grouped[family].length,
+        models: grouped[family]
+      }))
+    });
+  }
+
+  static getBySkill(req, res) {
+    const activeModels = AIModel.getActiveModels();
+    const grouped = ModelFamilyService.groupModelsByCoreSkill(activeModels);
+    return res.json({
+      success: true,
+      viewType: 'Model Core Skills',
+      groups: Object.keys(grouped).map((skill) => ({
+        skillName: skill,
+        count: grouped[skill].length,
+        models: grouped[skill]
+      }))
+    });
+  }
+
+  static toggleStatus(req, res) {
+    const { id } = req.params;
+    const model = AIModel.getById(id);
+    if (!model) {
+      return res.status(404).json({ success: false, message: 'Model not found' });
+    }
+
+    const newStatus = model.status === 'Active' ? 'Inactive' : 'Active';
+    const updated = AIModel.update(model.id, { status: newStatus });
+    return res.json({ success: true, model: updated });
+  }
+
+  static async updateModel(req, res) {
+    const { id } = req.params;
+    const updates = req.body || {};
+    const model = AIModel.getById(id);
+    if (!model) {
+      return res.status(404).json({ success: false, message: 'Model not found' });
+    }
+    const updated = AIModel.update(model.id, updates);
+    return res.json({ success: true, model: updated });
+  }
+
+  static async testModel(req, res) {
+    const { id } = req.params;
+    const model = AIModel.getById(id);
+    if (!model) {
+      return res.status(404).json({ success: false, message: 'Model not found' });
+    }
+
+    const startTime = Date.now();
+    try {
+      const provider = require('../models/ProviderModel').getById(model.providerId, false);
+      if (!provider || !provider.isActive) {
+        return res.json({ success: false, latency: 0, error: 'Provider is inactive or missing' });
+      }
+
+      const isAnthropic = provider.baseUrl.toLowerCase().includes('anthropic.com');
+      const headers = { 'Content-Type': 'application/json' };
+      if (provider.apiKey && provider.apiKey !== 'ollama-local') {
+        if (isAnthropic) {
+          headers['x-api-key'] = `${provider.apiKey}:free`;
+        } else {
+          headers['Authorization'] = `Bearer ${provider.apiKey}`;
+        }
+      }
+
+      const testBody = {
+        model: model.modelId,
+        messages: [{ role: 'user', content: 'Hello! Say hi in 1 sentence.' }],
+        max_tokens: 20
+      };
+
+      const https = require('https');
+      const http = require('http');
+      const parsedUrl = new URL(provider.baseUrl + 'chat/completions');
+      const transport = parsedUrl.protocol === 'https:' ? https : http;
+
+      const latencyMs = Date.now() - startTime;
+      const proxyReq = transport.request(parsedUrl.toString(), {
+        method: 'POST',
+        headers,
+        timeout: 10000
+      }, (proxyRes) => {
+        let data = '';
+        proxyRes.on('data', chunk => data += chunk);
+        proxyRes.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            const reply = parsed.choices?.[0]?.message?.content || parsed.result?.content || 'OK';
+            return res.json({
+              success: proxyRes.statusCode >= 200 && proxyRes.statusCode < 300,
+              latency: Date.now() - startTime,
+              statusCode: proxyRes.statusCode,
+              response: reply
+            });
+          } catch {
+            return res.json({
+              success: proxyRes.statusCode >= 200 && proxyRes.statusCode < 300,
+              latency: Date.now() - startTime,
+              statusCode: proxyRes.statusCode,
+              response: data.substring(0, 120)
+            });
+          }
+        });
+      });
+
+      proxyReq.on('error', (err) => {
+        return res.json({ success: false, latency: Date.now() - startTime, error: err.message });
+      });
+
+      proxyReq.setTimeout(10000, () => {
+        proxyReq.destroy();
+        return res.json({ success: false, latency: Date.now() - startTime, error: 'Test timed out after 10s' });
+      });
+
+      proxyReq.write(JSON.stringify(testBody));
+      proxyReq.end();
+    } catch (err) {
+      return res.json({ success: false, latency: Date.now() - startTime, error: err.message });
+    }
+  }
+
+  // --- COMBOS CONTROLLERS ---
+  static getCombos(req, res) {
+    const combos = ComboModel.getAll();
+    return res.json({
+      success: true,
+      count: combos.length,
+      combos
+    });
+  }
+
+  static saveCombo(req, res) {
+    const { id, name, strategy, description, modelsList } = req.body;
+    if (!name || !strategy || !modelsList || !Array.isArray(modelsList)) {
+      return res.status(400).json({ success: false, message: 'Missing required combo fields' });
+    }
+
+    const comboId = id || `combo_${Date.now()}`;
+    const comboData = {
+      id: comboId,
+      name,
+      strategy,
+      description: description || '',
+      modelsList,
+      isActive: true
+    };
+
+    const saved = ComboModel.save(comboData);
+    return res.json({ success: true, combo: saved });
+  }
+
+  static toggleComboStatus(req, res) {
+    const { id } = req.params;
+    const toggled = ComboModel.toggle(id);
+    if (!toggled) {
+      return res.status(404).json({ success: false, message: 'Combo not found' });
+    }
+    return res.json({ success: true, combo: toggled });
+  }
+
+  static deleteCombo(req, res) {
+    const { id } = req.params;
+    ComboModel.delete(id);
+    return res.json({ success: true, message: 'Combo deleted successfully' });
+  }
+
+  static updateCombo(req, res) {
+    const { id } = req.params;
+    const { name, strategy, description, modelsList } = req.body;
+    const combo = ComboModel.getById(id);
+    if (!combo) {
+      return res.status(404).json({ success: false, message: 'Combo not found' });
+    }
+
+    const oldName = combo.name;
+    const updated = { ...combo };
+    if (name !== undefined) updated.name = name;
+    if (strategy !== undefined) updated.strategy = strategy;
+    if (description !== undefined) updated.description = description;
+    if (modelsList !== undefined && Array.isArray(modelsList)) updated.modelsList = modelsList;
+
+    const saved = ComboModel.save(updated);
+
+    // Auto-refactor system fallback model if configured to old combo name
+    const config = db.read(db.files.config);
+    if (config.default_fallback_model_id === oldName || config.default_fallback_model_id === id) {
+      config.default_fallback_model_id = name || id;
+      db.write(db.files.config, config);
+    }
+
+    return res.json({ success: true, combo: saved, refactoredFrom: oldName });
+  }
+
+  static getComboUsage(req, res) {
+    const { id } = req.params;
+    const combo = ComboModel.getById(id);
+    if (!combo) {
+      return res.status(404).json({ success: false, message: 'Combo not found' });
+    }
+
+    const allLogs = LogModel.getAll() || [];
+    const comboLogs = allLogs.filter((log) => log.modelId === id || log.comboId === id);
+    const successLogs = comboLogs.filter((log) => log.status === 'SUCCESS' || (log.statusCode && log.statusCode < 400));
+    const errorLogs = comboLogs.filter((log) => log.status === 'FAILED' || (log.statusCode && log.statusCode >= 400));
+
+    const modelBreakdown = {};
+    comboLogs.forEach((log) => {
+      const key = log.model || log.modelId || 'unknown';
+      if (!modelBreakdown[key]) modelBreakdown[key] = { requests: 0, tokens: 0 };
+      modelBreakdown[key].requests++;
+      modelBreakdown[key].tokens += log.totalTokens || log.promptTokens || 0;
+    });
+
+    return res.json({
+      success: true,
+      stats: {
+        total_requests: comboLogs.length,
+        error_requests: errorLogs.length,
+        total_tokens: comboLogs.reduce((sum, log) => sum + (log.totalTokens || log.promptTokens || 0), 0),
+        total_input_tokens: comboLogs.reduce((sum, log) => sum + (log.promptTokens || 0), 0),
+        total_output_tokens: comboLogs.reduce((sum, log) => sum + (log.completionTokens || 0), 0),
+        total_cost: 0,
+        avg_latency: comboLogs.length > 0 ? Math.round(comboLogs.reduce((sum, log) => sum + (log.latencyMs || 0), 0) / comboLogs.length) : 0
+      },
+      modelBreakdown: Object.keys(modelBreakdown).map(key => ({
+        model: key,
+        requests: modelBreakdown[key].requests,
+        tokens: modelBreakdown[key].tokens,
+        avg_latency: 0
+      })),
+      recentLogs: comboLogs.slice(-20).reverse().map((log) => ({
+        id: log.id,
+        status: log.status === 'FAILED' ? 'error' : 'success',
+        model: log.model || log.modelId || 'unknown',
+        total_tokens: log.totalTokens || log.promptTokens || 0,
+        latency_ms: log.latencyMs || 0,
+        created_at: Date.now() / 1000
+      }))
+    });
+  }
+
+  static async testCombo(req, res) {
+    const { id } = req.params;
+    const combo = ComboModel.getById(id);
+    if (!combo) {
+      return res.status(404).json({ success: false, message: 'Combo not found' });
+    }
+
+    const ProviderModel = require('../models/ProviderModel');
+    const providerStatus = [];
+    const modelIds = combo.modelsList || [];
+
+    for (const modelId of modelIds) {
+      const model = AIModel.getById(modelId);
+      if (!model) {
+        providerStatus.push({ display_name: modelId, status: 'error', error: 'Model not found' });
+        continue;
+      }
+      const provider = ProviderModel.getById(model.providerId, false);
+      if (!provider || !provider.isActive) {
+        providerStatus.push({ display_name: provider?.displayName || model.providerId, status: 'inactive', error: provider ? 'Provider disabled' : 'Provider missing' });
+        continue;
+      }
+      providerStatus.push({ display_name: provider.displayName, status: 'active', daily_limit: provider.freeTokensDay || 0, monthly_limit: provider.freeTokensMonth || 0 });
+    }
+
+    const logs = [
+      `[INIT] Testing combo "${combo.name}" with ${modelIds.length} model(s)...`,
+      `[SCAN] Scanned ${providerStatus.length} model provider mapping(s).`,
+      providerStatus.some(p => p.status === 'active') ? '[OK ] Active providers detected. Routing pool is healthy.' : '[WARN] No active providers detected in this combo.',
+      `[RESULT] Priority sort complete. Active providers are first in rotation queue.`
+    ];
+
+    return res.json({
+      success: true,
+      providerStatus,
+      logs: logs.join('\n')
+    });
+  }
+}
+
+module.exports = ModelController;

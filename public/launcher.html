@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeModelsClub - Launching Dashboard...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #080b12;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-sidebar: #0f172a;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-glow: rgba(6, 182, 212, 0.4);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-code: 'Fira Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #090d16 70%, #030712 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(6, 8, 14, 0.8);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.15);
+      overflow: hidden;
+      animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--primary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-title span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent-cyan);
+    }
+
+    .modal-body {
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid var(--border-glow);
+      color: var(--accent-cyan);
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .status-msg {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      min-height: 28px;
+    }
+
+    .status-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* Left-to-Right Animated Progress Bar Track */
+    .running-bar-track {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      position: relative;
+      margin: 16px 0;
+    }
+
+    .running-bar-fill {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, #06b6d4, #6366f1, #f97316);
+      border-radius: 12px;
+      position: absolute;
+      left: 0;
+      animation: bounceBar 1.5s infinite alternate ease-in-out;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.7);
+    }
+
+    @keyframes bounceBar {
+      0% { left: 0%; width: 30%; }
+      100% { left: 70%; width: 30%; }
+    }
+
+    .manual-btn {
+      margin-top: 16px;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      cursor: not-allowed;
+      transition: all 0.3s ease;
+      width: 100%;
+      text-align: center;
+    }
+
+    .manual-btn:not(:disabled) {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    .manual-btn:not(:disabled):hover {
+      background: rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    }
+
+    @keyframes scaleUp {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .progress-percent {
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+    }
+
+    .log-trail {
+      margin-top: 16px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-family: var(--font-code);
+      font-size: 0.72rem;
+      color: var(--accent-emerald);
+      text-align: left;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="brand-icon">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="modal-title">
+          FreeModelsClub Smart Chatbot
+          <span>Localhost Environment Setup & Dashboard Launcher</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="status-badge" id="badge-el">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <span>Environment & Server Audit</span>
+        </div>
+        <div class="status-msg" id="msg-el">Initializing FreeModelsClub System...</div>
+        <div class="status-sub" id="sub-el">Configuring Node.js runtime and checking Express server...</div>
+
+        <!-- Left-to-Right Running Progress Bar -->
+        <div class="running-bar-track">
+          <div class="running-bar-fill" id="bar-el"></div>
+        </div>
+
+        <div class="progress-meta">
+          <span id="step-el"><i class="fa-solid fa-gear fa-spin" style="margin-right: 4px; color: var(--accent-cyan);"></i> Processing backend boot sequence</span>
+          <span class="progress-percent" id="percent-el">10%</span>
+        </div>
+
+        <button id="manual-btn" class="manual-btn" disabled>
+          Manual Connect (30s)
+        </button>
+
+        <div class="log-trail" id="log-el">
+          [INIT] System launcher started.<br>
+          [WAIT] Waiting for backend server initialization on port 12247...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PORT = 12247;
+    const TARGET_URL = `http://localhost:${PORT}/dashboard`;
+    const API_URL = `http://localhost:${PORT}/v1/api`;
+
+    let currentProgress = 10;
+    let isRedirecting = false;
+    let lastLog = '';
+    
+    let countdown = 30;
+    let isServerReady = false;
+    const startTime = Date.now();
+    const minWaitTime = 0; // Instant redirect as soon as server is active
+
+    const manualBtn = document.getElementById('manual-btn');
+
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        if (manualBtn) manualBtn.textContent = `Manual Connect (${countdown}s)`;
+      } else {
+        clearInterval(countdownInterval);
+        if (manualBtn) {
+          manualBtn.textContent = `Connect Manually Now`;
+          manualBtn.disabled = false;
+        }
+      }
+    }, 1000);
+
+    if (manualBtn) {
+      manualBtn.addEventListener('click', () => {
+        window.location.href = TARGET_URL;
+      });
+    }
+
+    function appendLog(line) {
+      if (line === lastLog) return;
+      lastLog = line;
+      const logEl = document.getElementById('log-el');
+      if (logEl) {
+        logEl.innerHTML += `<br>${line}`;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    }
+
+    function updateProgress(percent, msg, sub, badge) {
+      currentProgress = Math.min(100, Math.max(currentProgress, percent));
+      
+      const percentEl = document.getElementById('percent-el');
+      const msgEl = document.getElementById('msg-el');
+      const subEl = document.getElementById('sub-el');
+      const badgeEl = document.getElementById('badge-el');
+
+      if (percentEl) percentEl.textContent = currentProgress + '%';
+      if (msgEl && msg) msgEl.textContent = msg;
+      if (subEl && sub) subEl.textContent = sub;
+      if (badgeEl && badge) {
+        if (currentProgress >= 100 && badge === 'Launch Success') {
+            badgeEl.innerHTML = `<i class="fa-solid fa-check"></i> <span>${badge}</span>`;
+        } else {
+            badgeEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>${badge}</span>`;
+        }
+      }
+    }
+
+    // Dynamic Script Injection to bypass local file:// CORS restrictions
+    function reloadStatusScript() {
+      const old = document.getElementById('fmc-status-script');
+      if (old) old.remove();
+      const s = document.createElement('script');
+      s.id = 'fmc-status-script';
+      s.src = `status.js?_t=${Date.now()}`;
+      document.body.appendChild(s);
+    }
+
+    async function checkServerStatus() {
+      if (isRedirecting) return;
+
+      // 1. Inject status.js to load window.FMC_STATUS without CORS restrictions
+      reloadStatusScript();
+      if (window.FMC_STATUS) {
+        const st = window.FMC_STATUS;
+        if (st.progress) {
+          updateProgress(st.progress, st.message, st.subMessage, st.badge || 'Environment Setup');
+          if (st.log) appendLog(`[STATUS] ${st.log}`);
+        }
+        if (st.status === 'ready') {
+          triggerSuccessRedirect();
+          return;
+        }
+      }
+
+      // 2. Try JSON fetch if on HTTP origin
+      try {
+        const res = await fetch(`status.json?_t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.progress) {
+            updateProgress(data.progress, data.message, data.subMessage, data.badge || 'Environment Setup');
+            if (data.log) appendLog(`[STATUS] ${data.log}`);
+          }
+          if (data.status === 'ready') {
+            triggerSuccessRedirect();
+            return;
+          }
+        }
+      } catch (err) {
+        // Ignored for file:// origins
+      }
+
+      // 3. Direct HTTP check to port 12247
+      try {
+        const serverRes = await fetch(API_URL, { method: 'GET', mode: 'cors' });
+        if (serverRes.ok) {
+          updateProgress(100, "Server Active & Operational!", "Redirecting to Dashboard...", "Server Verified");
+          appendLog("[OK] Express server active on port 12247!");
+          triggerSuccessRedirect();
+          return;
+        }
+      } catch (err) {
+        // Server not listening yet
+      }
+
+      // Incremental creep up to 90% while waiting for boot
+      if (currentProgress < 90) {
+        currentProgress += 1;
+        const percentEl = document.getElementById('percent-el');
+        if (percentEl) percentEl.textContent = currentProgress + '%';
+      }
+    }
+
+    function triggerSuccessRedirect() {
+      if (isRedirecting) return;
+      isServerReady = true;
+      
+      const elapsed = Date.now() - startTime;
+      const remainingWait = minWaitTime - elapsed;
+      
+      if (remainingWait > 0) {
+        updateProgress(99, "Server Ready!", `Waiting ${Math.ceil(elapsed/1000)}s / ${Math.ceil(minWaitTime/1000)}s for background services to stabilize...`, "Almost There");
+        setTimeout(triggerSuccessRedirect, 1000);
+        return;
+      }
+      
+      isRedirecting = true;
+      updateProgress(100, "FreeModelsClub Ready!", "Launching Dashboard in default browser...", "Launch Success");
+      
+      const barEl = document.getElementById('bar-el');
+      if (barEl) {
+        barEl.style.animation = 'none';
+        barEl.style.left = '0';
+        barEl.style.width = '100%';
+        barEl.style.background = 'linear-gradient(90deg, #10b981, #06b6d4)';
+        barEl.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.8)';
+      }
+
+      setTimeout(() => {
+        window.location.href = TARGET_URL;
+      }, 700);
+    }
+
+    // Poll every 350ms
+    setInterval(checkServerStatus, 350);
+    checkServerStatus();
+  </script>
+</body>
+</html>

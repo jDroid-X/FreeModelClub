@@ -1,0 +1,15 @@
+﻿# CONFIG SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Config View (http://localhost:3000/config)
+
+================================================================================
+[2026-07-31 20:11:00] INITIALIZE SCREEN CHANGE LOG & N8N INTEGRATION SNIPPETS
+================================================================================
+Target Screen : ConfigView.js
+Requested By  : User Chat Rule & n8n Workflow Design
+Status        : PASS (Active & Verified)
+Changes       :
+	- Initialized screen requirement log for Config View.
+	- Verified integration code snippets for cURL, Python, Node.js, Go, and PHP.
+	- Verified OpenAI-compatible API base URL endpoints configuration (`http://localhost:12247/v1`).
+Files Modified:
+	- public/js/views/ConfigView.js

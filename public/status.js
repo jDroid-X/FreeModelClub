@@ -1,0 +1,9 @@
+﻿window.FMC_STATUS = {
+    "message":  "Server Ready! Redirecting to Dashboard...",
+    "subMessage":  "FreeModelsClub proxy operational on port 12247",
+    "timestamp":  "2026-08-01T13:31:36",
+    "log":  "[OK] Express server active on port 12247.",
+    "badge":  "Server Ready",
+    "status":  "ready",
+    "progress":  100
+};

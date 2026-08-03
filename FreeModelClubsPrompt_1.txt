@@ -1,0 +1,93 @@
+Purpose/Objective =>develop a localhost service provider smart chatbot (OpenAI compatible) by using only free models from different providers. Outline to follow as below (add UI/UX features by doing the deep dive development as required to fully integrated service provider)
+
+Use system default theme (light / dark (add 7 more themes( Metal based (darkest to lightest shade (font always in contrast to background (shadow option in case of tiles))). Choose professional compact layout (separate structure (css style) best smart fit (as per browser width) as per browser pixel settings (including fonts(crystal clear (Editor style(various types and colors (opposite to background or elements and theme suitable)))) minimum padding, margins, borders (change on mouse hover) wherever or if necessary(best smart fit)). Put scroll bar (horz, vert) if page going beyond width and height. Add theme tab in setting page to add/ update/ change various items.  Theme listview has to be smooth drawer opening with 3 sec stay time before getting disappear.
+
+create a login screen email FreeModelsClub@jdroidxy.com password-Admin@1234 (show default values to sign in)
+after login it will check if any provider is active or not if not.
+
+open the Provider registration screen (Provider ID, Display Name, Provider API(OpenAI Compatible as default (listdown(other open source API connectors)), Base URL, API Key (search models by Provider), Model Id, Model Name, Box (Display Only Free models from provider (allow search, MultiSelect, Select/Unselect All). Add various UI/UX features buttons Register etc. (show metadata of every field). For all missing items always open popup dialog box and show the steps and take to the path where to do the update the missing mandatory items).on click of add it's asking via popup without filling the selected models from the box. if multiple models selected in the box then Add Model button must have save all. after saving all selected models there details must be displayed (model, tokens and other metadata(in table format) )
+
+After registration open the configuration screen which will show the Provider and its only free models. Then it will show script details of all the endpoints for chat compilation, response, message in Boxs for json, curl, python, nodejs (add others) - this data will be downloaded from "by searching online or Providers website". add memo box(editable) in which user can manually paste reference website for system to look at with button Search to open browser with that url's.
+
+After registration of Provider open dashboard page (localhost:12247/dashboard) display all possible metadata for that provider model wise token data and its validity.(Show on top right theme (pallet icon), Profile icon, Hamburger Menu icon (add items relevant and related to this product as per standard Menu objectives)
+
+in left pane next item is Playground - this will be online chatbot model which have input with model selection (show the list of free Models to choose (search option and select). After selection of model. input will be added in the chat window. the chat bot will connect to the provider free model and bring the response in response window. The chatbot as header which will show all metadata related to model tokens and its analytical statistic in one row.
+
+in left pane show item Provider - This page will show the list of Active Providers with Models and their metadata token details. This screen will also allow to Add, change/update, Delete Providers with free Models only. This will also allow to create connection between localhost:12247 and Provider=>Models and other tools/service providers (Claude, VsCode, Antigravity, Kiro etc)
+
+In Left pane show item Model Club - this will show the registered active models only with all provider, tokens and other metadata. This screen will also have various buttons like Model Family(rearrange models as per same family irrespective of providers) Model Core Skills (rearrange models as per model core skills irrespective of providers)
+
+in left pane show the settings - screen will display Endpoints as below
+Dashboard : http://localhost:12247
+Base URL  : http://localhost:12247/v1 
+API       : http://localhost:12247/v1/api
+Models    : http://localhost:12247/v1/models
+Chat API  : http://localhost:12247/v1/chat/completions
+Also allow to generate API for this FreeModelsClub@jdroidxy.com localhost:12247 to connect to other tools like Claude, VsCode, Antigravity, Kiro etc. use all the possible code so that once the connection is made between tool=>jdroidxy=>provider=>model then if in any of connected tools for any input in chatbot it will get correct or relative response from the connected models. while doing this generate a details log report (including maximum metadata possible to trace down root cause of the issues.) 
+
+Top 7 Missing Features & Functionalities in Playground
+#	Feature / Functionality	Description in Top 3 AI Chat Interfaces (ChatGPT / Claude / Gemini)	Status in FMC Playground
+1	Hyperparameter Tuning Sliders	Real-time sliders for Temperature (0.0 – 2.0), Top-P (0.0 – 1.0), and Max Completion Tokens in a parameter sidebar.	❌ Missing (Uses default backend parameters)
+2	Custom System Prompt Editor	Editable text area to define the assistant persona (e.g. "You are a senior JavaScript developer...") before sending messages.	❌ Missing (Fixed default system message)
+3	Real-Time Token Streaming (SSE)	Live typewriter SSE stream word-by-word with a "Stop Generation" button while AI is outputting.	❌ Missing (Waits for full HTTP response)
+4	Regenerate & Edit Prompt	Ability to click "Regenerate" on assistant replies or edit previous user messages to branch conversations.	❌ Missing (Static message history)
+5	Live Input Token Counter	Real-time token calculator underneath the chat input textarea updating as the user types.	❌ Missing (Telemetry updates after response)
+6	Multi-Modal File / Image Upload	File attachment picker and image drop zone for Vision models (Llama 3.2 Vision, Gemini 1.5 Flash).	❌ Missing (Text-only input)
+7	Branching Response Navigator	< 1 / 2 > response switcher arrows allowing users to toggle between multiple generated answers for a prompt.	❌ Missing (Single response line)
+
+
+in left pane show report screen which will have 2 tabs 1 log (details as above), 2 system log (every app action log details)
+
+ Top 7 Adding Features & Functionalities in Playground
+#	Feature / Functionality	Description in Top 3 AI Chat Interfaces (ChatGPT / Claude / Gemini)	Status in FMC Playground
+1	Hyperparameter Tuning Sliders	Real-time sliders for Temperature (0.0 – 2.0), Top-P (0.0 – 1.0), and Max Completion Tokens in a parameter sidebar.	❌ Missing (Uses default backend parameters)
+2	Custom System Prompt Editor	Editable text area to define the assistant persona (e.g. "You are a senior JavaScript developer...") before sending messages.	❌ Missing (Fixed default system message)
+3	Real-Time Token Streaming (SSE)	Live typewriter SSE stream word-by-word with a "Stop Generation" button while AI is outputting.	❌ Missing (Waits for full HTTP response)
+4	Regenerate & Edit Prompt	Ability to click "Regenerate" on assistant replies or edit previous user messages to branch conversations.	❌ Missing (Static message history)
+5	Live Input Token Counter	Real-time token calculator underneath the chat input textarea updating as the user types.	❌ Missing (Telemetry updates after response)
+6	Multi-Modal File / Image Upload	File attachment picker and image drop zone for Vision models (Llama 3.2 Vision, Gemini 1.5 Flash).	❌ Missing (Text-only input)
+7	Branching Response Navigator	< 1 / 2 > response switcher arrows allowing users to toggle between multiple generated answers for a prompt.	❌ Missing (Single response line)
+
+
+op Features for Provider & Model Registration
+Feature #	Feature Name	Description	Status in FMC
+1	Multi-Key Load Balancing Pool	Allows registering multiple API Keys per provider with auto-rotation (Key 1 -> Key 2) when rate limits occur.	🆕 Can be added
+2	Custom HTTP Headers Configurator	Custom headers support (e.g., HTTP-Referer, X-Title, Helicone-Auth) for custom OpenAI-compatible proxies.	🆕 Can be added
+3	Rate Limit Bounds (RPM / TPM)	Displays Requests Per Minute (RPM) & Tokens Per Minute (TPM) limits per free model.	🆕 Can be added
+4	Provider Import / Export (JSON)	One-click JSON export/import of provider registration profiles for easy backup & migration.	🆕 Can be added
+5	Real-Time Health & Latency Badge	Live ping latency gauge (<50ms, 50-200ms, >200ms) and HTTP 200 OK health status indicator.	🆕 Can be added
+
+ Top Features for Model Club & Model Combos
+Feature #	Feature Name	Description	Status in FMC
+1	Advanced Load-Balancing Strategies	Select between Weighted Round-Robin, Priority Fallback, Least Latency First, and Lowest Error Rate First routing.	🆕 Can be added
+2	Inline Routing Execution Simulator	A 1-click Test Combo Router simulator to test prompts directly on a Combo and see which model won the routing execution.	🆕 Can be added
+3	Side-by-Side Model Comparison Matrix	Compare 2-3 models side-by-side on Context Window, Speed, Latency, Architecture, and Benchmark skill scores.	🆕 Can be added
+4	Automatic Circuit Breaker & Health Probing	Automatically bypasses degraded models inside a Combo if latency exceeds >2000ms or fails HTTP checks.	🆕 Can be added
+5	Combo Cloning & JSON Export/Import	1-click Clone Combo button and JSON Export/Import of combo routing profiles for easy backup.	🆕 Can be added
+
+
+🚀 Top Features for Settings & Tab Screens
+Feature #	Feature Name	Description	Status in FMC
+1	API Key Security Scopes & Expiry Limits	Assign permissions (Read-Only, Full Proxy, Admin) and set expiry dates (30 Days, 90 Days, Never) for Client API Keys.	🆕 Can be added
+2	Automated .env / Script File Generator	1-Click download of pre-configured .env, setup.ps1, or setup.sh connection files for tools.	🆕 Can be added
+3	Custom Metal Theme Color Builder	Real-time color picker to customize accent highlights and glass opacity for custom metal themes.	🆕 Can be added
+4	Master System Backup Export / Import	1-Click JSON export/import of all system settings, launch rules, and endpoints configuration.	🆕 Can be added
+5	Live Endpoint Request Header Tester	Interactive live cURL runner inside the Endpoint Inspector with dynamic status badges.	🆕 Can be added
+
+
+ Top Features for Diagnostic Reports & Logs
+Feature #	Feature Name	Description	Status in FMC
+1	Live Log Stream Auto-Refresh Toggle	Real-time auto-polling toggle switch (Play/Pause Live Feed) to stream proxy logs live as requests happen.	🆕 Can be added
+2	Log Level Pill Filters (ALL, INFO, WARN, ERROR)	1-Click severity filter badges to isolate Error stack traces, Warnings, or Success logs instantly.	🆕 Can be added
+3	Audit Log CSV & JSON Exporter	1-Click download buttons to export full system audit logs in CSV and JSON formats.	🆕 Can be added
+4	Keyword & Regex Log Search	Real-time search bar filtering logs by Model ID, Component Source, Status Code, or Exception message.	🆕 Can be added
+5	Latency Distribution Breakdown	Visual breakdown bar showing request distribution (<100ms Fast, 100-500ms Normal, >500ms Slow).	🆕 Can be added
+
+
+ Top Features for User Manual & HIL Guide
+Feature #	Feature Name	Description	Status in FMC
+1	Interactive Left TOC Rail (20% Width)	Sticky Table of Contents sidebar for instant section jumping (Prerequisites, Onboarding, Combos, Tools, Tray Icon, FAQs).	🆕 Can be added
+2	Direct View Launcher Buttons inside Steps	Interactive CTA buttons right inside manual steps (e.g., Step 2 contains an "Open Onboarding" button that navigates directly).	🆕 Can be added
+3	Export Manual as Markdown / PDF	1-Click download buttons to export full operational manual as a clean Markdown or PDF document for offline reading.	🆕 Can be added
+4	Interactive FAQ & Troubleshooting Accordion	Collapsible Q&A section solving common errors (Port 12247 Refused, Tray Icon Missing, Rate Limit 429 Failover).	🆕 Can be added
+5	Live Search with Keyword Highlighting	Instant search bar with real-time text matching and section filtering.	🆕 Can be added

@@ -1,0 +1,15 @@
+﻿# USER MANUAL SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: User Manual View (http://localhost:3000/manual)
+
+================================================================================
+[2026-07-31 20:11:00] INITIALIZE SCREEN CHANGE LOG & HIL GUIDE
+================================================================================
+Target Screen : ManualView.js
+Requested By  : User Chat Rule & n8n Workflow Design
+Status        : PASS (Active & Verified)
+Changes       :
+	- Initialized screen requirement log for User Manual View.
+	- Verified Human-In-Loop 7-section step-by-step onboarding guide.
+	- Verified FAQ loader and interactive screen hint modals.
+Files Modified:
+	- public/js/views/ManualView.js

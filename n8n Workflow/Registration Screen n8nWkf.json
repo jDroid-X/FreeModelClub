@@ -1,0 +1,255 @@
+{
+  "id": "fmc-registration-screen-workflow",
+  "name": "FMC Registration Screen n8nWkf",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fmc-registration-screen-workflow-trigger",
+      "name": "TRIGGER: RegistrationView Loaded",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fmcApiBase",
+              "value": "http://localhost:12247"
+            },
+            {
+              "name": "sessionToken",
+              "value": "fmc_user_session_token"
+            },
+            {
+              "name": "screen",
+              "value": "RegistrationView"
+            },
+            {
+              "name": "imageVisionEnabled",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "id": "fmc-registration-screen-workflow-input",
+      "name": "INPUT: RegistrationView Config & Session",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the FMC Registration Screen n8nWkf for RegistrationView. Purpose: Validate new provider base URLs, resolve API keys, and perform provider agent lookups.. Leverage attached Chat Model, Window Buffer Memory, and Tools to process context and return structured JSON telemetry."
+        }
+      },
+      "id": "fmc-registration-screen-workflow-ai-agent",
+      "name": "AI AGENT: FMC Registration Screen n8nWkf",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemma-3-27b-it",
+        "options": {
+          "baseURL": "http://localhost:12247/v1"
+        }
+      },
+      "id": "fmc-registration-screen-workflow-chat-model",
+      "name": "CHAT MODEL: FMC Proxy (gemma-3-27b-it)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "fmc-proxy-credentials",
+          "name": "FMC Localhost Proxy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "fmc_fmc-registration-screen-workflow_session"
+      },
+      "id": "fmc-registration-screen-workflow-memory",
+      "name": "MEMORY: Window Buffer (RegistrationView)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "test_connection_tool",
+        "description": "Test provider API key and endpoint ping",
+        "method": "POST",
+        "url": "http://localhost:12247/api/providers/test-connection"
+      },
+      "id": "fmc-registration-screen-workflow-tool-1",
+      "name": "TOOL 1: Provider Connection Test Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "agent_lookup_tool",
+        "description": "Lookup provider metadata and model endpoints",
+        "method": "POST",
+        "url": "http://localhost:12247/api/providers/agent-lookup"
+      },
+      "id": "fmc-registration-screen-workflow-tool-2",
+      "name": "TOOL 2: Agent Lookup Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "fetch_models_tool",
+        "description": "Fetch remote provider model catalog",
+        "method": "POST",
+        "url": "http://localhost:12247/api/providers/fetch-models"
+      },
+      "id": "fmc-registration-screen-workflow-tool-3",
+      "name": "TOOL 3: Fetch Models Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL OUTPUT: RegistrationView\nreturn [{ json: { workflowId: 'fmc-registration-screen-workflow', name: 'FMC Registration Screen n8nWkf', screen: 'RegistrationView', status: 'AGENT_LOADED', imageCapabilities: false, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "fmc-registration-screen-workflow-final-output",
+      "name": "FINAL OUTPUT: RegistrationView Agent Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "TRIGGER: RegistrationView Loaded": {
+      "main": [
+        [
+          {
+            "node": "INPUT: RegistrationView Config & Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INPUT: RegistrationView Config & Session": {
+      "main": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CHAT MODEL: FMC Proxy (gemma-3-27b-it)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORY: Window Buffer (RegistrationView)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 1: Provider Connection Test Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 2: Agent Lookup Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 3: Fetch Models Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Registration Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI AGENT: FMC Registration Screen n8nWkf": {
+      "main": [
+        [
+          {
+            "node": "FINAL OUTPUT: RegistrationView Agent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,19 @@
+# DASHBOARD SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Dashboard View (http://localhost:3000/dashboard)
+
+================================================================================
+[2026-07-31 21:03:00] INSTANT DASHBOARD LAUNCH & 0-SECOND WAIT FIX
+================================================================================
+Target Screen : launcher.html / tray_launcher.ps1 / DashboardView.js
+User Chat Request : "still not launching..."
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Discovered 30-second artificial delay (`const minWaitTime = 30000`) in `public/launcher.html` which blocked browser redirect.
+	- Reduced `minWaitTime` to `0` in `launcher.html` so redirect occurs instantly (< 1s) as soon as Express server port 12247 is online.
+	- Added explicit `Open-Dashboard` auto-trigger in `tray_launcher.ps1` immediately after `Start-FMCServer` completes.
+	- Verified instant HTTP 200 dashboard launch on `http://localhost:12247/dashboard`.
+Files Modified:
+	- public/launcher.html
+	- tray_launcher.ps1
+	- requirement/dashboard.txt
+

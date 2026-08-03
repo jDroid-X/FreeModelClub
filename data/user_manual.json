@@ -1,0 +1,56 @@
+[
+  {
+    "step": 1,
+    "title": "Sign In to Localhost Service",
+    "description": "Open http://localhost:12247 in browser. Use pre-filled default credentials: Email: FreeModelsClub@jdroidxy.com, Password: Admin@1234.",
+    "hilAction": "Click Sign In button. System verifies session and redirects to Provider Registration screen if no provider is active."
+  },
+  {
+    "step": 2,
+    "title": "Register & Configure Free AI Provider",
+    "description": "If no provider is active, navigate to Provider Registration. Select API Protocol (Groq, Gemini, OpenRouter, Together, Mistral, Ollama), enter Base URL and API Key.",
+    "hilAction": "Click Search Free Models button to fetch available free models, toggle multi-select checkboxes, and click Register Provider."
+  },
+  {
+    "step": 3,
+    "title": "Generate Integration Snippets",
+    "description": "Go to Integration Code screen to view ready-to-run cURL, Python, Node.js, Go, and PHP scripts pointing to http://localhost:12247/v1.",
+    "hilAction": "Copy script snippets or paste reference documentation URLs in the editable Memo box for lookup."
+  },
+  {
+    "step": 4,
+    "title": "Test Online Playground Chatbot",
+    "description": "Open Playground page. Select an active free model or Model Combo from top dropdown, inspect real-time token telemetry header, and send chat prompts.",
+    "hilAction": "Inspect live streaming or non-streaming responses, token counters, and prompt latency."
+  },
+  {
+    "step": 5,
+    "title": "Connect External Clients & Tools (Claude, VSCode, Antigravity, Kiro)",
+    "description": "Go to Settings page to copy localhost endpoint URLs and generate custom client API Keys.",
+    "hilAction": "Configure your IDE extension or tool to point to Base URL http://localhost:12247/v1 with Bearer key."
+  },
+  {
+    "step": 6,
+    "title": "Monitor Diagnostic Reports & Logs",
+    "description": "Visit Reports screen to inspect API Diagnostic logs (tokens, latency, error root cause) and System audit events.",
+    "hilAction": "Use Clear Logs button or view closed-loop diagnostic traces if errors occur."
+  },
+  {
+    "step": 7,
+    "title": "Create & Manage Model Combos",
+    "description": "Navigate to Model Club -> Model Combo tab. Click \"Create Model Combo\" or quick-create from any Model Family to build load-balancing pools.",
+    "hilAction": "Choose strategy (Round Robin vs. Fallback), select active models, enter a custom identifier name (e.g. claude-opus), and save."
+  },
+  {
+    "step": 8,
+    "title": "Sync with Claude Desktop & Anthropic Tools",
+    "description": "In Settings -> Tool Connections -> Claude Chatbot, copy the complete configuration JSON snippet into your claude_desktop_config.json file.",
+    "hilAction": "Verify that ANTHROPIC_BASE_URL points to http://localhost:12247/v1. The proxy backend automatically translates Anthropic /v1/messages to OpenAI format."
+  },
+  {
+    "step": 9,
+    "title": "Manage Dynamic Master Data Config",
+    "description": "Navigate to Settings -> Master Data tab to update system-wide defaults, ports, and retry limits dynamically without code modifications.",
+    "hilAction": "Input custom Brand Name, Localhost Port, Fallback Model ID, and click Save System Config."
+  }
+]

@@ -1,0 +1,201 @@
+{
+  "id": "fmc-config-screen-workflow",
+  "name": "FMC Config Screen n8nWkf",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fmc-config-screen-workflow-trigger",
+      "name": "TRIGGER: ConfigView Loaded",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fmcApiBase",
+              "value": "http://localhost:12247"
+            },
+            {
+              "name": "sessionToken",
+              "value": "fmc_user_session_token"
+            },
+            {
+              "name": "screen",
+              "value": "ConfigView"
+            },
+            {
+              "name": "imageVisionEnabled",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "id": "fmc-config-screen-workflow-input",
+      "name": "INPUT: ConfigView Config & Session",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the FMC Config Screen n8nWkf for ConfigView. Purpose: Audit API token quotas, rate limits, proxy timeouts, and fallback routing priorities.. Leverage attached Chat Model, Window Buffer Memory, and Tools to process context and return structured JSON telemetry."
+        }
+      },
+      "id": "fmc-config-screen-workflow-ai-agent",
+      "name": "AI AGENT: FMC Config Screen n8nWkf",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemma-3-27b-it",
+        "options": {
+          "baseURL": "http://localhost:12247/v1"
+        }
+      },
+      "id": "fmc-config-screen-workflow-chat-model",
+      "name": "CHAT MODEL: FMC Proxy (gemma-3-27b-it)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "fmc-proxy-credentials",
+          "name": "FMC Localhost Proxy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "fmc_fmc-config-screen-workflow_session"
+      },
+      "id": "fmc-config-screen-workflow-memory",
+      "name": "MEMORY: Window Buffer (ConfigView)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "models_quota_tool",
+        "description": "Audit active models quota",
+        "method": "GET",
+        "url": "http://localhost:12247/api/models/active"
+      },
+      "id": "fmc-config-screen-workflow-tool-1",
+      "name": "TOOL 1: Active Models Quota Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL OUTPUT: ConfigView\nreturn [{ json: { workflowId: 'fmc-config-screen-workflow', name: 'FMC Config Screen n8nWkf', screen: 'ConfigView', status: 'AGENT_LOADED', imageCapabilities: false, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "fmc-config-screen-workflow-final-output",
+      "name": "FINAL OUTPUT: ConfigView Agent Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "TRIGGER: ConfigView Loaded": {
+      "main": [
+        [
+          {
+            "node": "INPUT: ConfigView Config & Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INPUT: ConfigView Config & Session": {
+      "main": [
+        [
+          {
+            "node": "AI AGENT: FMC Config Screen n8nWkf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CHAT MODEL: FMC Proxy (gemma-3-27b-it)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI AGENT: FMC Config Screen n8nWkf",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORY: Window Buffer (ConfigView)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI AGENT: FMC Config Screen n8nWkf",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 1: Active Models Quota Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Config Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI AGENT: FMC Config Screen n8nWkf": {
+      "main": [
+        [
+          {
+            "node": "FINAL OUTPUT: ConfigView Agent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

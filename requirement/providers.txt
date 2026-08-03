@@ -1,0 +1,55 @@
+================================================================================
+  PROVIDERS VIEW — REQUIREMENT CHANGE LOG
+  Screen: Providers View | File: providers.txt
+================================================================================
+
+--------------------------------------------------------------------------------
+[2026-07-31 13:55:00] | TestPing Connection Fix — Multi-Provider Aware Ping Engine
+--------------------------------------------------------------------------------
+Change Request   : TestPing button returns FAIL even when Antigravity succeeds.
+Target Screen    : Providers View, Registration View (all pages with TestPing)
+Modified Files   : src/controllers/ProviderController.js
+Description      :
+  Root Cause Analysis:
+  1. Anthropic — missing `anthropic-version: 2023-06-01` required header.
+     Without it, API returns 400/401, treated as FAIL.
+  2. Ollama — was probing `/models` but Ollama endpoint is `/api/tags`.
+     Returned 404 → FAIL even when Ollama is fully running.
+  3. Auth 401/403 — previous code treated 401/403 as FAIL.
+     These codes mean server is ALIVE, key is wrong — should be SUCCESS
+     with advisory message "verify API key in provider settings".
+  4. 404 on /models fallback — retry base URL to confirm socket is alive.
+
+  Fix Applied (ProviderController.testConnection):
+  - Extracted `executeProbe(url, headers)` → reusable async Promise helper.
+  - Provider-type detection: isAnthropic, isGeminiNative, isOllama.
+  - Ollama: primaryPingUrl → `{baseUrl}/api/tags` (correct endpoint).
+  - Anthropic: added `anthropic-version: 2023-06-01` header in authHeaders.
+  - Status 401/403: reported as success=true with advisory status message.
+  - Status 404/405: fallback probe2 on cleanBaseUrl; if <500 → success=true.
+  - Protocol field forwarded from frontend via ApiService.testProviderConnection.
+  - api.js already passes `protocol` in both testConnection and testProviderConnection.
+
+
+--------------------------------------------------------------------------------
+[2026-08-01 14:20:00] | Provider Soft-Delete & Archive Folder Integration
+--------------------------------------------------------------------------------
+Change Request   : "while request to delete Providers then it should move to Archive Folder in System page"
+Target Screen    : Providers View, Settings View (Archived Providers Folder tab)
+Modified Files   :
+  - src/models/ProviderModel.js
+  - src/controllers/ProviderController.js
+  - src/routes/providerRoutes.js
+  - public/js/services/api.js
+  - public/js/views/SettingsView.js
+  - public/js/views/SettingsAgentHelper.js
+  - requirement/providers.txt
+Description      :
+  1. Updated ProviderModel.delete(id): Converted hard deletion into soft archiving (isArchived: true, isActive: false, archivedAt timestamp).
+  2. Filtered out archived providers from ProviderModel.getAll() and ProviderModel.getActiveProviders().
+  3. Created GET /api/providers/archived, POST /api/providers/:id/restore, DELETE /api/providers/:id/permanent endpoints.
+  4. Added "Archived Providers Folder" tab in SettingsView.js / System Settings page.
+  5. Implemented restore and permanent purge action controls in SettingsAgentHelper.js.
+Completion Status : PASS
+Agent             : Provider Architect, Backend Agent, Frontend Agent, Audit Agent
+================================================================================

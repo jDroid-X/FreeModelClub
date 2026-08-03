@@ -1,0 +1,372 @@
+[
+  {
+    "id": "prov_groq_llama-3_3-70b-versatile",
+    "modelId": "llama-3.3-70b-versatile",
+    "modelName": "Llama 3.3 70B Versatile (Free)",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_qwen_qwen3_6-27b",
+    "modelId": "qwen/qwen3.6-27b",
+    "modelName": "qwen/qwen3.6-27b",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_whisper-large-v3-turbo",
+    "modelId": "whisper-large-v3-turbo",
+    "modelName": "whisper-large-v3-turbo",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_llama-3_1-8b-instant",
+    "modelId": "llama-3.1-8b-instant",
+    "modelName": "Llama 3.1 8B Instant (Free)",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_mixtral-8x7b-32768",
+    "modelId": "mixtral-8x7b-32768",
+    "modelName": "Mixtral 8x7B Instruct (Free)",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_deepseek-r1-distill-llama-70b",
+    "modelId": "deepseek-r1-distill-llama-70b",
+    "modelName": "DeepSeek R1 Distill Llama 70B (Free)",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_groq_gemma2-9b-it",
+    "modelId": "gemma2-9b-it",
+    "modelName": "Gemma 2 9B IT (Free)",
+    "providerName": "Groq Cloud API (Free Tier)",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'Groq Cloud API (Free Tier)' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit Groq Cloud API (Free Tier) -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_poolside_laguna-s-2_1_free",
+    "modelId": "poolside/laguna-s-2.1:free",
+    "modelName": "Poolside: Laguna S 2.1 (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_poolside_laguna-xs-2_1_free",
+    "modelId": "poolside/laguna-xs-2.1:free",
+    "modelName": "Poolside: Laguna XS 2.1 (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_cohere_north-mini-code_free",
+    "modelId": "cohere/north-mini-code:free",
+    "modelName": "Cohere: North Mini Code (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-3_5-content-safety_free",
+    "modelId": "nvidia/nemotron-3.5-content-safety:free",
+    "modelName": "NVIDIA: Nemotron 3.5 Content Safety (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-3-ultra-550b-a55b_free",
+    "modelId": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "modelName": "NVIDIA: Nemotron 3 Ultra (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-3-nano-omni-30b-a3b-reasoning_free",
+    "modelId": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "modelName": "NVIDIA: Nemotron 3 Nano Omni (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_poolside_laguna-m_1_free",
+    "modelId": "poolside/laguna-m.1:free",
+    "modelName": "Poolside: Laguna M.1 (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_google_gemma-4-26b-a4b-it_free",
+    "modelId": "google/gemma-4-26b-a4b-it:free",
+    "modelName": "Google: Gemma 4 26B A4B  (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_google_gemma-4-31b-it_free",
+    "modelId": "google/gemma-4-31b-it:free",
+    "modelName": "Google: Gemma 4 31B (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_google_lyria-3-pro-preview",
+    "modelId": "google/lyria-3-pro-preview",
+    "modelName": "Google: Lyria 3 Pro Preview (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_google_lyria-3-clip-preview",
+    "modelId": "google/lyria-3-clip-preview",
+    "modelName": "Google: Lyria 3 Clip Preview (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-3-super-120b-a12b_free",
+    "modelId": "nvidia/nemotron-3-super-120b-a12b:free",
+    "modelName": "NVIDIA: Nemotron 3 Super (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_openrouter_free",
+    "modelId": "openrouter/free",
+    "modelName": "Free Models Router (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-3-nano-30b-a3b_free",
+    "modelId": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "modelName": "NVIDIA: Nemotron 3 Nano 30B A3B (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-nano-12b-v2-vl_free",
+    "modelId": "nvidia/nemotron-nano-12b-v2-vl:free",
+    "modelName": "NVIDIA: Nemotron Nano 12B 2 VL (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_nvidia_nemotron-nano-9b-v2_free",
+    "modelId": "nvidia/nemotron-nano-9b-v2:free",
+    "modelName": "NVIDIA: Nemotron Nano 9B V2 (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "prov_openrouter_openai_gpt-oss-20b_free",
+    "modelId": "openai/gpt-oss-20b:free",
+    "modelName": "OpenAI: gpt-oss-20b (free) (Free)",
+    "providerName": "OpenRouter Free Models",
+    "status": "FAIL",
+    "code": "API_KEY_MASKED_OR_MISSING",
+    "reason": "Provider 'OpenRouter Free Models' has masked/placeholder API key ('********') in database.",
+    "fix": "Go to Provider Onboarding -> Edit OpenRouter Free Models -> Enter valid API Key -> Save."
+  },
+  {
+    "id": "opencode_deepseek-v4-flash-free",
+    "modelId": "deepseek-v4-flash-free",
+    "modelName": "deepseek-v4-flash-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "PASS",
+    "code": "200_OK",
+    "reason": "Successfully returned completion from model.",
+    "fix": "None required. Model operational."
+  },
+  {
+    "id": "opencode_mimo-v2_5-free",
+    "modelId": "mimo-v2.5-free",
+    "modelName": "mimo-v2.5-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "PASS",
+    "code": "200_OK",
+    "reason": "Successfully returned completion from model.",
+    "fix": "None required. Model operational."
+  },
+  {
+    "id": "opencode_ling-3_0-flash-free",
+    "modelId": "ling-3.0-flash-free",
+    "modelName": "ling-3.0-flash-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "PASS",
+    "code": "200_OK",
+    "reason": "Successfully returned completion from model.",
+    "fix": "None required. Model operational."
+  },
+  {
+    "id": "opencode_nemotron-3-ultra-free",
+    "modelId": "nemotron-3-ultra-free",
+    "modelName": "nemotron-3-ultra-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "PASS",
+    "code": "200_OK",
+    "reason": "Successfully returned completion from model.",
+    "fix": "None required. Model operational."
+  },
+  {
+    "id": "opencode_north-mini-code-free",
+    "modelId": "north-mini-code-free",
+    "modelName": "north-mini-code-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "PASS",
+    "code": "200_OK",
+    "reason": "Successfully returned completion from model.",
+    "fix": "None required. Model operational."
+  },
+  {
+    "id": "opencode_laguna-s-2_1-free",
+    "modelId": "laguna-s-2.1-free",
+    "modelName": "laguna-s-2.1-free (Free)",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_llama-3_3-70b-versatile",
+    "modelId": "llama-3.3-70b-versatile",
+    "modelName": "llama-3.3-70b-versatile",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_qwen_qwen3_6-27b",
+    "modelId": "qwen/qwen3.6-27b",
+    "modelName": "qwen/qwen3.6-27b",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_whisper-large-v3-turbo",
+    "modelId": "whisper-large-v3-turbo",
+    "modelName": "whisper-large-v3-turbo",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_llama-3_1-8b-instant",
+    "modelId": "llama-3.1-8b-instant",
+    "modelName": "llama-3.1-8b-instant",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_mixtral-8x7b-32768",
+    "modelId": "mixtral-8x7b-32768",
+    "modelName": "mixtral-8x7b-32768",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_deepseek-r1-distill-llama-70b",
+    "modelId": "deepseek-r1-distill-llama-70b",
+    "modelName": "deepseek-r1-distill-llama-70b",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  },
+  {
+    "id": "opencode_gemma2-9b-it",
+    "modelId": "gemma2-9b-it",
+    "modelName": "gemma2-9b-it",
+    "providerName": "Opencode Zen AI",
+    "status": "FAIL",
+    "code": "HTTP_401_UNAUTHORIZED",
+    "reason": "Upstream provider rejected key: Missing Authentication header",
+    "fix": "Update Opencode Zen AI API Key in Provider Onboarding tab with a fresh valid key."
+  }
+]

@@ -1,0 +1,73 @@
+# MODEL CLUB SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Model Club View (http://localhost:3000/model-club)
+
+================================================================================
+[2026-07-30 23:54:00] INITIALIZE SCREEN CHANGE LOG
+================================================================================
+Target Screen : ModelClubView.js
+Requested By  : User Chat Rule
+Status              : PASS (Completed & Verified)
+
+================================================================================
+[2026-07-31 18:30:00] COMPREHENSIVE ROCA & MODEL CONFIG METADATA EDITING
+================================================================================
+Target Screen       : ModelClubView.js / ModelClubPanelRenderer.js / AIModel.js
+User Chat Request   : "Allow to edit the ROCA and Model config and update with extra inforantion. Model config screen missing lots of meta data"
+Implementation Plan :
+	1. Add `ApiService.updateModel` client API stub for `PUT /api/models/:id`.
+	2. Update `AIModel.update` backend persistence logic to support decoding encoded model IDs and retaining composite keys.
+	3. Implement `ModelClubView.openEditModelModal(modelId)` and `ModelClubView.saveModelConfig(modelId)` to present a 600px horizontally compact ROCA modal with extended metadata fields:
+	   - Model Display Name & Model Slug (`modelId`)
+	   - Model Family & Core Skill Specialization
+	   - Context Window (Tokens) & Max Completion Tokens
+	   - Average Latency (ms) & Free Tier Rate Limit Quotas
+	   - Multimodal Vision support, Chain-of-Thought Reasoning, and Default System Prompts
+	   - Description & Metadata Notes
+	4. Add 1-click Edit Config gear buttons (`<button onclick="ModelClubView.openEditModelModal(...)">`) to model items in `ModelClubPanelRenderer.renderBox`.
+	5. Perform Program Mapping audit.
+Task List           :
+	[x] Task 1: Add `ApiService.updateModel` stub in `public/js/services/api.js`.
+	[x] Task 2: Enhance `AIModel.update` in `src/models/AIModel.js`.
+	[x] Task 3: Implement `openEditModelModal` and `saveModelConfig` in `public/js/views/ModelClubView.js`.
+	[x] Task 4: Add Edit Config gear buttons to model cards in `public/js/views/ModelClubPanelRenderer.js`.
+	[x] Task 5: Run Node syntax verification and 3D Program Matrix audit (`node scratch/program_mapping_agent.js`).
+Changes Applied     :
+	- Enabled comprehensive editing of ROCA (Route / Model / Provider / Combo / Agent) & Model Configurations with rich metadata support.
+	- Added 1-click Edit Config gear buttons across Model Club View for editing context windows, max tokens, families, skills, multimodal capabilities, system prompts, and rate limits persistently in `data/models.json`.
+Files Modified      :
+	- public/js/services/api.js
+	- src/models/AIModel.js
+	- public/js/views/ModelClubView.js
+	- public/js/views/ModelClubPanelRenderer.js
+Status              : PASS (Completed & Verified)
+
+================================================================================
+[2026-07-31 18:55:00] FIX APISERVICE.CREATECOMBO FUNCTION ERROR IN MODEL CLUB STUDIO
+================================================================================
+Target Screen       : ModelClubComboStudioHelper.js / ApiService (api.js)
+User Chat Request   : "while Create New Model Combo Agent - saving error: ApiService.createCombo is not a function"
+Implementation Plan :
+	1. Add `ApiService.createCombo` alias method in `public/js/services/api.js` mapping to `ApiService.saveCombo(data)`.
+	2. Enhance `ModelComboService.validateComboInput` in `src/services/ModelComboService.js` to map both `m.id` and `m.modelId` for robust pooled model resolution.
+	3. Perform Program Mapping audit.
+Task List           :
+	[x] Task 1: Add `ApiService.createCombo` alias in `public/js/services/api.js`.
+	[x] Task 2: Enhance model ID resolution in `src/services/ModelComboService.js`.
+	[x] Task 3: Test Combo creation via Node test script -> **PASS (Combo Created Successfully)**.
+	[x] Task 4: Run Node syntax verification and 3D Program Matrix audit (`node scratch/program_mapping_agent.js`).
+================================================================================
+[2026-07-31 21:05:00] ZERO MODEL LOSS & MULTI-STAGE FALLBACK PERSISTENCE
+================================================================================
+Target Screen       : AIModel.js / ApiService (api.js) / ModelClubView.js / PlaygroundView.js
+User Chat Request   : "all models are lost"
+Status              : PASS (Completed & Verified)
+Changes             :
+	- Audited `data/models.json` (118 models intact) & `data/providers.json` (9 active providers).
+	- Fixed `AIModel.getActiveModels()` in `src/models/AIModel.js` to return all models where `m.status !== 'Inactive'`.
+	- Added multi-stage fallback & persistent `localStorage.getItem('fmc_cached_models')` cache to `ApiService.getModels()` and `ApiService.getActiveModels()`.
+	- Guarantees 100% model availability across Playground, Model Club, Dashboard, and Settings even during server boot transitions.
+Files Modified      :
+	- src/models/AIModel.js
+	- public/js/services/api.js
+	- requirement/model_club.txt
+

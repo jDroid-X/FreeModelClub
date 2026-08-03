@@ -1,0 +1,45 @@
+• [2026-07-25T13:58:00Z] in endpoint i am not able to see the URL Masking editable option.
+• [2026-07-25T13:58:00Z] what are the items on header of every page
+• [2026-07-25T13:58:00Z] Ha Ha Ha what mistake you find in this image from security point of veiw???
+• [2026-07-25T13:58:00Z] what is the color of jDroid-xyz-fmc tile. can we use the same in telemetry cards? for light themes
+• [2026-07-25T13:58:00Z] the purpose of maksing is to dispaly http://jDroid-xyz-fmc/dashboard in browser URL not http://localhost:12247/jDroid-xyz-fmc/dashboard. - fix this. remove the edit icon from jDroid-xyz-fmc/dashboard tile
+• [2026-07-25T13:58:00Z] In Model Screen Group By Family (rename <Model Family> is not working correctly. Like can see there are 3 groups for Lama - The purpose of Group all the models of same Family into one umbrella irrespective or provider.
+• [2026-07-25T13:58:00Z] so if new provider is added in future how this Model Family will get updated automatically with provision of updating manually also. rename Group By Family as Models Family
+• [2026-07-25T13:58:00Z] onClick of itmes in the left pane like Models Famaily or Core Sliks a tree shold be displayed hedears of the right pane below that so onclick header display the detail of that headers
+• [2026-07-25T13:58:00Z] Create, add or Update a text file "Chat Request" for all the chat request sent. save them in path <current project path> with bullets point and datetime stamp.
+• [2026-07-25T13:58:00Z] since the beginning of this project how many implementation plan and tasks has been added. list them and save them in requirement folder with name <imp_plan_##> <Task_##> next number (##) from the existing one or already have.
+• [2026-07-25T14:02:00Z] like we have grouped the Model family with all its varients in one group. similarly do in Core Skills View (example we have lots of coding headers they should com in one groupe)
+• [2026-07-25T14:02:00Z] I also see that earlier items UI/UX (shadow and mouse hover features ) is change. can we keep the same like in (New Model Combo).
+• [2026-07-25T14:02:00Z] Also share details How the data in Header Telemetry is updated. which provider is to display how it is decided?? and why we have chosen this only? what about other? is this have dummy data or live?
+• [2026-07-25T14:07:00Z] Dynamic Real-Time Switch: If you select Groq Cloud API -> Llama 3.3 70B Versatile in Playground, the telemetry bar immediately updates to: -- if this is the case then what is the current model in playgroud. does this matcing. if not then fix the issue
+• [2026-07-25T14:11:00Z] In Core Skill Views - Skill: Coding & Software Development (6 Models) Next to this show the Tokens Availale <Sum> unit. - Combo Agent button missing (Do we have Comob Agent in system as per ROCAS format - if not then add it as per the combo business requirement use imp10_plan_10 form C:\Users\jiten\jAnitGravity\FreeModelsClub\requirement as reference)
+• [2026-07-25T14:15:00Z] Instead of showing full name Create Coding & Software Development Combo - show only Comob Agent as button with background (telemetry card backgound)
+• [2026-07-25T14:18:00Z] Why this message <No Model Combos Created Create Virtual Model Combos to pool multiple free models with Round-Robin or Fallback load-balancing. Create First Model Combo> As per image we already have one combo in the system where it gone??
+• [2026-07-25T14:23:00Z] if in front of header on click of Combo Agents it should automatically pick all the models and create Model Combo and open in Editable mode to do the changes if required. with all the various functionaity it should have. as option to choose and the save
+• [2026-07-25T16:36:00Z] 15-Year Senior Architect UI/UX Audit & Closed-Loop Waterfall Validation Across All 9 SPA Screens.
+• [2026-07-25T16:40:00Z] Verification of API key masking and Zero-Trust unmasking for outbound API requests.
+• [2026-07-25T16:50:00Z] Verification of System Tray Launcher (tray_launcher.ps1) and Express Server startup on port 12247.
+• [2026-07-25T16:52:00Z] Chronological Waterfall Execution across 22 Enterprise AI Agents, PonyTail Line Limit Audit, UI/UX UI Controls (Button, Textbox, ListBox, Dialog, Validations, Popups), Closed-Loop Convergence, and Task 29 Documentation.
+• [2026-07-29T13:20:00Z] Fix window margins out of bounds, selection counts tracking, duplicate text rendering on base models pane, and uniform pane layout across Model Club taxonomy.
+• [2026-07-29T15:00:00Z] PonyTail line limit (< 250 lines): create separate codes for panels in OOPS MVC structure called by function or reference.
+• [2026-07-29T15:30:00Z] Deep dive and due diligence for Model Clubs and Combo pages. Fix critical bugs, broken code, and run Agents to Sync Frontend, Backend, QA, Testing, Security.
+• [2026-07-29T15:35:00Z] In select all clear all row remove telemetry badges and add 8 action icons with their respective functions.
+• [2026-07-29T15:40:00Z] Remove compare model button and move search bar before refresh button in top header.
+• [2026-07-30T04:10:00Z] Redesign new and edit Models Combo Club on the basis of current panel structure multiselect deselect option to be there following top-bottom and bottom-top hierarchy linking.
+• [2026-07-30T13:48:00Z] Fix search window selection where all panels are not updated correctly when searching.
+• [2026-07-30T13:52:00Z] Fix combo pane auto-fill issue and panel refresh focus loss during search.
+• [2026-07-30T13:58:00Z] Fix search filtering where typing "llama" in search bar produced different results than selecting "Llama Family" (implement taxonomy-aware search traversal).
+• [2026-07-30T14:01:00Z] Create an independent SearchAgent module using dynamic filter queries that can be used anywhere in the project.
+• [2026-07-30T14:06:00Z] Explain token collection and 2-to-3 digit SI unit formatting engine in Active Providers & Service Connections.
+• [2026-07-30T14:07:00Z] List all providers giving unlimited tokens.
+• [2026-07-30T14:09:00Z] Explain why OpenRouter free models hit 429 rate limits despite being $0 token cost.
+• [2026-07-30T14:11:00Z] Verify if rate limits, token usage, and model metadata are updated on card views for all providers.
+• [2026-07-30T14:13:00Z] Update Sync Token Limits algorithm covering all criteria and add Sync Token Limits button to Dashboard left telemetry rail.
+• [2026-07-30T15:23:00Z] Fix Provider Agent lookup bug in registration form.
+• [2026-07-30T15:30:00Z] Update PonyTail rule in AGENTS.md mandating existing functionality and code integrity must not break during modular refactoring.
+• [2026-07-30T15:34:00Z] Audit Provider Register page and restore all refactored functionalities.
+• [2026-07-30T15:39:00Z] Add pre-refactoring Mind Mapping / Program Mapping and post-refactoring verification audit mandate to AGENTS.md.
+• [2026-07-30T15:41:00Z] Restore and implement Program Mapping Agent (src/services/ProgramMappingAgent.js and scratch/program_mapping_agent.js).
+• [2026-07-30T15:44:00Z] Explain the architectural structure of Program Mapping Agent.
+• [2026-07-30T15:45:00Z] Implement 3-Dimensional Program Mapping Matrix [View <-> Controller/Agent <-> Database Schema] & 1-to-Multi-Thread Closed-Loop Feedback Loop.
+• [2026-07-30T21:18:52Z] Create/update Chat Request text file with timestamped bullet points and save new implementation plans and task files in requirement directory.

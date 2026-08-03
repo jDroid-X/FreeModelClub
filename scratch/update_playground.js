@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('public/js/views/PlaygroundView.js', 'utf8'); c = c.replace(/\$\{m\.modelName \|\| m\.modelId\}/g, \\\); fs.writeFileSync('public/js/views/PlaygroundView.js', c);

@@ -1,0 +1,282 @@
+{
+  "id": "fmc-reports-screen-workflow",
+  "name": "FMC Reports Screen n8nWkf",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fmc-reports-screen-workflow-trigger",
+      "name": "TRIGGER: ReportsView Loaded",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fmcApiBase",
+              "value": "http://localhost:12247"
+            },
+            {
+              "name": "sessionToken",
+              "value": "fmc_user_session_token"
+            },
+            {
+              "name": "screen",
+              "value": "ReportsView"
+            },
+            {
+              "name": "imageVisionEnabled",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "fmc-reports-screen-workflow-input",
+      "name": "INPUT: ReportsView Config & Session",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the FMC Reports Screen n8nWkf for ReportsView. Purpose: Render audit logs, system telemetry, visual report charts, graphic artifacts, and 1-click n8n sync.. Leverage attached Chat Model, Window Buffer Memory, and Tools to process context and return structured JSON telemetry."
+        }
+      },
+      "id": "fmc-reports-screen-workflow-ai-agent",
+      "name": "AI AGENT: FMC Reports Screen n8nWkf",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "baseURL": "http://localhost:12247/v1"
+        }
+      },
+      "id": "fmc-reports-screen-workflow-chat-model",
+      "name": "CHAT MODEL: FMC Proxy (llama-3.3-70b-versatile)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "fmc-proxy-credentials",
+          "name": "FMC Localhost Proxy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "fmc_fmc-reports-screen-workflow_session"
+      },
+      "id": "fmc-reports-screen-workflow-memory",
+      "name": "MEMORY: Window Buffer (ReportsView)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "api_logs_tool",
+        "description": "Fetch API audit logs",
+        "method": "GET",
+        "url": "http://localhost:12247/api/reports/api-logs"
+      },
+      "id": "fmc-reports-screen-workflow-tool-1",
+      "name": "TOOL 1: API Logs Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "system_logs_tool",
+        "description": "Fetch system logs",
+        "method": "GET",
+        "url": "http://localhost:12247/api/reports/system-logs"
+      },
+      "id": "fmc-reports-screen-workflow-tool-2",
+      "name": "TOOL 2: System Logs Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "telemetry_tool",
+        "description": "Fetch telemetry metrics and graphic chart data",
+        "method": "GET",
+        "url": "http://localhost:12247/api/reports/telemetry"
+      },
+      "id": "fmc-reports-screen-workflow-tool-3",
+      "name": "TOOL 3: Telemetry Summary Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "n8n_sync_tool",
+        "description": "Synchronize n8n workflows with database",
+        "method": "POST",
+        "url": "http://localhost:12247/api/integrations/n8n-sync"
+      },
+      "id": "fmc-reports-screen-workflow-tool-4",
+      "name": "TOOL 4: n8n Sync Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL OUTPUT: ReportsView\nreturn [{ json: { workflowId: 'fmc-reports-screen-workflow', name: 'FMC Reports Screen n8nWkf', screen: 'ReportsView', status: 'AGENT_LOADED', imageCapabilities: true, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "fmc-reports-screen-workflow-final-output",
+      "name": "FINAL OUTPUT: ReportsView Agent Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "TRIGGER: ReportsView Loaded": {
+      "main": [
+        [
+          {
+            "node": "INPUT: ReportsView Config & Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INPUT: ReportsView Config & Session": {
+      "main": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CHAT MODEL: FMC Proxy (llama-3.3-70b-versatile)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORY: Window Buffer (ReportsView)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 1: API Logs Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 2: System Logs Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 3: Telemetry Summary Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 4: n8n Sync Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Reports Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI AGENT: FMC Reports Screen n8nWkf": {
+      "main": [
+        [
+          {
+            "node": "FINAL OUTPUT: ReportsView Agent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

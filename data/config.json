@@ -1,0 +1,20 @@
+{
+  "appName": "FreeModelsClub Localhost Smart Chatbot",
+  "port": 12247,
+  "baseUrl": "http://localhost:12247/v1",
+  "activeProviderId": "prov_groq",
+  "default_fallback_model_id": "llama-3.3-70b-versatile",
+  "max_failover_attempts": 3,
+  "provider_ping_timeout_ms": 5000,
+  "memoReferenceUrls": [
+    "https://console.groq.com/docs/models",
+    "https://openrouter.ai/discover?lane=free",
+    "https://ai.google.dev/gemini-api/docs/models/gemini"
+  ],
+  "updatedAt": "2026-07-26T08:57:45.756Z",
+  "activeToolIntegration": {
+    "toolId": "vscode",
+    "comboId": "combo_1785056157264_7qse1",
+    "timestamp": "2026-07-26T08:57:45.752Z"
+  }
+}

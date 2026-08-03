@@ -1,0 +1,224 @@
+<think>
+Here's a thinking process:
+
+1.  **Analyze User Input:**
+   - **Role:** Senior OOPS game systems developer
+   - **Task:** Design components for a Canvas Game
+   - **Specific Request:** Write the file `index.html`
+   - **Requirements:**
+     - Highly comprehensive responsive Canvas wrapper
+     - Futuristic CSS dark mode glassmorphism panels
+     - Keyboard instructions drawer
+     - High score telemetry cards
+     - Links to CSS and script files
+     - Return ONLY raw complete code content without conversation wrapping markdown blocks
+   - **Context:** Must integrate perfectly with an existing codebase (though the existing codebase isn't provided, I'll assume standard structure: `style.css`, `script.js`, `game.js` or similar, but I'll stick to generic names like `style.css` and `script.js` as requested, or follow common conventions. I'll make sure the HTML structure is robust and ready for OOPS game systems).
+
+2.  **Deconstruct Requirements:**
+   - **Responsive Canvas Wrapper:** Needs to handle different screen sizes, maintain aspect ratio, and center the canvas.
+   - **Futuristic CSS Dark Mode Glassmorphism Panels:** Dark background, semi-transparent panels with blur effects, neon accents, modern typography.
+   - **Keyboard Instructions Drawer:** A slide-out or toggleable panel showing controls.
+   - **High Score Telemetry Cards:** Cards displaying scores, maybe with stats like plays, streaks, etc.
+   - **Links to CSS/JS:** Standard `<link>` and `<script>` tags.
+   - **OOPS Integration Ready:** Structure should support event listeners, canvas context access, game loop initialization, etc.
+
+3.  **Plan HTML Structure:**
+   
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Futuristic Canvas Game</title>
+       <link rel="stylesheet" href="style.css">
+       <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+   </head>
+   <body>
+       <div class="app-container">
+           <!-- Main Canvas Wrapper -->
+           <div class="canvas-wrapper" id="canvasWrapper">
+               <canvas id="gameCanvas"></canvas>
+               <div class="canvas-overlay">
+                   <h1 id="gameTitle">NEON PERSEVERANCE</h1>
+                   <button id="startBtn" class="neon-btn">INITIALIZE SYSTEM</button>
+               </div>
+           </div>
+
+           <!-- UI Panels Container -->
+           <div class="ui-layer">
+               <!-- High Score Telemetry -->
+               <div class="telemetry-panel glass-panel" id="telemetryPanel">
+                   <h2>TELEMETRY</h2>
+                   <div class="score-cards">
+                       <div class="score-card">
+                           <span class="label">HIGH SCORE</span>
+                           <span class="value" id="highScoreValue">000000</span>
+                       </div>
+                       <div class="score-card">
+                           <span class="label">SESSION PLAYS</span>
+                           <span class="value" id="sessionPlays">00</span>
+                       </div>
+                       <div class="score-card">
+                           <span class="label">MAX STREAK</span>
+                           <span class="value" id="maxStreak">0</span>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- Controls Drawer Toggle -->
+               <button class="controls-toggle btn-icon" id="controlsToggle" aria-label="Toggle Controls">
+                   <svg>...</svg>
+               </button>
+
+               <!-- Keyboard Instructions Drawer -->
+               <aside class="controls-drawer glass-panel hidden" id="controlsDrawer">
+                   <header class="drawer-header">
+                       <h3>COMMAND INTERFACE</h3>
+                       <button class="close-drawer btn-icon" id="closeDrawer">&times;</button>
+                   </header>
+                   <ul class="keybindings">
+                       <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span>Move / Navigate</span></li>
+                       <li><kbd>SPACE</kbd> <span>Primary Action / Jump</span></li>
+                       <li><kbd>SHIFT</kbd> <span>Boost / Dash</span></li>
+                       <li><kbd>P</kbd> <span>Pause / Resume</span></li>
+                       <li><kbd>R</kbd> <span>Reset / Restart</span></li>
+                       <li><kbd>M</kbd> <span>Toggle Mute</span></li>
+                   </ul>
+               </aside>
+           </div>
+
+           <!-- Pause Overlay -->
+           <div class="pause-overlay glass-panel hidden" id="pauseOverlay">
+               <h2>SYSTEM PAUSED</h2>
+               <button id="resumeBtn" class="neon-btn">RESUME</button>
+               <button id="quitBtn" class="neon-btn secondary">TERMINATE</button>
+           </div>
+       </div>
+
+       <script type="module" src="script.js"></script>
+   </body>
+   </html>
+   
+
+4.  **Refine & Enhance (Mental Walkthrough & OOPS Considerations):**
+   - *Responsive Canvas:* Need to ensure the canvas scales properly. I'll add CSS classes that handle this, but the HTML structure should support it. I'll add a `data-aspect="16 9"` attribute or similar to help JS calculate scaling, but the prompt says "design components", so HTML structure + classes is key.
+   - *Glassmorphism:* Handled via CSS classes (`glass-panel`, `glass-overlay`). I'll make sure the HTML has proper semantic tags.
+   - *Telemetry Cards:* Structured with IDs for JS to update.
+   - *Controls Drawer:* Toggleable, slides in from right or left. I'll add proper ARIA attributes and structure.
+   - *OOPS Integration:* The HTML should expose specific IDs that a GameEngine class or UIManager class can easily query. I'll use `data-*` attributes where appropriate for OOPS binding.
+   - *CSS Links:* `style.css`
+   - *JS Links:* `script.js` (or `game.js`/`app.js`). I'll stick to `script.js` as requested, but I'll make it a module.
+   - *Futuristic Theme:* Add Google Fonts (Orbitron for headers, Inter for body), neon accents via classes, dark background.
+
+   Let's draft the complete HTML with careful attention to structure, semantics, and hooks for JS/CSS. I'll ensure it's production-ready.
+
+   Structure:
+   - `<!DOCTYPE html>`
+   - `<html lang="en">`
+   - `<head>` with meta, viewport, title, fonts, CSS link
+   - `<body>`
+     - `.app-container` (full screen dark background)
+     - `.canvas-wrapper` (relative, handles scaling)
+       - `#gameCanvas`
+       - `.ui-overlay` (start screen, pause screen)
+     - `.hud-layer` (telemetry, controls toggle)
+     - `.controls-drawer` (slide panel)
+     - `<script src="script.js"></script>`
+   - I'll add detailed comments for OOPS integration points.
+
+   Let's write it out carefully. I'll make sure it's purely HTML as requested, with inline comments for structure. I'll avoid markdown wrapping as instructed.
+
+   Key features to include:
+   - Responsive viewport meta
+   - Semantic structure
+   - Glassmorphism ready classes
+   - Telemetry cards with data attributes
+   - Keyboard drawer with toggle state
+   - Proper linking
+   - Ready for OOPS event delegation
+
+   I'll generate the raw HTML now.
+   Self-Correction/Refinement during thought:
+   - The prompt says "Return ONLY raw complete code content without conversation wrapping markdown blocks."
+   - I must ensure NO markdown, just the raw HTML code.
+   - I'll make sure the HTML is comprehensive and matches the exact requirements.
+   - I'll add `data-` attributes for OOPS binding (e.g., `data-ui="telemetry"`, `data-ui="controls"`).
+   - I'll structure it so a `GameEngine`, `UIManager`, and `InputHandler` class can easily attach to it.
+
+   Draft:
+   
+   <!DOCTYPE html>
+  <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+       <meta name="theme-color" content="#0a0b10">
+       <title>NEON PERSEVERANCE | Canvas Game System</title>
+       <link rel="preconnect" href="https://fonts.googleapis.com">
+       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+       <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+       <link rel="stylesheet" href="style.css">
+   </head>
+   <body class="theme-dark">
+       <div class="app-root" id="appRoot">
+           <!-- Dynamic Background Particles/Grid (Handled by Canvas) -->
+           <div class="canvas-container" id="canvasContainer" data-aspect="16 9">
+               <canvas id="gameCanvas" aria-label="Game Rendering Surface"></canvas>
+               
+               <!-- Start/Menu Overlay -->
+               <div class="overlay-panel glass-panel" id="mainMenu">
+                   <h1 class="neon-title">NEON PERSEVERANCE</h1>
+                   <p class="subtitle">System Ready. Awaiting Input.</p>
+                   <button class="neon-btn primary" id="startBtn" data-action="start">INITIALIZE</button>
+                   <button class="neon-btn secondary" id="loadBtn" data-action="load" style="display:none;">RESTORE STATE</button>
+               </div>
+
+               <!-- Pause/Game Over Overlay -->
+               <div class="overlay-panel glass-panel hidden" id="pauseOverlay">
+                   <h2 class="neon-title">SYSTEM PAUSED</h2>
+                   <div class="quick-stats">
+                       <span>SCORE: <strong id="currentScore">0</strong></span>
+                       <span>TIME: <strong id="playTime">00:00</strong></span>
+                   </div>
+                   <div class="button-group">
+                       <button class="neon-btn primary" id="resumeBtn" data-action="resume">RESUME</button>
+                       <button class="neon-btn secondary" id="quitBtn" data-action="quit">TERMINATE</button>
+                   </div>
+               </div>
+           </div>
+
+           <!-- HUD Layer -->
+           <div class="hud-layer">
+               <!-- Telemetry Panel -->
+               <aside class="telemetry-panel glass-panel" id="telemetryPanel" data-ui="telemetry">
+                   <header class="panel-header">
+                       <h3>TELEMETRY</h3>
+                       <div class="status-indicator">
+                           <span class="pulse-dot"></span> LIVE
+                       </div>
+                   </header>
+                   <div class="metrics-grid">
+                       <div class="metric-card" data-metric="highScore">
+                           <span class="metric-label">HIGH SCORE</span>
+                           <span class="metric-value" id="highScoreValue">000000</span>
+                       </div>
+                       <div class="metric-card" data-metric="sessionPlays">
+                           <span class="metric-label">SESSION PLAYS</span>
+                           <span class="metric-value" id="sessionPlays">00</span>
+                       </div>
+                       <div class="metric-card" data-metric="maxStreak">
+                           <span class="metric-label">MAX STREAK</span>
+                           <span class="metric-value" id="maxStreak">0</span>
+                       </div>
+                       <div class="metric-card" data-metric="efficiency">
+                           <span class="metric-label">EFFICIENCY</span>
+                           <span class="metric-value" id="efficiencyValue">0.0%</span>
+                       </div>
+                   </div>
+               </aside>
+
+               <!-- Controls Toggle -->
+               <button class="hud-toggle btn-icon" id="controlsToggle" aria-label="Toggle Command Interface" data-action="toggleControls">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                       <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                       <path d="M6 12h4m

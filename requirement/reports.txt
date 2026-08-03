@@ -1,0 +1,63 @@
+# REPORTS SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Reports View (http://localhost:3000/reports)
+
+================================================================================
+[2026-07-31 00:39:38] FIX MISSING LOG DETAILS IN REPORTS VIEW
+================================================================================
+Target Screen : ReportsView.js & ReportsViewHelper.js
+Requested By  : User Chat Question
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Discovered missing helper methods (`renderLogsTable`, `updateLatencyBar`, `renderLogDetailModal`, `exportCsv`, `exportJson`) in `ReportsViewHelper.js`.
+	- Added full table renderer with timestamp formatting, model/endpoint, provider, latency badges, and status badges.
+	- Enabled 1-click **Log Diagnostic Inspector** modal (`openLogDetailModal`) to view full JSON payload and error tracebacks.
+
+================================================================================
+[2026-07-31 20:10:00] FIX N8N VISUAL WORKFLOW REPORT TAB IN REPORTS VIEW
+================================================================================
+Target Screen : ReportsView.js & ReportsViewHelper.js
+Requested By  : User Chat Request ("unable to see the n8n report")
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Fixed blank "3. n8n Visual Workflow" tab in ReportsView.
+	- Added missing static method `renderN8nWorkflowTab(container)` in `ReportsViewHelper.js`.
+	- Added live status header (FMC :12247 ping, n8n :5678 health check, live API & system log counters).
+	- Rendered Master Brain Agents overview (15 agents) & 10 Screen Workflow status cards (61 total agents).
+	- Integrated 7-Node Internal Request Pipeline visualization & n8n launch helper button.
+
+================================================================================
+[2026-07-31 20:38:00] 1-CLICK N8N SYNC & MASTER BRAIN AUTO-LAUNCH FEATURE
+================================================================================
+Target Screen : IntegrationController.js / integrationRoutes.js / ReportsView.js / ReportsViewHelper.js
+User Chat Request : "next to Launch n8n, can we have n8n sync - which will do all the steps of importing all the workflows so that on click Launch n8n will directly open the master workflow for testing."
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Added `POST /api/integrations/n8n-sync` backend API endpoint in `IntegrationController.js` & `integrationRoutes.js`.
+	- Added `ApiService.syncN8nWorkflows()` method in `public/js/services/api.js`.
+	- Added vibrant **`⚡ n8n Sync`** button next to **Launch n8n** in `ReportsViewHelper.js` header row.
+	- Clicking **⚡ n8n Sync** strips UTF-8 BOM, imports all 10 screen workflows + Master Brain into n8n database via backend CLI executor, and automatically opens `http://localhost:5678/workflow/fmc-master-brain-centralized-workflow` directly!
+Files Modified:
+	- src/controllers/IntegrationController.js
+	- src/routes/integrationRoutes.js
+	- public/js/services/api.js
+	- public/js/views/ReportsView.js
+	- public/js/views/ReportsViewHelper.js
+	- requirement/reports.txt
+
+================================================================================
+[2026-07-31 22:38:00] NODE LABEL UPDATE & DUAL SERVICE BACKGROUND CHECK
+================================================================================
+Target Screen       : Master FMC n8n Wkf.json / Launch_n8n.bat
+User Chat Request   : "change this with Playground workflow" / "launch n8n background service check"
+Status              : PASS (Completed & Verified)
+Changes             :
+	- Updated Node 2 label in `Master FMC n8n Wkf.json` from `INPUT: MasterInputBrainView Extractor` to `INPUT: Playground Workflow Chatbot Input Payload`.
+	- Re-imported all 11 workflows into n8n database.
+	- Refactored `Launch_n8n.bat` to audit both required background services:
+		1. Port 12247 (FMC Backend Server): Checks if running -> bypasses; if not -> starts `node server.js` in background.
+		2. Port 5678 (n8n Engine): Checks if running -> bypasses; if not -> starts `npx -y n8n start` in background.
+	- Verified dual service boot & instant browser launch to `http://localhost:5678/workflow/fmc-master-brain-centralized-workflow`.
+Files Modified      :
+	- n8n Workflow/Master FMC n8n Wkf.json
+	- Launch_n8n.bat
+	- requirement/reports.txt

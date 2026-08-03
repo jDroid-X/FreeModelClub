@@ -1,0 +1,171 @@
+{
+  "skillCategories": [
+    {
+      "id": "coding",
+      "name": "Coding & Software Development",
+      "icon": "fa-code",
+      "color": "#10b981",
+      "subLevels": [
+        { "id": "ide_agent", "name": "IDE Agents & Copilots", "keywords": ["code", "coder", "dev", "ide", "program", "coding", "refactor"] },
+        { "id": "code_gen", "name": "Code Generation & Completion", "keywords": ["generation", "complete", "snippet", "autocomplete"] },
+        { "id": "debug_review", "name": "Debugging & Code Review", "keywords": ["debug", "review", "lint", "fix", "patch"] }
+      ],
+      "matchKeywords": ["code", "coder", "dev", "ide", "program", "coding", "software", "refactor", "mimo", "north-mini-code", "laguna", "poolside", "kimi"]
+    },
+    {
+      "id": "reasoning",
+      "name": "Reasoning & Complex Logic",
+      "icon": "fa-brain",
+      "color": "#f59e0b",
+      "subLevels": [
+        { "id": "math_cot", "name": "Math & Chain-of-Thought", "keywords": ["math", "chain", "r1", "reason", "think"] },
+        { "id": "scientific", "name": "Scientific & Analytical", "keywords": ["science", "analytic", "research"] },
+        { "id": "planning", "name": "Planning & Agentic Logic", "keywords": ["agent", "plan", "workflow", "decision"] }
+      ],
+      "matchKeywords": ["r1", "reason", "math", "think", "chain", "logic", "deepseek-r1", "nemotron-3-nano-omni"]
+    },
+    {
+      "id": "general",
+      "name": "General Knowledge & Language",
+      "icon": "fa-comments",
+      "color": "#6366f1",
+      "subLevels": [
+        { "id": "qa_chat", "name": "Q&A & Conversational", "keywords": ["chat", "qa", "conversation", "versatile", "instruct"] },
+        { "id": "multilingual", "name": "Multilingual & Translation", "keywords": ["multilingual", "translation", "language", "nmt"] },
+        { "id": "summarize", "name": "Summarization & Writing", "keywords": ["summary", "writing", "content", "creative"] }
+      ],
+      "matchKeywords": ["general", "knowledge", "versatile", "instruct", "chat", "language", "glm", "minimax", "gpt", "openai", "mixtral", "mistral", "qwen", "gemini"]
+    },
+    {
+      "id": "fast_chat",
+      "name": "Fast Chat & Low Latency",
+      "icon": "fa-bolt",
+      "color": "#06b6d4",
+      "subLevels": [
+        { "id": "instant", "name": "Instant Response Models", "keywords": ["instant", "turbo", "flash", "fast", "lite"] },
+        { "id": "edge", "name": "Edge & On-Device", "keywords": ["small", "mini", "nano", "1b", "3b", "4b", "smollm", "edge"] },
+        { "id": "streaming", "name": "Streaming & Real-Time", "keywords": ["streaming", "realtime", "live"] }
+      ],
+      "matchKeywords": ["instant", "flash", "turbo", "fast", "lite", "8b", "small", "mini", "nano", "1b", "3b", "4b", "smollm", "gemma2-9b", "gemma-4"]
+    },
+    {
+      "id": "vision",
+      "name": "Vision & Multimodal",
+      "icon": "fa-eye",
+      "color": "#ec4899",
+      "subLevels": [
+        { "id": "image_understand", "name": "Image Understanding", "keywords": ["vision", "image", "vl", "visual", "paligemma"] },
+        { "id": "ocr_document", "name": "OCR & Document Parsing", "keywords": ["ocr", "parse", "table", "page", "document", "element"] },
+        { "id": "video_media", "name": "Video & Rich Media", "keywords": ["video", "multimodal", "media", "lip", "lipsync"] }
+      ],
+      "matchKeywords": ["vision", "vl", "multimodal", "image", "ocr", "parse", "table", "page", "element", "paligemma", "lipsync", "graphic", "yolox", "inkling", "ising"]
+    },
+    {
+      "id": "safety",
+      "name": "Safety & Content Moderation",
+      "icon": "fa-shield-halved",
+      "color": "#ef4444",
+      "subLevels": [
+        { "id": "jailbreak", "name": "Jailbreak & Prompt Guard", "keywords": ["jailbreak", "guard", "safety-guard", "detect"] },
+        { "id": "content_filter", "name": "Content Filtering & NSFW", "keywords": ["content-safety", "nsfw", "filter", "moderat"] },
+        { "id": "topic_control", "name": "Topic Control & Alignment", "keywords": ["topic", "control", "align", "nemoguard"] }
+      ],
+      "matchKeywords": ["guard", "safety", "jailbreak", "content-safety", "moderat", "nemoguard", "topic-control", "nemotron-3.5-content"]
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise & Specialized",
+      "icon": "fa-industry",
+      "color": "#8b5cf6",
+      "subLevels": [
+        { "id": "speech_tts", "name": "Speech, TTS & ASR", "keywords": ["speech", "tts", "asr", "whisper", "voice", "parakeet", "magpie", "voicechat"] },
+        { "id": "rag_retrieval", "name": "RAG & Retrieval", "keywords": ["rag", "retrieval", "embed", "bge", "search", "rerank"] },
+        { "id": "science_bio", "name": "Molecular, Protein & BioAI", "keywords": ["protein", "fold", "molecular", "molmim", "genmol", "msa", "openfold"] }
+      ],
+      "matchKeywords": ["whisper", "speech", "tts", "asr", "voice", "parakeet", "magpie", "voicechat", "embed", "bge", "retrieval", "fold", "molecular", "molmim", "genmol", "msa", "openfold"]
+    }
+  ],
+  "headFamilies": [
+    {
+      "id": "llama",
+      "name": "Llama Family",
+      "vendor": "Meta",
+      "icon": "🦙",
+      "matchKeywords": ["llama"],
+      "variants": ["Llama 3.1", "Llama 3.2", "Llama 3.3", "Nemotron-Super", "Llama Guard"]
+    },
+    {
+      "id": "gemini_gemma",
+      "name": "Gemini & Gemma Family",
+      "vendor": "Google",
+      "icon": "💎",
+      "matchKeywords": ["gemini", "gemma"],
+      "variants": ["Gemini 1.5", "Gemini 2.0", "Gemini 2.5", "Gemma 2", "Gemma 4", "DiffusionGemma"]
+    },
+    {
+      "id": "gpt",
+      "name": "OpenAI GPT Family",
+      "vendor": "OpenAI",
+      "icon": "🧠",
+      "matchKeywords": ["gpt", "openai"],
+      "variants": ["GPT-3.5", "GPT-4o", "GPT-4o-mini", "GPT-OSS"]
+    },
+    {
+      "id": "qwen",
+      "name": "Qwen Family",
+      "vendor": "Alibaba",
+      "icon": "🐉",
+      "matchKeywords": ["qwen"],
+      "variants": ["Qwen 2.5", "Qwen 3.6"]
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek Family",
+      "vendor": "DeepSeek",
+      "icon": "🔍",
+      "matchKeywords": ["deepseek"],
+      "variants": ["DeepSeek R1", "DeepSeek V4"]
+    },
+    {
+      "id": "mistral",
+      "name": "Mistral & Mixtral Family",
+      "vendor": "Mistral AI",
+      "icon": "🌀",
+      "matchKeywords": ["mistral", "mixtral", "codestral"],
+      "variants": ["Mixtral 8x7B", "Mistral Medium 3.5", "Mistral-Nemotron"]
+    },
+    {
+      "id": "nemotron",
+      "name": "NVIDIA Nemotron Family",
+      "vendor": "NVIDIA",
+      "icon": "🟢",
+      "matchKeywords": ["nemotron", "nvidia"],
+      "excludeKeywords": ["llama"],
+      "variants": ["Nemotron 3", "Nemotron 3.5", "Nemotron Nano", "Nemotron Super", "Nemotron Ultra", "Nemotron OCR", "Nemotron ASR"]
+    },
+    {
+      "id": "cohere",
+      "name": "Cohere Family",
+      "vendor": "Cohere",
+      "icon": "🔗",
+      "matchKeywords": ["cohere", "north"],
+      "variants": ["North Mini Code"]
+    },
+    {
+      "id": "poolside",
+      "name": "Poolside Family",
+      "vendor": "Poolside AI",
+      "icon": "🏊",
+      "matchKeywords": ["poolside", "laguna"],
+      "variants": ["Laguna S", "Laguna XS", "Laguna M"]
+    },
+    {
+      "id": "other",
+      "name": "Other Specialized",
+      "vendor": "Various",
+      "icon": "🔬",
+      "matchKeywords": [],
+      "variants": ["Inkling", "GLM-5.2", "Kimi", "MiniMax", "OpenFold", "MolMIM", "SmolLM"]
+    }
+  ]
+}

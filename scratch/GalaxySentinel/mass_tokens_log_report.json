@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-08-01T13:18:01.665Z",
+  "totalPromptTokens": 150031,
+  "totalCompletionTokens": 33284,
+  "grandTotalTokens": 183315,
+  "runs": [
+    {
+      "file": "index.html",
+      "model": "qwen/qwen3.6-27b",
+      "latencyMs": 6056,
+      "promptTokens": 110,
+      "completionTokens": 3000,
+      "totalTokens": 3110
+    },
+    {
+      "file": "style.css",
+      "model": "poolside/laguna-s-2.1:free",
+      "latencyMs": 91183,
+      "promptTokens": 4010,
+      "completionTokens": 3000,
+      "totalTokens": 7010
+    },
+    {
+      "file": "engine.js",
+      "model": "poolside/laguna-s-2.1:free",
+      "latencyMs": 87540,
+      "promptTokens": 7023,
+      "completionTokens": 3000,
+      "totalTokens": 10023
+    },
+    {
+      "file": "player.js",
+      "model": "poolside/laguna-xs-2.1:free",
+      "latencyMs": 32696,
+      "promptTokens": 10024,
+      "completionTokens": 3000,
+      "totalTokens": 13024
+    },
+    {
+      "file": "enemies.js",
+      "model": "cohere/north-mini-code:free",
+      "latencyMs": 81282,
+      "promptTokens": 10536,
+      "completionTokens": 2997,
+      "totalTokens": 13533
+    },
+    {
+      "file": "weapons.js",
+      "model": "nvidia/nemotron-3.5-content-safety:free",
+      "latencyMs": 3742,
+      "promptTokens": 502,
+      "completionTokens": 265,
+      "totalTokens": 767
+    },
+    {
+      "file": "particles.js",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "latencyMs": 79911,
+      "promptTokens": 13845,
+      "completionTokens": 3000,
+      "totalTokens": 16845
+    },
+    {
+      "file": "audio.js",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "latencyMs": 18318,
+      "promptTokens": 16059,
+      "completionTokens": 3022,
+      "totalTokens": 19081
+    },
+    {
+      "file": "ui.js",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "latencyMs": 66591,
+      "promptTokens": 17473,
+      "completionTokens": 3000,
+      "totalTokens": 20473
+    },
+    {
+      "file": "physics.js",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "latencyMs": 31556,
+      "promptTokens": 20480,
+      "completionTokens": 3000,
+      "totalTokens": 23480
+    },
+    {
+      "file": "levels.js",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "latencyMs": 43382,
+      "promptTokens": 23483,
+      "completionTokens": 3000,
+      "totalTokens": 26483
+    },
+    {
+      "file": "test_suite.js",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "latencyMs": 33696,
+      "promptTokens": 26486,
+      "completionTokens": 3000,
+      "totalTokens": 29486
+    }
+  ]
+}
