@@ -2,6 +2,22 @@
 # Screen: Playground View (http://localhost:12247/playground)
 
 ================================================================================
+[2026-08-20 19:05:00] LOCAL FOLDER EXPLORER SELECTION FIX & CLEAN PRODUCTION EXPORT PURGE
+================================================================================
+Target Screen : PlaygroundView.js / FolderTreeView.js / FileSystemController.js / IDEWorkspaceView.js / export_clean_production.ps1
+Requested By  : User Chat (chatbot history is still getting uploaded in github. we have to stop it update the sync of export_clean_production. also in Playground -> Conversation Panel -> IDE Tab the Explore is not allowing to select the folder from local system)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Fixed Explorer Local Folder Selection: Added missing PlaygroundView.navigateBrowser and PlaygroundView.selectBrowserPath delegation methods so clicking directories and "Select Current Folder" correctly binds the chosen path to IDEWorkspaceView, loads the file tree, and updates the workspace indicators.
+	- Added Quick Directory Jump Shortcuts: Added 1-click jump pills (C:\, D:\, Desktop, Documents, Project Workspace) in FolderTreeView.js for quick OS navigation.
+	- Production Export Sync Purge: Updated scripts/export_clean_production.ps1 with strict purge rules deleting all historical task notes (Task_*.md, imp*.md, *audit*.md), scratch dumps, temporary uploads, and log files before pushing to GitHub.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/js/views/playground/FolderTreeView.js
+	- scripts/export_clean_production.ps1
+	- requirement/playground.txt
+
+================================================================================
 [2026-08-20 18:58:00] GEMINI FIRST PREFERENCE, HIGHEST/LATEST MODEL RANKING & REACTIVE SELECT SYNC
 ================================================================================
 Target Screen : PlaygroundView.js / ModelDropdownHelper.js / PlaygroundViewHelper.js
