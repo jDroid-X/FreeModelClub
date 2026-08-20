@@ -1,9 +1,9 @@
 ﻿window.FMC_STATUS = {
-    "message":  "Server Ready! Redirecting to Playground...",
-    "subMessage":  "FreeModelsClub proxy operational on port 12247",
-    "timestamp":  "2026-08-20T16:15:08",
-    "log":  "[OK] Express server active on port 12247.",
-    "badge":  "Server Ready",
-    "status":  "ready",
-    "progress":  100
+    "message":  "Dependencies Verified",
+    "subMessage":  "Ready to initiate Express server process",
+    "timestamp":  "2026-08-20T21:11:50",
+    "log":  "[OK] Dependencies verified.",
+    "badge":  "Environment Ready",
+    "status":  "deps_ok",
+    "progress":  85
 };

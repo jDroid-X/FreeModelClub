@@ -214,7 +214,7 @@ body.theme-platinum {
   --muted-text-color: #334155;
 }
 
-/* 2. Gold Dark Metal */
+/* 2. Gold Dark Metal — Complementary: Warm gold base (H:45°) + Blue accent (H:225°) */
 body.theme-gold {
   --bg-dark: #120e04;
   --bg-card: rgba(36, 27, 8, 0.92);
@@ -223,65 +223,69 @@ body.theme-gold {
   --bg-input: rgba(26, 20, 6, 0.9);
   --bg-code: rgba(16, 12, 3, 0.95);
   --border-color: rgba(251, 191, 36, 0.35);
-  --border-glow: rgba(251, 191, 36, 0.75);
+  --border-glow: rgba(59, 130, 246, 0.75);
   --tile-glow-bg: rgba(251, 191, 36, 0.18);
-  --primary: #d97706;
-  --primary-hover: #b45309;
-  --primary-light: #fbbf24;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #60a5fa;
   --accent-cyan: #38bdf8;
-  --accent-emerald: #34d399;
+  --accent-emerald: #fbbf24;
   --accent-amber: #fbbf24;
   --accent-rose: #fb7185;
   --text-main: #fffbeb;
   --text-muted: #fef3c7;
   --text-dim: #fde68a;
-  --tile-shadow: 0 8px 32px rgba(217, 119, 6, 0.3);
+  --tile-shadow: 0 8px 32px rgba(59, 130, 246, 0.25);
   --modal-overlay: rgba(18, 14, 4, 0.85);
   --bg-hover-overlay: rgba(255, 255, 255, 0.08);
   --bg-hover-overlay-strong: rgba(255, 255, 255, 0.15);
   --bg-input-disabled: rgba(255, 255, 255, 0.05);
+  --icon-color: #fbbf24;
+  --icon-hover-color: #60a5fa;
   --surface-depth-step: 25%;
   --surface-contrast-step: 16%;
   --sidebar-text-color: #fffbeb;
   --muted-text-color: #fef3c7;
 }
 
-/* 3. Silver Light Metal */
+/* 3. Silver Light Metal — Warm-Neutral (H:30° Stone) vs Platinum's Cool (H:210°) */
 body.theme-silver {
-  --bg-dark: #dbe3ec;
-  --bg-card: #f8fafc;
-  --bg-card-hover: #eef4fa;
-  --bg-sidebar: #c4d0db;
+  --bg-dark: #f0ece6;
+  --bg-card: #faf8f5;
+  --bg-card-hover: #f5f1ec;
+  --bg-sidebar: #8b7d6b;
   --bg-input: #ffffff;
-  --bg-code: #e2e8f0;
-  --border-color: rgba(100, 116, 139, 0.4);
-  --border-glow: rgba(148, 163, 184, 0.72);
-  --tile-glow-bg: linear-gradient(135deg, rgba(248,250,252,0.98), rgba(226,232,240,0.92));
-  --primary: #475569;
-  --primary-hover: #334155;
-  --primary-light: #64748b;
-  --accent-cyan: #0284c7;
+  --bg-code: #eae4dc;
+  --border-color: rgba(139, 125, 107, 0.35);
+  --border-glow: rgba(139, 125, 107, 0.65);
+  --tile-glow-bg: linear-gradient(135deg, rgba(250,248,245,0.98), rgba(234,228,220,0.92));
+  --primary: #6b5b4e;
+  --primary-hover: #57493e;
+  --primary-light: #a39585;
+  --accent-cyan: #0891b2;
   --accent-emerald: #059669;
-  --accent-amber: #d97706;
-  --accent-rose: #e11d48;
-  --text-main: #0f172a;
-  --text-muted: #1e293b;
-  --text-dim: #334155;
-  --tile-shadow: 0 10px 28px rgba(100, 116, 139, 0.16);
-  --modal-overlay: rgba(209, 219, 229, 0.9);
-  --bg-hover-overlay: rgba(0, 0, 0, 0.06);
-  --bg-hover-overlay-strong: rgba(0, 0, 0, 0.12);
-  --bg-input-disabled: rgba(0, 0, 0, 0.05);
+  --accent-amber: #b45309;
+  --accent-rose: #be123c;
+  --text-main: #1c1410;
+  --text-muted: #3d3228;
+  --text-dim: #6b5b4e;
+  --tile-shadow: 0 10px 28px rgba(139, 125, 107, 0.14);
+  --modal-overlay: rgba(240, 236, 230, 0.9);
+  --bg-hover-overlay: rgba(0, 0, 0, 0.05);
+  --bg-hover-overlay-strong: rgba(0, 0, 0, 0.1);
+  --bg-input-disabled: rgba(0, 0, 0, 0.04);
+  --icon-color: #0891b2;
+  --icon-hover-color: #6b5b4e;
   background-image:
-    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.75) 0%, transparent 36%),
-    linear-gradient(180deg, rgba(248,250,252,0.62), rgba(196,208,219,0.62));
-  --surface-depth-step: 20%;
-  --surface-contrast-step: 18%;
-  --sidebar-text-color: #0f172a;
-  --muted-text-color: #334155;
+    radial-gradient(circle at 80% 20%, rgba(255,252,248,0.8) 0%, transparent 36%),
+    linear-gradient(180deg, rgba(250,248,245,0.6), rgba(216,208,196,0.5));
+  --surface-depth-step: 18%;
+  --surface-contrast-step: 15%;
+  --sidebar-text-color: #faf8f5;
+  --muted-text-color: #3d3228;
 }
 
-/* 4. Titanium Dark Metal */
+/* 4. Titanium Dark Metal — Cool-Steel (H:210°), Cyan glow, tech-forward */
 body.theme-titanium {
   --bg-dark: #070a10;
   --bg-card: rgba(22, 30, 44, 0.92);
@@ -289,9 +293,9 @@ body.theme-titanium {
   --bg-sidebar: #0c111a;
   --bg-input: rgba(12, 17, 26, 0.9);
   --bg-code: rgba(8, 12, 20, 0.95);
-  --border-color: rgba(56, 189, 248, 0.35);
-  --border-glow: rgba(56, 189, 248, 0.75);
-  --tile-glow-bg: rgba(56, 189, 248, 0.18);
+  --border-color: rgba(56, 189, 248, 0.3);
+  --border-glow: rgba(56, 189, 248, 0.7);
+  --tile-glow-bg: rgba(56, 189, 248, 0.15);
   --primary: #0284c7;
   --primary-hover: #0369a1;
   --primary-light: #38bdf8;
@@ -307,48 +311,52 @@ body.theme-titanium {
   --bg-hover-overlay: rgba(255, 255, 255, 0.08);
   --bg-hover-overlay-strong: rgba(255, 255, 255, 0.15);
   --bg-input-disabled: rgba(255, 255, 255, 0.05);
+  --icon-color: #38bdf8;
+  --icon-hover-color: #7dd3fc;
   --surface-depth-step: 25%;
   --surface-contrast-step: 16%;
   --sidebar-text-color: #f8fafc;
   --muted-text-color: #cbd5e1;
 }
 
-/* 5. Bronze Dark Metal */
+/* 5. Bronze Mid-Dark Metal — Elevated luminance (L:12%), Split-Comp Teal accent (H:175°) */
 body.theme-bronze {
-  --bg-dark: #160d09;
-  --bg-card: rgba(46, 26, 15, 0.94);
-  --bg-card-hover: rgba(65, 37, 20, 0.98);
-  --bg-sidebar: #221309;
-  --bg-input: rgba(33, 18, 10, 0.92);
-  --bg-code: rgba(18, 10, 6, 0.96);
-  --border-color: rgba(180, 83, 9, 0.38);
-  --border-glow: rgba(251, 146, 60, 0.78);
-  --tile-glow-bg: linear-gradient(135deg, rgba(69, 39, 20, 0.98), rgba(28, 16, 10, 0.92));
-  --primary: #c2410c;
-  --primary-hover: #9a3412;
-  --primary-light: #fb923c;
-  --accent-cyan: #38bdf8;
-  --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --bg-dark: #201810;
+  --bg-card: rgba(56, 40, 24, 0.94);
+  --bg-card-hover: rgba(72, 52, 32, 0.97);
+  --bg-sidebar: #2e2014;
+  --bg-input: rgba(42, 30, 18, 0.92);
+  --bg-code: rgba(28, 20, 12, 0.96);
+  --border-color: rgba(20, 184, 166, 0.35);
+  --border-glow: rgba(20, 184, 166, 0.72);
+  --tile-glow-bg: linear-gradient(135deg, rgba(56, 40, 24, 0.98), rgba(32, 24, 16, 0.92));
+  --primary: #14b8a6;
+  --primary-hover: #0d9488;
+  --primary-light: #2dd4bf;
+  --accent-cyan: #2dd4bf;
+  --accent-emerald: #14b8a6;
+  --accent-amber: #fb923c;
   --accent-rose: #fb7185;
   --text-main: #fff7ed;
   --text-muted: #ffedd5;
   --text-dim: #fdba74;
-  --tile-shadow: 0 10px 34px rgba(124, 45, 18, 0.34);
-  --modal-overlay: rgba(22, 13, 9, 0.88);
+  --tile-shadow: 0 10px 34px rgba(20, 184, 166, 0.22);
+  --modal-overlay: rgba(32, 24, 16, 0.88);
   --bg-hover-overlay: rgba(255, 255, 255, 0.08);
   --bg-hover-overlay-strong: rgba(255, 255, 255, 0.15);
   --bg-input-disabled: rgba(255, 255, 255, 0.05);
+  --icon-color: #2dd4bf;
+  --icon-hover-color: #fb923c;
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(251, 146, 60, 0.12) 0%, transparent 35%),
-    linear-gradient(180deg, rgba(69, 39, 20, 0.22), rgba(16, 10, 7, 0.72));
-  --surface-depth-step: 25%;
-  --surface-contrast-step: 16%;
+    radial-gradient(circle at 20% 20%, rgba(20, 184, 166, 0.08) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(56, 40, 24, 0.22), rgba(24, 16, 10, 0.72));
+  --surface-depth-step: 22%;
+  --surface-contrast-step: 14%;
   --sidebar-text-color: #fff7ed;
   --muted-text-color: #ffedd5;
 }
 
-/* 6. Copper Dark Metal */
+/* 6. Copper Dark Metal — Warm-Red base (H:15°), Triadic Purple accent (H:270°) */
 body.theme-copper {
   --bg-dark: #1b0c08;
   --bg-card: rgba(58, 26, 20, 0.94);
@@ -356,68 +364,71 @@ body.theme-copper {
   --bg-sidebar: #280f0b;
   --bg-input: rgba(39, 17, 13, 0.92);
   --bg-code: rgba(24, 10, 8, 0.96);
-  --border-color: rgba(249, 115, 22, 0.4);
-  --border-glow: rgba(251, 146, 60, 0.82);
+  --border-color: rgba(168, 85, 247, 0.35);
+  --border-glow: rgba(168, 85, 247, 0.78);
   --tile-glow-bg: linear-gradient(135deg, rgba(84, 38, 28, 0.98), rgba(31, 14, 10, 0.92));
-  --primary: #ea580c;
-  --primary-hover: #c2410c;
-  --primary-light: #fdba74;
-  --accent-cyan: #38bdf8;
+  --primary: #a855f7;
+  --primary-hover: #9333ea;
+  --primary-light: #c084fc;
+  --accent-cyan: #c084fc;
   --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --accent-amber: #fb923c;
   --accent-rose: #fb7185;
-  --text-main: #fff5f5;
-  --text-muted: #fee2e2;
+  --text-main: #fef2f2;
+  --text-muted: #fecaca;
   --text-dim: #fca5a5;
-  --tile-shadow: 0 10px 34px rgba(127, 51, 35, 0.34);
+  --tile-shadow: 0 10px 34px rgba(168, 85, 247, 0.28);
   --modal-overlay: rgba(27, 12, 8, 0.88);
   --bg-hover-overlay: rgba(255, 255, 255, 0.08);
   --bg-hover-overlay-strong: rgba(255, 255, 255, 0.15);
   --bg-input-disabled: rgba(255, 255, 255, 0.05);
+  --icon-color: #c084fc;
+  --icon-hover-color: #fb923c;
   background-image:
-    radial-gradient(circle at 80% 18%, rgba(251, 146, 60, 0.14) 0%, transparent 34%),
+    radial-gradient(circle at 80% 18%, rgba(168, 85, 247, 0.1) 0%, transparent 34%),
     linear-gradient(180deg, rgba(84, 38, 28, 0.24), rgba(22, 10, 8, 0.72));
   --surface-depth-step: 25%;
   --surface-contrast-step: 16%;
-  --sidebar-text-color: #fff5f5;
-  --muted-text-color: #fee2e2;
+  --sidebar-text-color: #fef2f2;
+  --muted-text-color: #fecaca;
 }
 
-/* 7. Obsidian Dark Metal */
+/* 7. Obsidian Ultra-Dark Metal — Void Black (L:2%), Green Terminal (H:142°) */
 body.theme-obsidian {
-  --bg-dark: #06080d;
-  --bg-card: rgba(18, 24, 38, 0.92);
-  --bg-card-hover: rgba(28, 38, 58, 0.96);
-  --bg-sidebar: #0a0d16;
-  --bg-input: rgba(10, 14, 23, 0.9);
-  --bg-code: rgba(5, 8, 15, 0.95);
-  --border-color: rgba(99, 102, 241, 0.35);
-  --border-glow: rgba(99, 102, 241, 0.75);
-  --tile-glow-bg: rgba(99, 102, 241, 0.15);
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: #818cf8;
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
+  --bg-dark: #020304;
+  --bg-card: rgba(8, 12, 8, 0.94);
+  --bg-card-hover: rgba(14, 22, 14, 0.97);
+  --bg-sidebar: #040604;
+  --bg-input: rgba(6, 10, 6, 0.92);
+  --bg-code: rgba(3, 5, 3, 0.96);
+  --border-color: rgba(34, 197, 94, 0.3);
+  --border-glow: rgba(34, 197, 94, 0.7);
+  --tile-glow-bg: rgba(34, 197, 94, 0.12);
+  --primary: #22c55e;
+  --primary-hover: #16a34a;
+  --primary-light: #4ade80;
+  --accent-cyan: #4ade80;
+  --accent-emerald: #22c55e;
+  --accent-amber: #eab308;
   --accent-rose: #f43f5e;
-  --text-main: #ffffff;
-  --text-muted: #e2e8f0;
-  --text-dim: #cbd5e1;
-  --tile-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
-  --modal-overlay: rgba(6, 8, 13, 0.85);
-  --bg-hover-overlay: rgba(255, 255, 255, 0.08);
-  --bg-hover-overlay-strong: rgba(255, 255, 255, 0.15);
-  --bg-input-disabled: rgba(255, 255, 255, 0.05);
-  --surface-depth-step: 25%;
-  --surface-contrast-step: 16%;
-  --sidebar-text-color: #ffffff;
-  --muted-text-color: #e2e8f0;
+  --text-main: #d4f4dd;
+  --text-muted: #a3e6b5;
+  --text-dim: #6ee7a0;
+  --tile-shadow: 0 8px 32px rgba(34, 197, 94, 0.2);
+  --modal-overlay: rgba(2, 3, 4, 0.92);
+  --bg-hover-overlay: rgba(34, 197, 94, 0.06);
+  --bg-hover-overlay-strong: rgba(34, 197, 94, 0.12);
+  --bg-input-disabled: rgba(255, 255, 255, 0.03);
+  --icon-color: #4ade80;
+  --icon-hover-color: #86efac;
+  --surface-depth-step: 28%;
+  --surface-contrast-step: 12%;
+  --sidebar-text-color: #d4f4dd;
+  --muted-text-color: #a3e6b5;
 }
 
 /* ==========================================
    5 NATURAL THEMES (Earth, Water & Flora)
-   ========================================== */
 
 /* 8. Emerald Forest */
 body.theme-emerald-forest {

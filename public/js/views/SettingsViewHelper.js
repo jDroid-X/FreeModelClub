@@ -8,14 +8,14 @@
 class SettingsViewHelper {
   static getThemesList() {
     return [
-      // 7 Official Metal Themes
-      { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#dde7f1', bg: '#eef3f8', sidebar: '#64748b', card: '#ffffff', text: '#0f172a', contrast: '20% Light Depth', icon: 'fa-shield-halved' },
-      { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#fbbf24', bg: '#120e04', sidebar: '#1a1406', card: '#241b08', text: '#fffbeb', contrast: '25% Dark Depth', icon: 'fa-crown' },
-      { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#475569', bg: '#dbe3ec', sidebar: '#c4d0db', card: '#f8fafc', text: '#0f172a', contrast: '20% Light Depth', icon: 'fa-gem' },
-      { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#38bdf8', bg: '#070a10', sidebar: '#0c111a', card: '#161e2c', text: '#f8fafc', contrast: '25% Dark Depth', icon: 'fa-cube' },
-      { id: 'theme-bronze', name: 'Bronze Dark Metal', category: 'Metal', accent: '#fb923c', bg: '#160d09', sidebar: '#221309', card: '#2e1a0f', text: '#fff7ed', contrast: '25% Dark Depth', icon: 'fa-hammer' },
-      { id: 'theme-copper', name: 'Copper Dark Metal', category: 'Metal', accent: '#fb7185', bg: '#180907', sidebar: '#240e0b', card: '#30130e', text: '#fff5f5', contrast: '25% Dark Depth', icon: 'fa-coins' },
-      { id: 'theme-obsidian', name: 'Obsidian Dark Metal', category: 'Metal', accent: '#818cf8', bg: '#06080d', sidebar: '#0a0d16', card: '#121826', text: '#ffffff', contrast: '25% Dark Depth', icon: 'fa-circle-dot' },
+      // 7 Official Metal Themes (Differentiated: Complementary/Split-Comp/Triadic Accents)
+      { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#dde7f1', bg: '#eef3f8', sidebar: '#64748b', card: '#ffffff', text: '#0f172a', contrast: '20% Cool Light', icon: 'fa-shield-halved' },
+      { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#3b82f6', bg: '#120e04', sidebar: '#1a1406', card: '#241b08', text: '#fffbeb', contrast: '25% Warm + Blue', icon: 'fa-crown' },
+      { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#6b5b4e', bg: '#f0ece6', sidebar: '#8b7d6b', card: '#faf8f5', text: '#1c1410', contrast: '18% Warm Stone', icon: 'fa-gem' },
+      { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#38bdf8', bg: '#070a10', sidebar: '#0c111a', card: '#161e2c', text: '#f8fafc', contrast: '25% Cool Cyan', icon: 'fa-cube' },
+      { id: 'theme-bronze', name: 'Bronze Dark Metal', category: 'Metal', accent: '#14b8a6', bg: '#201810', sidebar: '#2e2014', card: '#382818', text: '#fff7ed', contrast: '12% Mid + Teal', icon: 'fa-hammer' },
+      { id: 'theme-copper', name: 'Copper Dark Metal', category: 'Metal', accent: '#a855f7', bg: '#1b0c08', sidebar: '#280f0b', card: '#3a1a14', text: '#fef2f2', contrast: '25% Warm + Purple', icon: 'fa-coins' },
+      { id: 'theme-obsidian', name: 'Obsidian Dark Metal', category: 'Metal', accent: '#22c55e', bg: '#020304', sidebar: '#040604', card: '#080c08', text: '#d4f4dd', contrast: '2% Void + Green', icon: 'fa-circle-dot' },
 
       // 5 Natural Themes
       { id: 'theme-emerald-forest', name: 'Emerald Forest', category: 'Natural', accent: '#10b981', bg: '#042f2e', sidebar: '#02201f', card: '#064e3b', text: '#f0fdf4', contrast: '25% Forest Depth', icon: 'fa-tree' },
