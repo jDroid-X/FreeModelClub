@@ -158,8 +158,9 @@ class ModelClubComboStudioHelper {
       });
       this._isAutoSaving = false;
 
-      if (!valRes.isValid && valRes.issues && valRes.issues.length > 0) return;
-      if (valRes.options && valRes.options.length > 0) return; // User is deciding in popup dialog
+      if (!valRes.isValid) {
+        return; // User is deciding in popup dialog if validation conditions failed
+      }
     }
 
     try {
