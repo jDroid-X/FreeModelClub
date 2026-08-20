@@ -79,30 +79,66 @@ class DashboardViewHelper {
     `;
   }
 
-  static renderTokenPoolGauge2x2(gauge, userEmail) {
-    const data = gauge || {};
-    const capacity = gauge?.monthlyCapacity || 1;
+  static renderTokenPoolGauge2x2(telemetryData, userEmail) {
+    const data = telemetryData || {};
+    const gauge = data.gauge || {};
+    const available = data.available ?? { month: 0, week: 0, day: 0 };
+    const consumed = data.consumed ?? { month: 0, week: 0, day: 0 };
+    const balance = data.balance ?? { month: 0, week: 0, day: 0 };
+    const percent = data.percent ?? { month: '0.0', week: '0.0', day: '0.0' };
+    const capacity = gauge.monthlyCapacity || available.month || 1;
     const fmt = this.formatTokens;
 
-    // Compute meaningful percentages for each donut
-    const availablePct = '100.0';
-    const consumedPct = ((data.consumed?.month || 0) / capacity * 100).toFixed(1);
-    const balancePct = ((data.balance?.month || 0) / capacity * 100).toFixed(1);
-    const percentConsumedRaw = parseFloat(data.percent?.month) || 0;
+    // Compute percentages for donuts
+    const consumedPct = ((consumed.month || 0) / capacity * 100).toFixed(1);
+    const balancePct = ((balance.month || 0) / capacity * 100).toFixed(1);
 
-    // 2x2 Quadrant layout: Q1=Available, Q2=Consumed, Q3=Balance, Q4=Utilization
-    // Each quadrant has a multi-color donut with M/W/D segments and pure interactive tooltip
+    // RAG Color Resolvers
+    // Healthy / Balance metric RAG (High = Green, Mid = Amber, Low = Red)
+    const getHealthyRag = (val, maxVal) => {
+      const p = maxVal > 0 ? (val / maxVal) * 100 : 0;
+      if (p >= 50) return '#10b981'; // Green
+      if (p >= 20) return '#f59e0b'; // Amber
+      return '#ef4444'; // Red
+    };
+
+    // Consumption / Utilization metric RAG (Low = Green, Mid = Amber, High = Red)
+    const getUsageRag = (val, maxVal) => {
+      const p = maxVal > 0 ? (val / maxVal) * 100 : 0;
+      if (p <= 50) return '#10b981'; // Green
+      if (p <= 80) return '#f59e0b'; // Amber
+      return '#ef4444'; // Red
+    };
+
+    const getPercentRag = (pctVal) => {
+      const p = parseFloat(pctVal) || 0;
+      if (p <= 50) return '#10b981';
+      if (p <= 80) return '#f59e0b';
+      return '#ef4444';
+    };
+
+    // 4 Quadrants: Available, Consumed, Balance, Utilization
     const metrics = [
       {
         id: 'available',
         title: 'AVAILABLE',
         icon: 'fa-database',
         borderColor: 'var(--accent-emerald)',
-        tooltip: `AVAILABLE TOKENS (Relative Capacity Breakdown):\n• Month (M): ${fmt(data.available?.month || 0)} (100%)\n• Week (W): ${fmt(data.available?.week || 0)} (${(((data.available?.week || 0)/(data.available?.month || 1))*100).toFixed(1)}% of Month)\n• Day (D): ${fmt(data.available?.day || 0)} (${(((data.available?.day || 0)/(data.available?.week || 1))*100).toFixed(1)}% of Week)`,
+        tooltip: `AVAILABLE TOKENS (Relative Capacity Breakdown):\n• Month (M): ${fmt(available.month || 0)} (100%)\n• Week (W): ${fmt(available.week || 0)} (${(((available.week || 0)/(available.month || 1))*100).toFixed(1)}% of Month)\n• Day (D): ${fmt(available.day || 0)} (${(((available.day || 0)/(available.week || 1))*100).toFixed(1)}% of Week)`,
+        values: {
+          M: fmt(available.month || 0),
+          W: fmt(available.week || 0),
+          D: fmt(available.day || 0)
+        },
+        ragColors: {
+          M: getHealthyRag(available.month || 0, capacity),
+          W: getHealthyRag(available.week || 0, capacity * 0.25),
+          D: getHealthyRag(available.day || 0, capacity * 0.035)
+        },
         segments: [
           { color: '#10b981', pct: 100, label: 'M' },
-          { color: '#06b6d4', pct: Math.min((((data.available?.week || 0) / (data.available?.month || 1)) * 100), 100).toFixed(1), label: 'W' },
-          { color: '#8b5cf6', pct: Math.min((((data.available?.day || 0) / (data.available?.week || 1)) * 100), 100).toFixed(1), label: 'D' }
+          { color: '#06b6d4', pct: Math.min((((available.week || 0) / (available.month || 1)) * 100), 100).toFixed(1), label: 'W' },
+          { color: '#8b5cf6', pct: Math.min((((available.day || 0) / (data.available?.week || 1)) * 100), 100).toFixed(1), label: 'D' }
         ]
       },
       {
@@ -110,11 +146,21 @@ class DashboardViewHelper {
         title: 'CONSUMED',
         icon: 'fa-bolt',
         borderColor: 'var(--accent-amber)',
-        tooltip: `CONSUMED TOKENS (Usage Breakdown):\n• Month (M): ${fmt(data.consumed?.month || 0)} (${consumedPct}% of Capacity)\n• Week (W): ${fmt(data.consumed?.week || 0)} (${(((data.consumed?.week || 0)/(data.consumed?.month || 1))*100).toFixed(1)}% of M)\n• Day (D): ${fmt(data.consumed?.day || 0)} (${(((data.consumed?.day || 0)/(data.consumed?.week || 1))*100).toFixed(1)}% of W)`,
+        tooltip: `CONSUMED TOKENS (Usage Breakdown):\n• Month (M): ${fmt(consumed.month || 0)} (${consumedPct}% of Capacity)\n• Week (W): ${fmt(consumed.week || 0)} (${(((consumed.week || 0)/(consumed.month || 1))*100).toFixed(1)}% of M)\n• Day (D): ${fmt(consumed.day || 0)} (${(((consumed.day || 0)/(consumed.week || 1))*100).toFixed(1)}% of W)`,
+        values: {
+          M: fmt(consumed.month || 0),
+          W: fmt(consumed.week || 0),
+          D: fmt(consumed.day || 0)
+        },
+        ragColors: {
+          M: getUsageRag(consumed.month || 0, capacity),
+          W: getUsageRag(consumed.week || 0, capacity * 0.25),
+          D: getUsageRag(consumed.day || 0, capacity * 0.035)
+        },
         segments: [
           { color: '#f59e0b', pct: Math.min(parseFloat(consumedPct) || 0, 100), label: 'M' },
-          { color: '#f97316', pct: Math.min((((data.consumed?.week || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'W' },
-          { color: '#ef4444', pct: Math.min((((data.consumed?.day || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'D' }
+          { color: '#f97316', pct: Math.min((((consumed.week || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'W' },
+          { color: '#ef4444', pct: Math.min((((consumed.day || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'D' }
         ]
       },
       {
@@ -122,11 +168,21 @@ class DashboardViewHelper {
         title: 'BALANCE',
         icon: 'fa-wallet',
         borderColor: 'var(--accent-cyan)',
-        tooltip: `TOKEN BALANCE (Remaining Pool Reserve):\n• Month (M): ${fmt(data.balance?.month || 0)} (${balancePct}% remaining)\n• Week (W): ${fmt(data.balance?.week || 0)} (${(((data.balance?.week || 0)/(data.balance?.month || 1))*100).toFixed(1)}% of M)\n• Day (D): ${fmt(data.balance?.day || 0)} (${(((data.balance?.day || 0)/(data.balance?.week || 1))*100).toFixed(1)}% of W)`,
+        tooltip: `TOKEN BALANCE (Remaining Pool Reserve):\n• Month (M): ${fmt(balance.month || 0)} (${balancePct}% remaining)\n• Week (W): ${fmt(balance.week || 0)} (${(((balance.week || 0)/(balance.month || 1))*100).toFixed(1)}% of M)\n• Day (D): ${fmt(balance.day || 0)} (${(((balance.day || 0)/(balance.week || 1))*100).toFixed(1)}% of W)`,
+        values: {
+          M: fmt(balance.month || 0),
+          W: fmt(balance.week || 0),
+          D: fmt(balance.day || 0)
+        },
+        ragColors: {
+          M: getHealthyRag(balance.month || 0, capacity),
+          W: getHealthyRag(balance.week || 0, capacity * 0.25),
+          D: getHealthyRag(balance.day || 0, capacity * 0.035)
+        },
         segments: [
           { color: '#06b6d4', pct: Math.min(parseFloat(balancePct) || 0, 100), label: 'M' },
-          { color: '#0d9488', pct: Math.min((((data.balance?.week || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'W' },
-          { color: '#10b981', pct: Math.min((((data.balance?.day || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'D' }
+          { color: '#0d9488', pct: Math.min((((balance.week || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'W' },
+          { color: '#10b981', pct: Math.min((((balance.day || 0) / (capacity || 1)) * 100), 100).toFixed(1), label: 'D' }
         ]
       },
       {
@@ -134,16 +190,26 @@ class DashboardViewHelper {
         title: 'UTILIZATION',
         icon: 'fa-chart-line',
         borderColor: '#8b5cf6',
-        tooltip: `UTILIZATION RATE (Velocity Metrics):\n• Month (M): ${(parseFloat(data.percent?.month || '0').toFixed(2))}%\n• Week (W): ${(parseFloat(data.percent?.week || '0').toFixed(2))}%\n• Day (D): ${(parseFloat(data.percent?.day || '0').toFixed(2))}%`,
+        tooltip: `UTILIZATION RATE (Velocity Metrics):\n• Month (M): ${(parseFloat(percent.month || '0').toFixed(2))}%\n• Week (W): ${(parseFloat(percent.week || '0').toFixed(2))}%\n• Day (D): ${(parseFloat(percent.day || '0').toFixed(2))}%`,
+        values: {
+          M: (parseFloat(percent.month || '0')).toFixed(1) + '%',
+          W: (parseFloat(percent.week || '0')).toFixed(1) + '%',
+          D: (parseFloat(percent.day || '0')).toFixed(1) + '%'
+        },
+        ragColors: {
+          M: getPercentRag(percent.month || '0'),
+          W: getPercentRag(percent.week || '0'),
+          D: getPercentRag(percent.day || '0')
+        },
         segments: [
-          { color: '#8b5cf6', pct: Math.min(parseFloat(data.percent?.month || '0'), 100), label: 'M' },
-          { color: '#a855f7', pct: Math.min(parseFloat(data.percent?.week || '0'), 100), label: 'W' },
-          { color: '#ec4899', pct: Math.min(parseFloat(data.percent?.day || '0'), 100), label: 'D' }
+          { color: '#8b5cf6', pct: Math.min(parseFloat(percent.month || '0'), 100), label: 'M' },
+          { color: '#a855f7', pct: Math.min(parseFloat(percent.week || '0'), 100), label: 'W' },
+          { color: '#ec4899', pct: Math.min(parseFloat(percent.day || '0'), 100), label: 'D' }
         ]
       }
     ];
 
-    // Shared render helper for one quadrant card with 3-concentric rings and NO text inside
+    // Shared render helper for one quadrant card with 3-concentric rings and M/W/D RAG row
     const renderQuadrant = (m) => {
       const circOuter = 251.2;  // r=40 (Month)
       const circMid = 188.4;    // r=30 (Week)
@@ -158,11 +224,11 @@ class DashboardViewHelper {
       const dashD = (pD / 100) * circInner;
 
       return `
-        <div class="dashboard-tile" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 3px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1.5px solid ${m.borderColor}; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+        <div class="dashboard-tile" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1.5px solid ${m.borderColor}; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;"
           onclick="DashboardView.handleTileClick('token:${m.id}')"
           title="${m.tooltip}">
-          <!-- Donut Rings (M/W/D Concentric with zero center text clutter) -->
-          <div style="position: relative; width: 68px; height: 68px; display: flex; align-items: center; justify-content: center;">
+          <!-- Donut Rings (M/W/D Concentric) -->
+          <div style="position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
             <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
               <!-- Background Tracks -->
               <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
@@ -189,9 +255,16 @@ class DashboardViewHelper {
             </div>
           </div>
 
-          <!-- Pure Category Label (No text clutter, all breakdown in tooltip) -->
+          <!-- Category Label -->
           <div style="font-size: 0.58rem; font-weight: 700; color: ${m.borderColor}; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-top: 1px;">
             ${m.title}
+          </div>
+
+          <!-- M / W / D Values with RAG Color Badges -->
+          <div style="display: flex; justify-content: space-around; width: 100%; font-size: 0.60rem; margin-top: 2px; padding: 2px 3px; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px solid rgba(255,255,255,0.04); gap: 2px;">
+            <span style="color: ${m.ragColors.M}; font-weight: 600;" title="Month: ${m.values.M}"><strong>M:</strong> ${m.values.M}</span>
+            <span style="color: ${m.ragColors.W}; font-weight: 600;" title="Week: ${m.values.W}"><strong>W:</strong> ${m.values.W}</span>
+            <span style="color: ${m.ragColors.D}; font-weight: 600;" title="Day: ${m.values.D}"><strong>D:</strong> ${m.values.D}</span>
           </div>
         </div>
       `;
@@ -234,17 +307,6 @@ class DashboardViewHelper {
             <span style="width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6; box-shadow: 0 0 3px #8b5cf6);"></span> Utilization
           </div>
         </div>
-
-        ${gauge ? `
-        <div style="margin-top: 3px; padding: 3px 6px; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 4px; font-size: 0.65rem; color: var(--text-muted); text-align: center;">
-          <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); margin-right: 3px;"></i>
-          Active Group: <span style="color: var(--accent-emerald); font-weight: 600;">${gauge.activeGroup || userEmail || 'N/A'}</span>
-          <span style="margin: 0 6px; opacity: 0.4;">|</span>
-          Pool Keys: <span style="color: var(--accent-cyan); font-weight: 600;">${gauge.activeKeysCount || 0}</span>
-          <span style="margin: 0 6px; opacity: 0.4;">|</span>
-          Capacity: <span style="color: var(--text-main); font-weight: 600;">${fmt(gauge.monthlyCapacity || 0)}</span>
-        </div>
-        ` : ''}
       </div>
     `;
   }
@@ -313,7 +375,7 @@ class DashboardViewHelper {
       <!-- BOTTOM PANELS ROW (3 Columns with 2x2 Gauge) -->
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; margin-bottom: 3px;">
         <!-- Card 1: Token Pool Gauge (2x2 Layout) -->
-        ${this.renderTokenPoolGauge2x2(gauge, userEmail)}
+        ${this.renderTokenPoolGauge2x2(data, userEmail)}
         
         <!-- Card 2: Top Providers -->
         <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0;">
@@ -791,38 +853,98 @@ class DashboardViewHelper {
       </div>
     `;
 
-    // 3. Model Usage
+    // 3. Model Usage (7D) with Complete X-Axis, Y-Axis, and Bar Metadata Values
     const usageData = stats.usage["All Users"]?.[tf] || [];
-    const modelColors = { "deepseek": "#d946ef", "qwen": "#6366f1", "mimo": "#06b6d4", "glm": "#f59e0b", "Other": "#10b981" };
+    const fmt = this.formatTokens;
+    const modelColors = { "deepseek": "#d946ef", "qwen": "#6366f1", "gemini": "#06b6d4", "mimo": "#06b6d4", "llama": "#f59e0b", "glm": "#f59e0b", "mistral": "#ec4899", "Other": "#10b981" };
+    
+    // Calculate total 7D tokens and max day tokens for proportional Y-scale
+    const total7dTokens = usageData.reduce((sum, d) => sum + (d.segments || []).reduce((s, x) => s + (x.value || 0), 0), 0);
+    const maxDayTokens = Math.max(...usageData.map(d => (d.segments || []).reduce((s, x) => s + (x.value || 0), 0)), 1000);
+    const maxChartPx = 54; // bar height container
+
     let usageBarsHtml = '';
     usageData.forEach(day => {
       let segments = day.segments || [];
-      let totalTokens = segments.reduce((sum, s) => sum + (s.value || 0), 0);
+      let totalDayTokens = segments.reduce((sum, s) => sum + (s.value || 0), 0);
+      let dayBarHeight = maxDayTokens > 0 ? Math.round((totalDayTokens / maxDayTokens) * maxChartPx) : 0;
+      if (totalDayTokens > 0 && dayBarHeight < 4) dayBarHeight = 4; // minimum visible bar
+      
       let segmentsHtml = '';
-      const chartHeight = 80;
-      segments.forEach((seg, idx) => {
-        const pct = totalTokens > 0 ? seg.value / totalTokens : 0;
+      segments.forEach((seg) => {
+        const pct = totalDayTokens > 0 ? (seg.value / totalDayTokens) : 0;
         let cKey = "Other";
-        Object.keys(modelColors).forEach(k => { if (seg.model.toLowerCase().includes(k)) cKey = k; });
+        const mLower = (seg.model || '').toLowerCase();
+        Object.keys(modelColors).forEach(k => { if (mLower.includes(k)) cKey = k; });
         const color = modelColors[cKey];
-        if (pct > 0) {
-          segmentsHtml = `<div style="height: ${pct * chartHeight}px; background: ${color};" title="${seg.model}: ${seg.value}"></div>` + segmentsHtml;
+        const segHeight = Math.max(Math.round(pct * dayBarHeight), 1);
+        if (seg.value > 0) {
+          segmentsHtml = `<div style="height: ${segHeight}px; background: ${color}; width: 100%; border-radius: 1px;" title="${seg.model}: ${fmt(seg.value)} tokens"></div>` + segmentsHtml;
         }
       });
+
+      // If no segments recorded for day, show a tiny 2px placeholder bar
+      if (!segmentsHtml) {
+        segmentsHtml = `<div style="height: 2px; background: rgba(255,255,255,0.08); width: 100%; border-radius: 1px;"></div>`;
+      }
+
       usageBarsHtml += `
-        <div style="display: flex; flex-direction: column; justify-content: flex-end; width: ${100/usageData.length}%; height: 100%;">
-          <div style="width: 80%; margin: 0 auto; display: flex; flex-direction: column; gap: 1px;">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: ${100 / (usageData.length || 7)}%; height: 100%;">
+          <!-- Bar Metadata Value (Tokens) -->
+          <div style="font-size: 0.52rem; font-weight: 700; color: ${totalDayTokens > 0 ? 'var(--accent-cyan)' : 'var(--text-dim)'}; margin-bottom: 2px; white-space: nowrap;">
+            ${totalDayTokens > 0 ? fmt(totalDayTokens) : '0'}
+          </div>
+          <!-- Stacked Bar Column -->
+          <div style="width: 75%; max-width: 24px; min-width: 10px; display: flex; flex-direction: column; gap: 1px; justify-content: flex-end; height: ${maxChartPx}px;">
             ${segmentsHtml}
+          </div>
+          <!-- X-Axis Day/Date Label -->
+          <div style="font-size: 0.52rem; color: var(--text-dim); text-align: center; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" title="${day.date}">
+            ${day.date}
           </div>
         </div>
       `;
     });
     
     const usageTile = `
-      <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
-        <h5 style="color: var(--text-main); margin-bottom: 3px; font-size: 0.75rem; padding: 2px;"><i class="fa-solid fa-chart-column" style="color:var(--accent-cyan); margin-right:4px;"></i> Model Usage (7D)</h5>
-        <div style="display: flex; align-items: flex-end; height: 90px; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-          ${usageBarsHtml}
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 1px 2px;">
+          <h5 style="color: var(--text-main); margin: 0; font-size: 0.74rem; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-chart-column" style="color:var(--accent-cyan);"></i> Model Usage (7D)
+          </h5>
+          <span class="badge badge-cyan" style="font-size: 0.58rem; padding: 1px 5px; font-weight: 600;">
+            7D Vol: ${fmt(total7dTokens)}
+          </span>
+        </div>
+
+        <!-- Legend -->
+        <div style="display: flex; gap: 6px; font-size: 0.54rem; color: var(--text-muted); margin-bottom: 3px; flex-wrap: wrap; padding-left: 2px;">
+          <span><strong style="color: #d946ef;">●</strong> DeepSeek</span>
+          <span><strong style="color: #6366f1;">●</strong> Qwen</span>
+          <span><strong style="color: #06b6d4;">●</strong> Gemini</span>
+          <span><strong style="color: #f59e0b;">●</strong> Llama</span>
+          <span><strong style="color: #10b981;">●</strong> Other</span>
+        </div>
+
+        <!-- Chart Grid with Y-Axis and Bars -->
+        <div style="display: flex; gap: 4px; align-items: flex-end; position: relative; padding-bottom: 2px;">
+          <!-- Y-Axis Scale Markers -->
+          <div style="display: flex; flex-direction: column; justify-content: space-between; height: ${maxChartPx + 14}px; font-size: 0.50rem; color: var(--text-dim); text-align: right; padding-right: 2px; border-right: 1px solid rgba(255,255,255,0.08); width: 28px; flex-shrink: 0; padding-bottom: 12px;">
+            <span>${fmt(maxDayTokens)}</span>
+            <span>${fmt(Math.round(maxDayTokens / 2))}</span>
+            <span>0</span>
+          </div>
+
+          <!-- Horizontal Dotted Gridlines & Bars Area -->
+          <div style="flex: 1; position: relative; display: flex; align-items: flex-end; height: ${maxChartPx + 14}px;">
+            <div style="position: absolute; top: 14px; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.06); pointer-events: none;"></div>
+            <div style="position: absolute; top: ${14 + maxChartPx / 2}px; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.06); pointer-events: none;"></div>
+            <div style="position: absolute; bottom: 12px; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,0.12); pointer-events: none;"></div>
+            
+            <div style="display: flex; width: 100%; height: 100%; align-items: flex-end;">
+              ${usageBarsHtml}
+            </div>
+          </div>
         </div>
       </div>
     `;

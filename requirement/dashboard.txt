@@ -2,6 +2,21 @@
 # Screen: Dashboard View (http://localhost:3000/dashboard)
 
 ================================================================================
+[2026-08-20 19:30:00] DASHBOARD TOKEN POOL GAUGE RAG M/W/D & MODEL USAGE 7D X/Y AXIS & METADATA ENHANCEMENTS
+================================================================================
+Target Screen : DashboardView.js / DashboardViewHelper.js
+Requested By  : User Chat (in Dashboard remove(image) items form the Token pool gauge. - put Month/Week/Days values ( color code as RAG. in all the 4 tiles (data from the above relevant tiles (donuts values (must be divided as per (M, W, D)))) in Model Usage (7D) values of metadata for the bars and x,y axis is missing.)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Removed Bottom Info Box from Token Pool Gauge: Removed the bottom active group / keys / capacity banner item as requested by user.
+	- Month / Week / Day RAG Indicator Badges: Added M / W / D value breakdowns to all 4 donut tiles (Available, Consumed, Balance, Utilization) color-coded as Red / Amber / Green based on health and velocity thresholds.
+	- Model Usage (7D) X-Axis & Y-Axis: Added Y-axis scale markers (Max, Mid, 0) with horizontal dotted guidelines, and X-axis day/date labels beneath each bar.
+	- Model Usage (7D) Metadata Values: Displayed formatted token count badges on top of each bar and 7D total volume summary in tile header.
+Files Modified:
+	- public/js/views/DashboardViewHelper.js
+	- requirement/dashboard.txt
+
+================================================================================
 [2026-08-20 17:52:00] HEADER TELEMETRY MODAL SINGLE-ICON FIX & UNNAMED PROVIDERS PURGE
 ================================================================================
 Target Screen : DashboardViewHelper.js / ModalDialog.js / ProviderModel.js / data/providers.json
