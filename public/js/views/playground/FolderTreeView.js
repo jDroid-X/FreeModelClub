@@ -16,18 +16,63 @@ class FolderTreeView {
     return `<div class="alert alert-danger" style="font-size: 0.75rem; padding: 10px;">${error}</div>`;
   }
 
+  static navigateBrowser(path) {
+    if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.navigateBrowser === 'function') {
+      PlaygroundView.navigateBrowser(path);
+    } else if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.browserNavigateCallback === 'function') {
+      PlaygroundView.browserNavigateCallback(path);
+    }
+  }
+
+  static selectBrowserPath(path) {
+    if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.selectBrowserPath === 'function') {
+      PlaygroundView.selectBrowserPath(path);
+    } else if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.browserSelectCallback === 'function') {
+      PlaygroundView.browserSelectCallback(path);
+    }
+  }
+
+  static async pickNativeFolder() {
+    if (window.showDirectoryPicker) {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        if (dirHandle && dirHandle.name) {
+          // Note: Browser sandbox provides handle; notify user or use standard path navigation
+          ModalDialog.showNotification(`Selected folder: ${dirHandle.name}`, 'success');
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.warn('Native picker error:', e);
+        }
+      }
+    }
+  }
+
   static renderTreeBrowser(mode, res, currentPath) {
     let parentBtnHtml = '';
     if (res.parentPath) {
       parentBtnHtml = `
-        <button class="btn btn-secondary btn-xs" style="padding: 4px 8px; font-weight: bold;" onclick="PlaygroundView.navigateBrowser('${res.parentPath.replace(/\\/g, '\\\\')}')">
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 4px 8px; font-weight: bold;" onclick="FolderTreeView.navigateBrowser('${res.parentPath.replace(/\\/g, '\\\\')}')">
           <i class="fa-solid fa-arrow-up"></i> Up
         </button>
       `;
     }
     
+    // Common Windows directory jump pills
+    const homePath = 'c:\\Users\\jiten';
+    const shortcutsHtml = `
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.68rem;">
+        <span style="color: var(--text-dim); align-self: center; font-size: 0.65rem; margin-right: 2px;"><i class="fa-solid fa-bolt"></i> Jumps:</span>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('c:\\\\')"><i class="fa-solid fa-hard-drive"></i> C:\\</button>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('d:\\\\')"><i class="fa-solid fa-hard-drive"></i> D:\\</button>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Desktop')"><i class="fa-solid fa-desktop"></i> Desktop</button>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Documents')"><i class="fa-solid fa-folder-open"></i> Documents</button>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\jAnitGravity\\\\FreeModelsClub')"><i class="fa-solid fa-cube"></i> Project</button>
+      </div>
+    `;
+
     let itemsHtml = '';
-    if (res.items.length === 0) {
+    if (!res.items || res.items.length === 0) {
       itemsHtml = `<div style="text-align: center; color: var(--text-muted); font-size: 0.72rem; padding: 15px;">Empty Folder</div>`;
     } else {
       itemsHtml = res.items.map(item => {
@@ -35,13 +80,13 @@ class FolderTreeView {
         if (item.isDir) {
           return `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.06)'" onmouseout="this.style.background='none'">
-              <div style="display: flex; align-items: center; gap: 8px; flex: 1; font-size: 0.72rem; font-family: monospace;" onclick="PlaygroundView.navigateBrowser('${escapedPath}')">
-                <i class="fa-solid fa-folder" style="color: var(--accent-amber);"></i>
-                <span style="color: var(--text-main); font-weight: bold;">${item.name}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex: 1; font-size: 0.72rem; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="FolderTreeView.navigateBrowser('${escapedPath}')" title="${item.path}">
+                <i class="fa-solid fa-folder" style="color: var(--accent-amber); flex-shrink: 0;"></i>
+                <span style="color: var(--text-main); font-weight: bold; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
               </div>
               ${mode === 'folder' ? `
-                <button class="btn btn-cyan btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="PlaygroundView.selectBrowserPath('${escapedPath}')">
-                  Select
+                <button type="button" class="btn btn-cyan btn-xs" style="padding: 2px 8px; font-size: 0.68rem; margin-left: 6px; flex-shrink: 0;" onclick="FolderTreeView.selectBrowserPath('${escapedPath}')">
+                  <i class="fa-solid fa-check"></i> Select
                 </button>
               ` : ''}
             </div>
@@ -49,13 +94,13 @@ class FolderTreeView {
         } else {
           return `
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.06)'" onmouseout="this.style.background='none'">
-              <div style="display: flex; align-items: center; gap: 8px; flex: 1; font-size: 0.72rem; font-family: monospace;" onclick="PlaygroundView.selectBrowserPath('${escapedPath}')">
-                <i class="fa-solid fa-file" style="color: var(--primary-light);"></i>
-                <span style="color: var(--text-main);">${item.name}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex: 1; font-size: 0.72rem; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="FolderTreeView.selectBrowserPath('${escapedPath}')" title="${item.path}">
+                <i class="fa-solid fa-file" style="color: var(--primary-light); flex-shrink: 0;"></i>
+                <span style="color: var(--text-main); overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
               </div>
               ${mode === 'file' ? `
-                <button class="btn btn-emerald btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="PlaygroundView.selectBrowserPath('${escapedPath}')">
-                  Select
+                <button type="button" class="btn btn-emerald btn-xs" style="padding: 2px 8px; font-size: 0.68rem; margin-left: 6px; flex-shrink: 0;" onclick="FolderTreeView.selectBrowserPath('${escapedPath}')">
+                  <i class="fa-solid fa-check"></i> Select
                 </button>
               ` : ''}
             </div>
@@ -66,9 +111,10 @@ class FolderTreeView {
     
     return `
       <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.75rem;">
+        ${shortcutsHtml}
         <div style="display: flex; gap: 4px; align-items: center;">
-          <input type="text" id="browser-current-path-input" class="form-control" style="font-size: 0.72rem; font-family: monospace; padding: 4px 8px; flex: 1;" value="${currentPath}" />
-          <button class="btn btn-cyan btn-xs" style="padding: 4px 8px;" onclick="PlaygroundView.navigateBrowser(document.getElementById('browser-current-path-input').value)">Go</button>
+          <input type="text" id="browser-current-path-input" class="form-control" style="font-size: 0.72rem; font-family: monospace; padding: 4px 8px; flex: 1;" value="${currentPath}" onkeydown="if(event.key==='Enter') FolderTreeView.navigateBrowser(this.value);" />
+          <button type="button" class="btn btn-cyan btn-xs" style="padding: 4px 8px;" onclick="FolderTreeView.navigateBrowser(document.getElementById('browser-current-path-input').value)">Go</button>
           ${parentBtnHtml}
         </div>
         
@@ -78,8 +124,8 @@ class FolderTreeView {
         
         ${mode === 'folder' ? `
           <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
-            <button class="btn btn-cyan btn-sm" style="width: 100%; font-weight: 700; padding: 6px;" onclick="PlaygroundView.selectBrowserPath('${currentPath.replace(/\\/g, '\\\\')}')">
-              Select Current Folder: ${currentPath.split('\\').pop() || currentPath}
+            <button type="button" class="btn btn-cyan btn-sm" style="width: 100%; font-weight: 700; padding: 6px;" onclick="FolderTreeView.selectBrowserPath('${currentPath.replace(/\\/g, '\\\\')}')">
+              <i class="fa-solid fa-folder-check" style="margin-right: 4px;"></i> Select Current Folder: ${currentPath.split('\\').pop() || currentPath}
             </button>
           </div>
         ` : ''}

@@ -1,6 +1,0 @@
-- [x] Implement `ProvidersView.renderProviderMatrix()` to generate the HTML table.
-- [x] Add sorting state and sorting logic for table columns (Status, ID, Name, Protocol, Quota).
-- [x] Integrate the matrix table into `ProvidersView.render()` right above the provider grid panels.
-- [x] Ensure the table obeys the `allProviders` array, but defaults to Active on top.
-- [x] Add simple column header click listeners to trigger re-rendering with new sort.
-- [x] Add CSS for the table (injected via `<style>` or inline) to match the dark glassmorphism theme.

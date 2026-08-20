@@ -1745,6 +1745,18 @@ class PlaygroundView {
   static togglePanel(panelName) {
     if (typeof PlaygroundViewHelper !== 'undefined') PlaygroundViewHelper.togglePanel(panelName);
   }
+
+  static navigateBrowser(path) {
+    if (typeof PlaygroundView.browserNavigateCallback === 'function') {
+      PlaygroundView.browserNavigateCallback(path);
+    }
+  }
+
+  static selectBrowserPath(path) {
+    if (typeof PlaygroundView.browserSelectCallback === 'function') {
+      PlaygroundView.browserSelectCallback(path);
+    }
+  }
 }
 
 window.PlaygroundView = PlaygroundView;
