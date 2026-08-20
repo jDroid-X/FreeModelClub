@@ -5,5 +5,12 @@ data/backups/
 data/*.lock
 data/system_logs.json
 data/api_logs.json
+data/chat_history.json
+data/conversations.json
+data/sessions.json
+data/session_*.json
+*.chat
+*.log
 .tray_launcher.lock
 test-results/
+

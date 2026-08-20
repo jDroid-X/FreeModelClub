@@ -58,16 +58,26 @@ class FolderTreeView {
       `;
     }
     
-    // Common Windows directory jump pills
-    const homePath = 'c:\\Users\\jiten';
+    // Dynamically derive root and home directories without hardcoding
+    let baseRoot = 'C:\\';
+    let userHome = '';
+    if (currentPath) {
+      const match = currentPath.match(/^([a-zA-Z]:\\(?:Users|home)\\[^\\]+)/i);
+      if (match) userHome = match[1];
+      const driveMatch = currentPath.match(/^([a-zA-Z]:\\)/);
+      if (driveMatch) baseRoot = driveMatch[1];
+    }
+    const homePath = userHome || 'C:\\Users\\Default';
+    
     const shortcutsHtml = `
-      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.68rem;">
-        <span style="color: var(--text-dim); align-self: center; font-size: 0.65rem; margin-right: 2px;"><i class="fa-solid fa-bolt"></i> Jumps:</span>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('c:\\\\')"><i class="fa-solid fa-hard-drive"></i> C:\\</button>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('d:\\\\')"><i class="fa-solid fa-hard-drive"></i> D:\\</button>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Desktop')"><i class="fa-solid fa-desktop"></i> Desktop</button>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Documents')"><i class="fa-solid fa-folder-open"></i> Documents</button>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\jAnitGravity\\\\FreeModelsClub')"><i class="fa-solid fa-cube"></i> Project</button>
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.68rem; align-items: center;">
+        <span style="color: var(--text-dim); font-size: 0.65rem; margin-right: 2px;"><i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i> Jumps:</span>
+        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${baseRoot.replace(/\\/g, '\\\\')}')"><i class="fa-solid fa-hard-drive"></i> Root (${baseRoot})</button>
+        ${userHome ? `
+          <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Desktop')"><i class="fa-solid fa-desktop"></i> Desktop</button>
+          <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Documents')"><i class="fa-solid fa-folder-open"></i> Documents</button>
+        ` : ''}
+        <button type="button" class="btn btn-cyan btn-xs" style="padding: 2px 6px; font-size: 0.65rem; margin-left: auto;" onclick="FolderTreeView.pickNativeFolder()"><i class="fa-solid fa-computer"></i> Native Picker</button>
       </div>
     `;
 

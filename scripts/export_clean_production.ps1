@@ -22,13 +22,15 @@ foreach ($item in $items) {
     }
 }
 
-# 1. Clean any chat history, conversation requests, or scratch logs from docs
+# 1. Clean any chat history, conversation requests, or scratch logs from docs & root
 $dstDocs = Join-Path $dst "docs"
 if (Test-Path $dstDocs) {
     Get-ChildItem -Path $dstDocs -Filter "*Chat*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $dstDocs -Filter "*scratch*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $dstDocs -Filter "*BYNARA*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $dstDocs -Filter "*FIXES_APPLIED*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path $dstDocs -Filter "*conversation*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path $dstDocs -Filter "*transcript*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 # 2. Clean temporary chat implementation plans and task files from requirement directory
@@ -37,6 +39,7 @@ if (Test-Path $dstReq) {
     Get-ChildItem -Path $dstReq -Filter "imp*.md" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $dstReq -Filter "Task_*.md" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -Path $dstReq -Filter "*audit*.md" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path $dstReq -Filter "*conversation*" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 # 3. Clean temporary artifact images from public/images/artifacts

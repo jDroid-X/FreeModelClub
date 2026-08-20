@@ -2,6 +2,22 @@
 # Screen: Playground View (http://localhost:12247/playground)
 
 ================================================================================
+[2026-08-20 21:46:00] DYNAMIC DIRECTORY ROOT/HOME DERIVATION & NATIVE PICKER INTEGRATION
+================================================================================
+Target Screen : PlaygroundView.js / FolderTreeView.js / export_clean_production.ps1 / .gitignore
+Requested By  : User Chat (Deep dive and due diligence for all screens, remove hardcoded items, fix critical bugs and silly mistakes)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Dynamic Root & Home Derivation: Removed hardcoded user home path ('c:\Users\jiten') in FolderTreeView.js, dynamically deriving active user home and drive root from workspace path.
+	- Native Folder Picker Button: Added 1-click Native System File Picker option triggering browser showDirectoryPicker API where supported.
+	- Enhanced GitHub Export Exclusions: Updated .gitignore and export_clean_production.ps1 with pattern filters to exclude all session logs, conversation transcripts, and chat request histories from git sync.
+Files Modified:
+	- public/js/views/playground/FolderTreeView.js
+	- scripts/export_clean_production.ps1
+	- .gitignore
+	- requirement/playground.txt
+
+================================================================================
 [2026-08-20 19:05:00] LOCAL FOLDER EXPLORER SELECTION FIX & CLEAN PRODUCTION EXPORT PURGE
 ================================================================================
 Target Screen : PlaygroundView.js / FolderTreeView.js / FileSystemController.js / IDEWorkspaceView.js / export_clean_production.ps1
