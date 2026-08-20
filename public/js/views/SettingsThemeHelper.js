@@ -83,12 +83,13 @@ class SettingsThemeHelper {
             transition: all 0.2s ease;
             cursor: pointer;
           ">
-            <!-- Sidebar Simulation -->
+            <!-- Sidebar Simulation (Left Navigation Panel) -->
             <div style="display: flex; gap: 15px; height: 100%;">
-              <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-sidebar')" style="width: 60px; background: ${bgSidebar}; border-right: 1px solid ${bColor}; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; cursor: pointer;">
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="width: 24px; height: 24px; border-radius: 50%; background: ${p}; cursor: pointer;"></div>
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-muted')" style="width: 20px; height: 4px; border-radius: 2px; background: ${tMuted}; opacity: 0.5; cursor: pointer;"></div>
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-dim')" style="width: 20px; height: 4px; border-radius: 2px; background: ${tDim}; opacity: 0.5; cursor: pointer;"></div>
+              <div id="preview-sidebar-panel" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-sidebar')" style="width: 70px; background: ${bgSidebar}; border-right: 1px solid ${bColor}; border-radius: 8px; padding: 10px 6px; display: flex; flex-direction: column; gap: 8px; align-items: center; cursor: pointer;" title="Sidebar Panel (--bg-sidebar)">
+                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="width: 24px; height: 24px; border-radius: 50%; background: ${p}; cursor: pointer; border: 1px solid ${bColor};" title="Active Nav Indicator (--primary)"></div>
+                <div id="preview-sidebar-item" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="width: 100%; height: 18px; border-radius: 4px; background: ${s}; color: ${tOnSecondary}; font-size: 0.55rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Nav Item Background (--secondary)">Nav</div>
+                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-muted')" style="width: 36px; height: 4px; border-radius: 2px; background: ${tMuted}; opacity: 0.6; cursor: pointer;"></div>
+                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-dim')" style="width: 28px; height: 4px; border-radius: 2px; background: ${tDim}; opacity: 0.6; cursor: pointer;"></div>
               </div>
               
               <!-- Main Content Simulation -->
@@ -122,10 +123,11 @@ class SettingsThemeHelper {
                   </div>
                 </div>
                 
-                <!-- Buttons -->
-                <div style="display: flex; gap: 10px; margin-top: auto;">
-                  <button id="preview-btn-primary" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="flex: 1; padding: 6px 12px; background: ${p}; color: ${tOnPrimary}; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s ease;">Primary Action</button>
-                  <button id="preview-btn-hover" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-hover-overlay')" style="flex: 1; padding: 6px 12px; background: ${bgHoverOverlay}; color: ${tMain}; border: 1px solid ${bColor}; border-radius: 4px; cursor: pointer;">Hover Item</button>
+                <!-- Buttons Simulation (Primary, Secondary, Hover) -->
+                <div style="display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap;">
+                  <button id="preview-btn-primary" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="flex: 1; padding: 6px 10px; font-size: 0.72rem; font-weight: 600; background: ${p}; color: ${tOnPrimary}; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s ease;">Primary</button>
+                  <button id="preview-btn-secondary" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="flex: 1; padding: 6px 10px; font-size: 0.72rem; font-weight: 600; background: ${s}; color: ${tOnSecondary}; border: 1px solid ${bColor}; border-radius: 4px; cursor: pointer;">Secondary</button>
+                  <button id="preview-btn-hover" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-hover-overlay')" style="flex: 1; padding: 6px 10px; font-size: 0.72rem; font-weight: 600; background: ${bgHoverOverlay}; color: ${tMain}; border: 1px solid ${bColor}; border-radius: 4px; cursor: pointer;">Hover Item</button>
                 </div>
               </div>
             </div>
@@ -563,8 +565,12 @@ class SettingsThemeHelper {
       sidebar.style.borderColor = bColor;
       sidebar.style.width = sidebarWidth;
       if (sidebar.children[0]) sidebar.children[0].style.background = p;
-      if (sidebar.children[1]) sidebar.children[1].style.background = tMuted;
-      if (sidebar.children[2]) sidebar.children[2].style.background = tDim;
+      if (sidebar.children[1]) {
+        sidebar.children[1].style.background = s;
+        sidebar.children[1].style.color = tOnSecondary;
+      }
+      if (sidebar.children[2]) sidebar.children[2].style.background = tMuted;
+      if (sidebar.children[3]) sidebar.children[3].style.background = tDim;
     }
 
     const mainContent = card.children[0]?.children[1];
@@ -609,10 +615,15 @@ class SettingsThemeHelper {
           buttons.children[0].style.color = tOnPrimary;
         }
         if (buttons.children[1]) {
-          buttons.children[1].style.background = bgHoverOverlay;
-          buttons.children[1].style.opacity = hoverOpacity;
+          buttons.children[1].style.background = s;
+          buttons.children[1].style.color = tOnSecondary;
           buttons.children[1].style.borderColor = bColor;
-          buttons.children[1].style.color = tMain;
+        }
+        if (buttons.children[2]) {
+          buttons.children[2].style.background = bgHoverOverlay;
+          buttons.children[2].style.opacity = hoverOpacity;
+          buttons.children[2].style.borderColor = bColor;
+          buttons.children[2].style.color = tMain;
         }
       }
     }
