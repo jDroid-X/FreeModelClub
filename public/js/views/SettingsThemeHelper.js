@@ -83,13 +83,27 @@ class SettingsThemeHelper {
             transition: all 0.2s ease;
             cursor: pointer;
           ">
-            <!-- Sidebar Simulation (Left Navigation Panel) -->
+            <!-- Left: Settings Navigation Panel Simulation -->
             <div style="display: flex; gap: 15px; height: 100%;">
-              <div id="preview-sidebar-panel" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-sidebar')" style="width: 70px; background: ${bgSidebar}; border-right: 1px solid ${bColor}; border-radius: 8px; padding: 10px 6px; display: flex; flex-direction: column; gap: 8px; align-items: center; cursor: pointer;" title="Sidebar Panel (--bg-sidebar)">
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="width: 24px; height: 24px; border-radius: 50%; background: ${p}; cursor: pointer; border: 1px solid ${bColor};" title="Active Nav Indicator (--primary)"></div>
-                <div id="preview-sidebar-item" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="width: 100%; height: 18px; border-radius: 4px; background: ${s}; color: ${tOnSecondary}; font-size: 0.55rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Nav Item Background (--secondary)">Nav</div>
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-muted')" style="width: 36px; height: 4px; border-radius: 2px; background: ${tMuted}; opacity: 0.6; cursor: pointer;"></div>
-                <div onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('text-dim')" style="width: 28px; height: 4px; border-radius: 2px; background: ${tDim}; opacity: 0.6; cursor: pointer;"></div>
+              <div id="preview-sidebar-panel" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('bg-card')" style="width: 125px; background: ${bgCard}; border: 1px solid ${bColor}; border-radius: 8px; padding: 8px 6px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.06);" title="Settings Navigation Panel (--bg-card)">
+                <div style="font-size: 0.58rem; font-weight: 700; color: ${accentCyan}; display: flex; align-items: center; gap: 4px; padding: 2px 4px; border-bottom: 1px solid ${bColor}; margin-bottom: 2px;" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('accent-cyan')">
+                  <i class="fa-solid fa-sliders"></i> Settings Navigation
+                </div>
+                <div id="preview-nav-item-active" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('primary')" style="background: ${p}; color: ${tOnPrimary}; font-size: 0.52rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; display: flex; align-items: center; gap: 4px; border: 1px solid ${bColor}; cursor: pointer;" title="Active Tab (--primary)">
+                  <i class="fa-solid fa-key" style="color: #fbbf24; font-size: 0.5rem;"></i> API Keys
+                </div>
+                <div id="preview-nav-item-1" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="background: ${s}; color: ${tOnSecondary}; font-size: 0.52rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; display: flex; align-items: center; gap: 4px; border: 1px solid ${bColor}; cursor: pointer;" title="Nav Button (--secondary / --btn-secondary-bg)">
+                  <i class="fa-solid fa-robot" style="color: #34d399; font-size: 0.5rem;"></i> System Agents
+                </div>
+                <div id="preview-nav-item-2" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="background: ${s}; color: ${tOnSecondary}; font-size: 0.52rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; display: flex; align-items: center; gap: 4px; border: 1px solid ${bColor}; cursor: pointer;" title="Nav Button (--secondary / --btn-secondary-bg)">
+                  <i class="fa-solid fa-palette" style="color: #06b6d4; font-size: 0.5rem;"></i> 7 Metal Themes
+                </div>
+                <div id="preview-nav-item-3" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="background: ${s}; color: ${tOnSecondary}; font-size: 0.52rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; display: flex; align-items: center; gap: 4px; border: 1px solid ${bColor}; cursor: pointer;" title="Nav Button (--secondary / --btn-secondary-bg)">
+                  <i class="fa-solid fa-shield-halved" style="color: #f59e0b; font-size: 0.5rem;"></i> Launch Rules
+                </div>
+                <div id="preview-nav-item-4" onclick="event.stopPropagation(); SettingsThemeHelper.highlightInput('secondary')" style="background: ${s}; color: ${tOnSecondary}; font-size: 0.52rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; display: flex; align-items: center; gap: 4px; border: 1px solid ${bColor}; cursor: pointer;" title="Nav Button (--secondary / --btn-secondary-bg)">
+                  <i class="fa-solid fa-database" style="color: #64748b; font-size: 0.5rem;"></i> Master Data
+                </div>
               </div>
               
               <!-- Main Content Simulation -->
@@ -561,16 +575,24 @@ class SettingsThemeHelper {
 
     const sidebar = card.children[0]?.children[0];
     if (sidebar) {
-      sidebar.style.background = bgSidebar;
+      sidebar.style.background = bgCard;
       sidebar.style.borderColor = bColor;
-      sidebar.style.width = sidebarWidth;
-      if (sidebar.children[0]) sidebar.children[0].style.background = p;
-      if (sidebar.children[1]) {
-        sidebar.children[1].style.background = s;
-        sidebar.children[1].style.color = tOnSecondary;
+      if (sidebar.children[0]) {
+        sidebar.children[0].style.color = accentCyan;
+        sidebar.children[0].style.borderColor = bColor;
       }
-      if (sidebar.children[2]) sidebar.children[2].style.background = tMuted;
-      if (sidebar.children[3]) sidebar.children[3].style.background = tDim;
+      if (sidebar.children[1]) {
+        sidebar.children[1].style.background = p;
+        sidebar.children[1].style.color = tOnPrimary;
+        sidebar.children[1].style.borderColor = bColor;
+      }
+      for (let i = 2; i <= 5; i++) {
+        if (sidebar.children[i]) {
+          sidebar.children[i].style.background = s;
+          sidebar.children[i].style.color = tOnSecondary;
+          sidebar.children[i].style.borderColor = bColor;
+        }
+      }
     }
 
     const mainContent = card.children[0]?.children[1];
