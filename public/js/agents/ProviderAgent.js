@@ -7,7 +7,7 @@
  */
 
 class ProviderAgent {
-  static suggestions = ['AgentRouter', 'NVIDIA', 'Groq', 'OpenRouter', 'Gemini', 'Together', 'Mistral', 'Ollama', 'SambaNova', 'Cerebras', 'DeepSeek', 'Hyperbolic', 'Bynara', 'Opencode'];
+  static suggestions = ['Gemini', 'Groq', 'Cerebras', 'OpenRouter', 'Mistral', 'Together', 'SambaNova', 'DeepSeek', 'NVIDIA', 'Ollama', 'AgentRouter'];
 
   static openPopup(initialQuery = '') {
     ModalDialog.showCustomModal({
@@ -26,7 +26,7 @@ class ProviderAgent {
             <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);">Target Provider Name or Domain:</label>
               <div style="display: flex; gap: 8px;">
-                <input type="text" id="provider-agent-query-input" class="form-control" placeholder="e.g. SambaNova, NVIDIA, Groq, Gemini, Cerebras..." value="${initialQuery}" onkeydown="if(event.key==='Enter'){event.preventDefault();ProviderAgent.search();}" />
+                <input type="text" id="provider-agent-query-input" class="form-control" placeholder="e.g. Gemini, Groq, Cerebras, OpenRouter, SambaNova..." value="${initialQuery}" onkeydown="if(event.key==='Enter'){event.preventDefault();ProviderAgent.search();}" />
                 <button type="button" class="btn btn-emerald" onclick="ProviderAgent.search()" title="Execute Online Search">
                   <i class="fa-solid fa-magnifying-glass"></i> Search Agent
                 </button>
@@ -68,7 +68,7 @@ class ProviderAgent {
     }
     try {
       const res = await ApiService.agentLookupProvider(query);
-      if (res.success && res.provider) {
+      if (res && res.success && res.found && res.provider) {
         const p = res.provider;
         const pid = p.rawId || p.id || query.toLowerCase().replace(/[^a-z0-9_-]/g, '');
         const encName = encodeURIComponent(p.displayName || query);
@@ -127,9 +127,19 @@ class ProviderAgent {
           `;
         }
       } else if (resContainer) {
-        const dict = typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getDictionary() : {};
-        const errInfo = dict['ERR_PROVIDER_NOT_FOUND'] || { code: 'ERR_PROVIDER_NOT_FOUND', title: 'Provider Specs Not Found', definition: `No provider specs found for '${query}'.`, guidance: 'Verify provider spelling or domain name, or enter Base URL manually.' };
-        resContainer.innerHTML = typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-warning">No provider specs found for '${query}'.</div>`;
+        const notFoundMsg = (res && res.message) ? res.message : `No verified AI provider matching '${query}' was found.`;
+        resContainer.innerHTML = `
+          <div class="glass-panel" style="padding: 14px; border-color: var(--accent-amber); background: rgba(245, 158, 11, 0.08);">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber); font-size: 1.3rem; margin-top: 2px;"></i>
+              <div>
+                <strong style="color: var(--accent-amber); font-size: 0.9rem; display: block; margin-bottom: 4px;">Provider Not Found</strong>
+                <span style="color: var(--text-main); font-size: 0.78rem; line-height: 1.4; display: block; margin-bottom: 8px;">${notFoundMsg}</span>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Please check the spelling or select a verified provider from the Quick Suggestions above (e.g. <strong>Gemini</strong>, <strong>Groq</strong>, <strong>Cerebras</strong>, <strong>OpenRouter</strong>).</div>
+              </div>
+            </div>
+          </div>
+        `;
       }
     } catch (err) {
       if (resContainer) {

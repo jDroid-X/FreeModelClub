@@ -65,6 +65,26 @@ class RegistrationViewHelper {
                   <option value="Coding" ${m.coreSkill === 'Coding' ? 'selected' : ''}>Coding</option>
                   <option value="Math & Logic" ${m.coreSkill === 'Math & Logic' ? 'selected' : ''}>Math & Logic</option>
                   <option value="Vision" ${m.coreSkill === 'Vision' ? 'selected' : ''}>Vision</option>
+                ${isDeprecated ? '<span class="badge badge-rose" style="font-size: 0.6rem; margin-left: 4px;">Deprecated</span>' : ''}
+              </td>
+              <td>
+                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'family', this.value)" ${isDeprecated ? 'disabled' : ''}>
+                  <option value="General" ${(!m.family || m.family === 'General') ? 'selected' : ''}>General</option>
+                  <option value="Llama" ${m.family === 'Llama' ? 'selected' : ''}>Llama</option>
+                  <option value="Qwen" ${m.family === 'Qwen' ? 'selected' : ''}>Qwen</option>
+                  <option value="Mistral" ${m.family === 'Mistral' ? 'selected' : ''}>Mistral</option>
+                  <option value="Gemini" ${m.family === 'Gemini' ? 'selected' : ''}>Gemini</option>
+                  <option value="Claude" ${m.family === 'Claude' ? 'selected' : ''}>Claude</option>
+                  <option value="DeepSeek" ${m.family === 'DeepSeek' ? 'selected' : ''}>DeepSeek</option>
+                  <option value="Custom" ${m.family === 'Custom' ? 'selected' : ''}>Custom</option>
+                </select>
+              </td>
+              <td>
+                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'coreSkill', this.value)" ${isDeprecated ? 'disabled' : ''}>
+                  <option value="General Knowledge" ${(!m.coreSkill || m.coreSkill === 'General Knowledge') ? 'selected' : ''}>General Knowledge</option>
+                  <option value="Coding" ${m.coreSkill === 'Coding' ? 'selected' : ''}>Coding</option>
+                  <option value="Math & Logic" ${m.coreSkill === 'Math & Logic' ? 'selected' : ''}>Math & Logic</option>
+                  <option value="Vision" ${m.coreSkill === 'Vision' ? 'selected' : ''}>Vision</option>
                   <option value="Agentic Reasoning" ${m.coreSkill === 'Agentic Reasoning' ? 'selected' : ''}>Agentic Reasoning</option>
                   <option value="Fast Chat" ${m.coreSkill === 'Fast Chat' ? 'selected' : ''}>Fast Chat</option>
                 </select>
@@ -116,7 +136,6 @@ class RegistrationViewHelper {
     `;
   }
 
-
   static renderDiscoveredModelsContainerHtml(fetchedModels) {
     if (!fetchedModels || fetchedModels.length === 0) {
       return `<p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin: 6px 0;">Click 'Search Free Models' above to discover provider models.</p>`;
@@ -138,22 +157,19 @@ class RegistrationViewHelper {
     `;
   }
 
-  // HC-02: Chips derived from all known provider DB keys — add new providers here only.
+  // HC-02: Chips derived from all known provider DB keys — Gemini first, followed by top 10 providers
   static getProviderChips() {
     return [
-      { id: 'groq', label: 'Groq' },
-      { id: 'openrouter', label: 'OpenRouter' },
       { id: 'gemini', label: 'Gemini' },
-      { id: 'together', label: 'Together AI' },
-      { id: 'mistral', label: 'Mistral' },
-      { id: 'ollama', label: 'Ollama Local' },
-      { id: 'sambanova', label: 'SambaNova' },
-      { id: 'nvidia', label: 'NVIDIA NIM' },
+      { id: 'groq', label: 'Groq' },
       { id: 'cerebras', label: 'Cerebras' },
+      { id: 'openrouter', label: 'OpenRouter' },
+      { id: 'mistral', label: 'Mistral' },
+      { id: 'together', label: 'Together AI' },
+      { id: 'sambanova', label: 'SambaNova' },
       { id: 'deepseek', label: 'DeepSeek' },
-      { id: 'hyperbolic', label: 'Hyperbolic' },
-      { id: 'bynara', label: 'Bynara' },
-      { id: 'opencode', label: 'Opencode' },
+      { id: 'nvidia', label: 'NVIDIA NIM' },
+      { id: 'ollama', label: 'Ollama Local' },
       { id: 'agentrouter', label: 'AgentRouter' }
     ];
   }
@@ -177,7 +193,7 @@ class RegistrationViewHelper {
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);">Target Provider Name:</label>
             <div style="display: flex; gap: 8px;">
-              <input type="text" id="agent-provider-query" class="form-control" placeholder="e.g. SambaNova, NVIDIA, Groq, Gemini, Cerebras..." value="${initialQuery}" onkeydown="if(event.key==='Enter'){ event.preventDefault(); RegistrationView.runProviderAgentSearch(); }" />
+              <input type="text" id="agent-provider-query" class="form-control" placeholder="e.g. Gemini, Groq, Cerebras, OpenRouter, SambaNova..." value="${initialQuery}" onkeydown="if(event.key==='Enter'){ event.preventDefault(); RegistrationView.runProviderAgentSearch(); }" />
               <button type="button" class="btn btn-emerald" onclick="RegistrationView.runProviderAgentSearch()" title="Check & Search Provider Info">
                 <i class="fa-solid fa-circle-check"></i> Check & Search
               </button>
@@ -249,7 +265,7 @@ class RegistrationViewHelper {
 
         <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">${p.description || ''}</p>
 
-        <div class="grid-2" style="gap: 8px; font-size: 0.78rem; margin-bottom: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.78rem; margin-bottom: 10px;">
           <div><strong>1. Provider ID:</strong> <code>${(p.rawId || p.id)}</code></div>
           <div><strong>2. Display Name:</strong> <strong style="color: var(--text-main);">${p.displayName}</strong></div>
           <div><strong>3. Protocol Connector:</strong> <span class="badge badge-cyan">${p.protocol}</span></div>

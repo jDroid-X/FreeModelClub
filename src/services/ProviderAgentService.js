@@ -133,31 +133,12 @@ class ProviderAgentService {
       };
     }
 
-    // STEP 4: Dynamic Heuristic Model Catalog Generation
-    const cleanId = cleanQuery.replace(/[^a-zA-Z0-9_-]/gi, '');
+    // STEP 3: Provider Not Found — Do NOT generate fake dummy data
     return {
-      success: true,
-      found: true,
-      matchType: 'Heuristic Live Pattern Discovery',
-      agentModelUsed: this.getActiveModelConnectedName(),
-      provider: {
-        rawId: cleanId,
-        displayName: `${query.charAt(0).toUpperCase() + query.slice(1)} Cloud AI`,
-        protocol: 'OpenAI Compatible',
-        baseUrl: `https://api.${cleanId}.ai/v1`,
-        apiKeyHelp: `Generate free API Key at https://platform.${cleanId}.ai/keys`,
-        apiKeyUrl: `https://platform.${cleanId}.ai/keys`,
-        keyPrefix: `${cleanId}_`,
-        freeTierQuota: '1,000 Free Credits / Standard Free Tier',
-        tokenDetailsHelp: `Rate limits and free credits policy configured by ${query} platform.`,
-        description: `Custom ${query} provider endpoint supporting OpenAI compatible interface with high-performance free models.`,
-        models: [
-          { modelId: `${cleanId}-llama-3.3-70b-instruct`, modelName: `${query} Llama 3.3 70B Instruct`, family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072, maxTokens: 4096, isFree: true },
-          { modelId: `${cleanId}-qwen-2.5-coder-32b`, modelName: `${query} Qwen 2.5 Coder 32B`, family: 'Qwen', coreSkill: 'Full-Stack Code Generation', contextWindow: 65536, maxTokens: 4096, isFree: true },
-          { modelId: `${cleanId}-deepseek-r1`, modelName: `${query} DeepSeek R1 Reasoning`, family: 'DeepSeek', coreSkill: 'Deep Math & Logic', contextWindow: 65536, maxTokens: 8192, isFree: true },
-          { modelId: `${cleanId}-default-free-8b`, modelName: `${query} Fast Instant 8B`, family: 'General', coreSkill: 'Ultra-Fast Chat', contextWindow: 32768, maxTokens: 4096, isFree: true }
-        ]
-      }
+      success: false,
+      found: false,
+      message: `No verified AI provider matching "${query}" was found. Please check the spelling or select a verified provider from the Quick Suggestions.`,
+      agentModelUsed: this.getActiveModelConnectedName()
     };
   }
 
