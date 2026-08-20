@@ -9,7 +9,7 @@ class SettingsViewHelper {
   static getThemesList() {
     return [
       // 7 Official Metal Themes
-      { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#64748b', bg: '#eef3f8', sidebar: '#dde7f1', card: '#ffffff', text: '#0f172a', contrast: '20% Light Depth', icon: 'fa-shield-halved' },
+      { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#dde7f1', bg: '#eef3f8', sidebar: '#64748b', card: '#ffffff', text: '#0f172a', contrast: '20% Light Depth', icon: 'fa-shield-halved' },
       { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#fbbf24', bg: '#120e04', sidebar: '#1a1406', card: '#241b08', text: '#fffbeb', contrast: '25% Dark Depth', icon: 'fa-crown' },
       { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#475569', bg: '#dbe3ec', sidebar: '#c4d0db', card: '#f8fafc', text: '#0f172a', contrast: '20% Light Depth', icon: 'fa-gem' },
       { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#38bdf8', bg: '#070a10', sidebar: '#0c111a', card: '#161e2c', text: '#f8fafc', contrast: '25% Dark Depth', icon: 'fa-cube' },

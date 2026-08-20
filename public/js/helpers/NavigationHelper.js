@@ -250,7 +250,7 @@ class NavigationHelper {
       const themes = typeof SettingsViewHelper !== 'undefined' 
         ? SettingsViewHelper.getThemesList() 
         : [
-            { id: 'theme-platinum', name: 'Platinum Light Metal', accent: '#64748b', category: 'Metal' },
+            { id: 'theme-platinum', name: 'Platinum Light Metal', accent: '#dde7f1', category: 'Metal' },
             { id: 'theme-gold', name: 'Gold Dark Metal', accent: '#fbbf24', category: 'Metal' },
             { id: 'theme-silver', name: 'Silver Light Metal', accent: '#475569', category: 'Metal' },
             { id: 'theme-titanium', name: 'Titanium Dark Metal', accent: '#38bdf8', category: 'Metal' },
