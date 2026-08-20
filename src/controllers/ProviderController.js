@@ -475,13 +475,36 @@ class ProviderController {
         probeRes.on('end', () => {});
         const latencyMs = Date.now() - startTime;
         ProviderModel.update(id, { pingLatencyMs: latencyMs });
-        safeRespond(200, { success: probeRes.statusCode < 500, latencyMs, statusCode: probeRes.statusCode });
+        const isAuthError = probeRes.statusCode === 401 || probeRes.statusCode === 403;
+        safeRespond(200, {
+          success: probeRes.statusCode >= 200 && probeRes.statusCode < 400,
+          latencyMs,
+          statusCode: probeRes.statusCode,
+          authRequired: isAuthError,
+          providerId: id,
+          providerName: provider.displayName || id,
+          error: isAuthError ? 'Authentication Required: API key is invalid or missing.' : (probeRes.statusCode >= 400 ? `HTTP ${probeRes.statusCode}` : null),
+          message: isAuthError ? `Endpoint reachable (${latencyMs}ms), but authentication failed (HTTP ${probeRes.statusCode}). Please update your API key.` : (probeRes.statusCode < 400 ? 'Ping successful' : `Endpoint returned HTTP ${probeRes.statusCode}`)
+        });
       });
       reqObj.on('error', (e) => safeRespond(200, { success: false, latencyMs: Date.now() - startTime, error: e.message }));
       reqObj.on('timeout', () => { reqObj.destroy(); safeRespond(200, { success: false, latencyMs: Date.now() - startTime, error: 'ETIMEDOUT' }); });
     } catch (e) {
       safeRespond(200, { success: false, latencyMs: Date.now() - startTime, error: e.message });
     }
+  }
+
+  static updateKey(req, res) {
+    const { id } = req.params;
+    const { apiKey } = req.body || {};
+    if (!apiKey) {
+      return res.status(400).json({ success: false, message: 'API key is required.' });
+    }
+    const updated = ProviderModel.update(id, { apiKey, isActive: true });
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Provider not found.' });
+    }
+    return res.json({ success: true, message: `API key updated and provider activated.`, provider: ProviderModel.getById(id, true) });
   }
 
   // New endpoint to report which model is currently used by the combo agent

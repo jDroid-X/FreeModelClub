@@ -23,14 +23,14 @@ class DatabaseSeed {
       appName: 'FreeModelsClub Localhost Smart Chatbot',
       port: 12247,
       baseUrl: 'http://localhost:12247/v1',
-      activeProviderId: null,
-      default_fallback_model_id: 'llama-3.3-70b-versatile',
+      activeProviderId: 'gemini',
+      default_fallback_model_id: 'gemini-2.5-flash',
       max_failover_attempts: 3,
       provider_ping_timeout_ms: 5000,
       memoReferenceUrls: [
+        'https://ai.google.dev/gemini-api/docs/models/gemini',
         'https://console.groq.com/docs/models',
-        'https://openrouter.ai/discover?lane=free',
-        'https://ai.google.dev/gemini-api/docs/models/gemini'
+        'https://openrouter.ai/discover?lane=free'
       ],
       updatedAt: new Date().toISOString()
     };
@@ -38,6 +38,17 @@ class DatabaseSeed {
 
   static getDefaultProviders() {
     return [
+      {
+        id: 'gemini',
+        displayName: 'Google Gemini AI Studio (OpenAI Endpoint)',
+        protocol: 'Gemini API',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+        apiKey: '',
+        isActive: false,
+        freeOnly: true,
+        docsUrl: 'https://ai.google.dev/gemini-api/docs/models/gemini',
+        registeredAt: new Date().toISOString()
+      },
       {
         id: 'groq',
         displayName: 'Groq Cloud API (Ultra-Fast Free Tier)',
@@ -61,17 +72,6 @@ class DatabaseSeed {
         registeredAt: new Date().toISOString()
       },
       {
-        id: 'gemini',
-        displayName: 'Google Gemini AI Studio (OpenAI Endpoint)',
-        protocol: 'Gemini API',
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-        apiKey: '',
-        isActive: false,
-        freeOnly: true,
-        docsUrl: 'https://ai.google.dev/gemini-api/docs/models/gemini',
-        registeredAt: new Date().toISOString()
-      },
-      {
         id: 'ollama',
         displayName: 'Ollama / Localhost Models',
         protocol: 'Ollama Local API',
@@ -87,6 +87,72 @@ class DatabaseSeed {
 
   static getDefaultModels() {
     return [
+      {
+        id: 'gemini-2.5-pro',
+        providerId: 'gemini',
+        providerName: 'Google Gemini AI Studio',
+        modelId: 'gemini-2.5-pro',
+        modelName: 'Gemini 2.5 Pro (Ultra Flagship Free Tier)',
+        isFree: true,
+        family: 'Gemini Family',
+        coreSkill: 'Advanced Reasoning & Coding',
+        contextWindow: 1048576,
+        maxTokens: 65536,
+        latencyMs: 120,
+        totalPromptTokens: 0,
+        totalCompletionTokens: 0,
+        requestCount: 0,
+        status: 'Active',
+        metadata: {
+          description: 'Google state-of-the-art 1M context multimodal reasoning powerhouse model.',
+          speedTokensPerSec: 180,
+          freeTierLimit: '5 RPM / 250 RPD'
+        }
+      },
+      {
+        id: 'gemini-2.5-flash',
+        providerId: 'gemini',
+        providerName: 'Google Gemini AI Studio',
+        modelId: 'gemini-2.5-flash',
+        modelName: 'Gemini 2.5 Flash (Ultra Fast Free Tier)',
+        isFree: true,
+        family: 'Gemini Family',
+        coreSkill: 'High-Speed Multimodal Chat',
+        contextWindow: 1048576,
+        maxTokens: 65536,
+        latencyMs: 80,
+        totalPromptTokens: 0,
+        totalCompletionTokens: 0,
+        requestCount: 0,
+        status: 'Active',
+        metadata: {
+          description: 'Next-gen lightweight multimodal model offering sub-second latencies and massive context.',
+          speedTokensPerSec: 350,
+          freeTierLimit: '15 RPM / 1,500 RPD'
+        }
+      },
+      {
+        id: 'gemini-2.0-flash',
+        providerId: 'gemini',
+        providerName: 'Google Gemini AI Studio',
+        modelId: 'gemini-2.0-flash',
+        modelName: 'Gemini 2.0 Flash (Free)',
+        isFree: true,
+        family: 'Gemini Family',
+        coreSkill: 'Multimodal Chat & Realtime Agents',
+        contextWindow: 1048576,
+        maxTokens: 8192,
+        latencyMs: 95,
+        totalPromptTokens: 0,
+        totalCompletionTokens: 0,
+        requestCount: 0,
+        status: 'Active',
+        metadata: {
+          description: 'High performance Google Gemini 2.0 generation model with multimodal tool execution.',
+          speedTokensPerSec: 320,
+          freeTierLimit: '15 RPM / 1,500 RPD'
+        }
+      },
       {
         id: 'llama-3.3-70b-versatile',
         providerId: 'groq',

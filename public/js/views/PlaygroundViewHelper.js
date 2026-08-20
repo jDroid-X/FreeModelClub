@@ -310,6 +310,95 @@ class PlaygroundViewHelper {
       </div>
     `;
   }
+
+  static renderEmptyStateHeroHtml() {
+    return `
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 9px 6px; max-width: 800px; margin: 0 auto; width: 100%;">
+        <div style="width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, var(--primary), var(--accent-cyan)); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 2.2rem; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); text-align: center; margin-bottom: 32px; max-width: 540px; line-height: 1.6;">
+          Select a starter prompt below or enter your task to begin building with AI.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; width: 100%;">
+          <div class="glass-panel" style="padding: 5px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s ease; display: flex; flex-direction: column; gap: 5px;" onclick="PlaygroundView.sendPresetPrompt('/explain Scaffold a new OOPS MVC module with automated tests')" onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)';">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); color: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fa-solid fa-cubes"></i></div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Build OOPS MVC Module</div>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">Scaffold a clean architecture controller, view, and model schema.</div>
+          </div>
+          <div class="glass-panel" style="padding: 5px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s ease; display: flex; flex-direction: column; gap: 5px;" onclick="PlaygroundView.sendPresetPrompt('/fix Analyze memory usage and identify async bottlenecks')" onmouseover="this.style.borderColor='var(--accent-cyan)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)';">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fa-solid fa-gauge-high"></i></div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Performance Audit</div>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">Detect event loop blocks, memory leaks, and unhandled promises.</div>
+          </div>
+          <div class="glass-panel" style="padding: 5px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s ease; display: flex; flex-direction: column; gap: 5px;" onclick="PlaygroundView.sendPresetPrompt('/security Scan endpoints against OWASP top 10 standards')" onmouseover="this.style.borderColor='var(--accent-emerald)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)';">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fa-solid fa-shield-halved"></i></div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Security Scan</div>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">Audit payload sizes, XSS escaping, CORS headers, and API keys.</div>
+          </div>
+          <div class="glass-panel" style="padding: 5px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s ease; display: flex; flex-direction: column; gap: 5px;" onclick="PlaygroundView.sendPresetPrompt('/tests Write unit tests with 100% coverage')" onmouseover="this.style.borderColor='var(--accent-amber)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)';">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;"><i class="fa-solid fa-vial-circle-check"></i></div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Generate Unit Tests</div>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">Create unit, integration, and UI regression test suites.</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  static quickOpenFile() {
+    if (!IDEWorkspaceView || !IDEWorkspaceView.workspacePath) {
+      ModalDialog.showNotification('Please open a workspace first using IDE Mode.', 'warning');
+      return;
+    }
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-folder-open" style="color: #6b9bff; margin-right: 8px;"></i>Quick Open File',
+      content: `<div style="padding: 8px 0;"><input type="text" id="quick-open-input" placeholder="Type to search files..." style="width: 100%; padding: 8px 12px; background: #2d2d2d; border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 0.8rem;" onkeyup="IDEWorkspaceView.filterQuickOpenFiles(this.value)"><div id="quick-open-results" style="max-height: 300px; overflow-y: auto; margin-top: 8px;"><div style="padding: 8px; color: #858585; font-size: 0.75rem;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div></div></div>`,
+      confirmText: 'Cancel',
+      onCancel: () => ModalDialog.closeModal()
+    });
+    setTimeout(() => {
+      IDEWorkspaceView.loadFileTreeForQuickOpen(IDEWorkspaceView.workspacePath);
+      const input = document.getElementById('quick-open-input');
+      if (input) input.focus();
+    }, 100);
+  }
+
+  static showChatView() {
+    PlaygroundView.activeTab = 'agents-window';
+    const container = document.getElementById('fmc-main-content');
+    if (container) container.style.display = 'none';
+    const chatContainer = document.querySelector('.glass-panel');
+    if (chatContainer) PlaygroundView.render(chatContainer);
+  }
+
+  static async refreshProjectPath() {
+    const pathEl = document.getElementById('project-path');
+    if (!pathEl) return;
+    const workspacePath = localStorage.getItem('fmc_project_workspace_path');
+    pathEl.textContent = workspacePath || 'No workspace set';
+  }
+
+  static togglePanel(panelName) {
+    const projectPanel = document.getElementById('project-panel');
+    const chatContainer = document.getElementById('session-list-container');
+    if (panelName === 'project') {
+      if (projectPanel) projectPanel.style.display = projectPanel.style.display === 'none' ? 'flex' : 'none';
+      if (chatContainer && projectPanel.style.display === 'flex') chatContainer.style.display = 'none';
+      else if (chatContainer) chatContainer.style.display = 'flex';
+    } else if (panelName === 'chat') {
+      if (projectPanel) projectPanel.style.display = 'none';
+      if (chatContainer) chatContainer.style.display = 'flex';
+    }
+  }
 }
 
 window.PlaygroundViewHelper = PlaygroundViewHelper;

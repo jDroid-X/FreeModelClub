@@ -83,6 +83,13 @@ class ApiService {
     return this.request('/api/providers/all');
   }
 
+  static updateProviderApiKey(providerId, apiKey) {
+    return this.request(`/api/providers/${providerId}/update-key`, {
+      method: 'POST',
+      body: JSON.stringify({ apiKey })
+    });
+  }
+
   static testConnection(baseUrl, apiKey, providerId = null) {
     return this.request('/api/providers/test-connection', {
       method: 'POST',

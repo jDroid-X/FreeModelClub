@@ -19,6 +19,7 @@ router.post('/agent-lookup', ProviderController.agentLookup);
 router.post('/token-agent/sync-all', ProviderController.syncTokens);
 router.post('/register', ProviderController.register);
 router.post('/:id/sync-limits', ProviderController.syncLimits);
+router.post('/:id/update-key', ProviderController.updateKey);
 router.put('/:id', ProviderController.update);
 router.post('/:id/ping', ProviderController.ping);
 router.get('/archived', ProviderController.getArchived);

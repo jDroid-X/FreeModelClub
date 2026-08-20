@@ -277,133 +277,6 @@ class RegistrationView {
     this.fetchedModels = [];
     this.renderDiscoveredModelsContainer();
     this.renderStagedTable();
-    this.testConnection();
-  }
-
-  static onProtocolChange(proto) {
-    const urlInput = document.getElementById('reg-prov-url');
-    const defaultUrls = this.getDefaultUrls();
-    if (urlInput && defaultUrls[proto]) urlInput.value = defaultUrls[proto];
-    const idInput = document.getElementById('reg-prov-id');
-    const nameInput = document.getElementById('reg-prov-name');
-    if (idInput && !idInput.value) idInput.value = proto.toLowerCase().split(' ')[0];
-    if (nameInput && !nameInput.value) nameInput.value = `${proto.split(' ')[0]} Cloud API`;
-  }
-
-  static toggleKeyVisibility() {
-    const k = document.getElementById('reg-prov-key'); const eye = document.getElementById('toggle-key-eye'); if (!k) return;
-    k.type = k.type === 'password' ? 'text' : 'password';
-    if (eye) eye.className = k.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
-  }
-
-  static async testConnection(btn) {
-    let url = document.getElementById('reg-prov-url')?.value;
-    let key = document.getElementById('reg-prov-key')?.value;
-    let proto = document.getElementById('reg-prov-protocol')?.value;
-    let pid = document.getElementById('reg-prov-id')?.value;
-
-    if (!url && proto) {
-      const defaultUrls = this.getDefaultUrls();
-      url = defaultUrls[proto] || '';
-      if (url && document.getElementById('reg-prov-url')) {
-        document.getElementById('reg-prov-url').value = url;
-      }
-    }
-
-    if (!pid && proto) {
-      pid = proto.toLowerCase().split(' ')[0].replace(/[^a-z0-9_-]/gi, '');
-      if (pid && document.getElementById('reg-prov-id')) {
-        document.getElementById('reg-prov-id').value = pid;
-      }
-    }
-
-    let provId = pid || null;
-    // HC-17: Normalize provider IDs using alias map — covers typos and common variants
-    if (provId) {
-      const alias = this.PROVIDER_ALIASES[provId.toLowerCase()];
-      if (alias) provId = alias;
-    }
-    if (pid && !this.providersList.some(p => p.id === pid)) {
-      provId = pid;
-    }
-    if (!url) return ModalDialog.showNotification('Please enter a Base API URL before testing.', 'warning');
-
-    const orig = btn ? btn.innerHTML : ''; if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
-    try {
-      const res = await ApiService.testProviderConnection({ providerId: provId, baseUrl: url, apiKey: key, protocol: proto });
-      const badgeEl = document.getElementById('connection-status-badge');
-
-      if (res.success) {
-        if (badgeEl) {
-          badgeEl.className = 'badge badge-emerald';
-          badgeEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Connection PASS (${res.latencyMs !== undefined ? res.latencyMs : 45}ms)`;
-        }
-        ModalDialog.showNotification(`Connection Success! Ping: ${res.latencyMs !== undefined ? res.latencyMs : 45}ms. Endpoint verified OK.`, 'success');
-      } else {
-        if (badgeEl) {
-          badgeEl.className = 'badge badge-rose';
-          badgeEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Connection FAIL`;
-        }
-        const errInfo = res.errorInfo || (typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getByStatusCode(res.statusCode, res.error || res.message) : { code: 'ERR_FAIL', title: 'Connection Test Failed', definition: res.error || res.message, guidance: 'Verify Base URL and API key credentials.' });
-
-        ModalDialog.showCustomModal({
-          title: `<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i> Connection Test Result: FAIL`,
-          content: typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-rose">${errInfo.definition || res.message}</div>`,
-          confirmText: 'Acknowledge',
-          onConfirm: () => {}
-        });
-      }
-    } catch (e) {
-      const errInfo = typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getByStatusCode(null, e.message) : { code: 'ERR_CLIENT', title: 'Client Exception', definition: e.message, guidance: 'Check network connectivity.' };
-      ModalDialog.showCustomModal({
-        title: `<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i> Test Connection Exception`,
-        content: typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-rose">${e.message}</div>`,
-        confirmText: 'Acknowledge',
-        onConfirm: () => {}
-      });
-    } finally {
-      if (btn) btn.innerHTML = orig;
-    }
-  }
-
-  static openProviderAgentModal(initialQuery = '') {
-    if (typeof ProviderAgent !== 'undefined' && ProviderAgent.openPopup) {
-      ProviderAgent.openPopup(initialQuery);
-    } else {
-      ModalDialog.showCustomModal({
-        title: '<i class="fa-solid fa-robot" style="color: var(--accent-emerald);"></i> Provider Agent — Online Web & AI Search Engine',
-        content: RegistrationViewHelper.renderProviderAgentModalHtml(initialQuery),
-        confirmText: 'Close', onConfirm: () => {}
-      });
-      setTimeout(() => { document.getElementById('agent-provider-query')?.focus(); }, 150);
-      if (initialQuery) setTimeout(() => this.runProviderAgentSearch(), 200);
-    }
-  }
-
-  static async runProviderAgentSearch() {
-    const input = document.getElementById('agent-provider-query') || document.getElementById('provider-agent-query-input');
-    const container = document.getElementById('provider-agent-results-container') || document.getElementById('provider-agent-results-pane');
-    if (!input || !container) return;
-
-    const query = input.value.trim();
-    if (!query) return ModalDialog.showNotification('Please enter a provider name.', 'warning');
-
-    container.innerHTML = '<div style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--accent-cyan);"></i> Searching live online API endpoints & discovering free model specs...</div>';
-    try {
-      const res = await ApiService.agentLookupProvider(query);
-      if (res.success && res.provider) {
-        container.innerHTML = RegistrationViewHelper.renderProviderAgentResultHtml(res);
-      } else {
-        container.innerHTML = `<div class="alert alert-warning">No provider specs found for '${query}'.</div>`;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
-    }
-  }
-
-  static applyProviderData(id, encName, proto, encUrl, encModels = '') {
-    const name = decodeURIComponent(encName), url = decodeURIComponent(encUrl);
-    document.getElementById('reg-prov-id').value = id;
     document.getElementById('reg-prov-name').value = name;
     document.getElementById('reg-prov-protocol').value = proto;
     document.getElementById('reg-prov-url').value = url;
@@ -765,6 +638,126 @@ class RegistrationView {
     ModalDialog.showNotification('Registration form cleared. Ready for new provider.', 'info');
   }
 
+  static getDefaultModelsForProtocol(proto) {
+    return RegistrationViewHelper.getDefaultModelsForProtocol(proto);
+  }
+
+  static renderDiscoveredModelsContainer() {
+    const c = document.getElementById('models-checkbox-container');
+    const badge = document.getElementById('discovered-models-badge');
+    if (badge) badge.innerText = `Step 1: Discovered Free Models Pool (${this.fetchedModels.length})`;
+    if (c) c.innerHTML = RegistrationViewHelper.renderDiscoveredModelsContainerHtml(this.fetchedModels);
+  }
+
+  static showDiscoveredModelsListDetail() {
+    if (!this.fetchedModels || this.fetchedModels.length === 0) {
+      ModalDialog.showNotification('No models discovered yet. Please search first.', 'warning');
+      return;
+    }
+    const listItems = this.fetchedModels.map(m => ({
+      id: m.id,
+      title: m.modelName || m.modelId,
+      subtitle: `${m.family || 'General'} | ${m.coreSkill || 'Reasoning'}`,
+      description: `Context Window: ${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'} tokens. This model is ready to be staged for registration.`,
+      tags: [m.family || 'General', m.isFree ? 'Free' : 'Paid']
+    }));
+    ModalDialog.showListDetailModal({
+      title: 'Discovered Models Detailed View',
+      listItems,
+      onSelect: (item) => {
+        ModalDialog.showNotification(`Selected ${item.title}. You can add it to the staged list.`, 'info');
+      }
+    });
+  }
+
+
+  static renderStagedTable() { 
+    const c = document.getElementById('staged-models-container'); 
+    if (c) c.innerHTML = RegistrationViewHelper.renderStagedTableHtml(this.stagedModels); 
+    sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
+    const badge = document.getElementById('staged-models-badge');
+    if (badge) badge.innerText = `Step 2: Staged Models to Save (${this.stagedModels.length})`;
+  }
+
+  static addSelectedFetchedModels() { 
+    const cbs = document.querySelectorAll('.fetched-model-cb:checked'); 
+    const selectedIds = new Set(Array.from(cbs).map(c => c.value));
+    const selected = this.fetchedModels.filter(m => selectedIds.has(m.id)); 
+    
+    const existingIds = new Set(this.stagedModels.map(m => m.id));
+    selected.forEach(s => { 
+      if (!existingIds.has(s.id)) this.stagedModels.push(s); 
+    }); 
+    this.renderStagedTable(); 
+  }
+  
+  static removeStagedModel(id) { this.stagedModels = this.stagedModels.filter(m => m.id !== id); this.renderStagedTable(); }
+
+  static async deleteDeprecatedModel(id) {
+    if (!confirm('Are you sure you want to permanently delete this deprecated model from the database?')) return;
+    try {
+      const res = await fetch(`/api/models/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        ModalDialog.showNotification('Model permanently deleted.', 'success');
+        this.stagedModels = this.stagedModels.filter(m => m.id !== id);
+        this.renderStagedTable();
+      } else {
+        ModalDialog.showNotification(data.message || 'Failed to delete model.', 'error');
+      }
+    } catch (e) {
+      ModalDialog.showNotification('Error deleting model: ' + e.message, 'error');
+    }
+  }
+  static updateStagedModel(id, field, value) {
+    const model = this.stagedModels.find(m => m.id === id);
+    if (model) {
+      model[field] = value;
+      sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
+    }
+  }
+  static toggleSelectAllStagedModels(checked) { document.querySelectorAll('.staged-model-cb').forEach(cb => cb.checked = checked); }
+  
+  static removeSelectedStagedModels() { 
+    const selected = new Set(Array.from(document.querySelectorAll('.staged-model-cb:checked')).map(cb => cb.value)); 
+    this.stagedModels = this.stagedModels.filter(m => !selected.has(m.id)); 
+    this.renderStagedTable(); 
+  }
+  
+  static clearAllStagedModels() {
+    this.stagedModels = [];
+    this.renderStagedTable();
+    ModalDialog.showNotification('All staged models cleared.', 'info');
+  }
+  static toggleAutoSelectAll(checked) { document.querySelectorAll('.fetched-model-cb').forEach(cb => cb.checked = checked); }
+  static validateId(el) {
+    const err = document.getElementById('reg-prov-id-err');
+    if (!el || !err) return;
+    if (/\s/.test(el.value)) err.innerText = 'Spaces are not allowed.';
+    else if (/[^a-zA-Z0-9_-]/.test(el.value)) err.innerText = 'Only letters, numbers, _, and - allowed.';
+    else err.innerText = '';
+  }
+
+  static validateUrl(el) {
+const err = document.getElementById('reg-prov-url-err');
+    if (!el || !err) return;
+    if (el.value.length > 0 && !el.value.startsWith('http://') && !el.value.startsWith('https://')) {
+      err.innerText = 'Must include http:// or https:// protocol.';
+    } else {
+      err.innerText = '';
+    }
+  }
+
+  static resetFormFields() {
+    document.getElementById('provider-registration-form')?.reset();
+    this.stagedModels = []; this.fetchedModels = [];
+    sessionStorage.removeItem('fmc_draft_models');
+    this.renderDiscoveredModelsContainer();
+    this.renderStagedTable();
+    setTimeout(() => { document.getElementById('reg-prov-id')?.focus(); }, 100);
+    ModalDialog.showNotification('Registration form cleared. Ready for new provider.', 'info');
+  }
+
   static async handleRegister(e) {
     if (e && e.preventDefault) e.preventDefault();
     let id = document.getElementById('reg-prov-id')?.value;
@@ -843,7 +836,7 @@ class RegistrationView {
       this.stagedModels = defaults.map(m => ({ id: `${cleanId}_${m.id}`, modelId: m.id, modelName: m.name, family: m.family, coreSkill: m.coreSkill, contextWindow: 128000, providerId: `${cleanId}`, providerName: name, isFree: true }));
       this.renderStagedTable();
     }
-
+    
     if (this.stagedModels && this.stagedModels.length > 0) {
       ValidationNotifier.showOptionPopup({
         title: 'Verify Staged Models',
@@ -899,6 +892,7 @@ class RegistrationView {
           regBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Registered Successfully';
         }
         ModalDialog.showNotification(`Provider '${name}' registered successfully with ${this.stagedModels.length} model(s)!`, 'success');
+        window.dispatchEvent(new CustomEvent('fmc-providers-updated'));
         if (typeof MonitoringAgent !== 'undefined') MonitoringAgent.syncAllPages();
         else if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
         this.promptAddComboAfterRegister(name, this.stagedModels);

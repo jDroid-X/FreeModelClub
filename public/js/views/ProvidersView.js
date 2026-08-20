@@ -199,6 +199,7 @@ class ProvidersView {
                           <i class="fa-solid fa-layer-group" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="View Associated Models" onclick="app.navigate('model-club');"></i>
                           <i class="fa-solid fa-chart-simple" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Telemetry / Tokens" onclick="app.navigate('reports');"></i>
                           <i class="fa-solid fa-play" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Test Ping Connection" onclick="ProvidersView.testPing('${p.id}');"></i>
+                          <i class="fa-solid fa-key" style="color: var(--accent-amber); cursor: pointer; transition: color 0.2s;" title="Add / Update API Key" onclick="ProvidersView.promptEditApiKey('${p.id}')"></i>
                           <i class="fa-regular fa-copy" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Copy API Key" onclick="ProvidersView.copyProviderKey('${p.id}')"></i>
                           <i class="fa-solid fa-sliders" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Configure Quota & Alerts" onclick="ProvidersView.configureQuota('${p.id}')"></i>
                           <i class="fa-solid fa-globe" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Open Developer Portal" onclick="ProvidersView.openProviderModels('${p.baseUrl || ''}', '${p.docsUrl || ''}', '${(p.displayName || p.id).replace(/'/g, "\\\'")}')"></i>
@@ -558,12 +559,78 @@ class ProvidersView {
     }
   }
 
+  static async promptEditApiKey(providerId, prefillKey = '', fromPingFailure = false) {
+    const res = await ApiService.getAllProviders();
+    const provider = (res.providers || []).find(p => p.id === providerId);
+    if (!provider) return ModalDialog.showNotification('Provider not found', 'error');
+
+    const displayName = provider.displayName || provider.id;
+    const portalUrl = provider.docsUrl || (provider.id === 'gemini' ? 'https://aistudio.google.com/app/apikey' : (provider.id === 'groq' ? 'https://console.groq.com/keys' : 'https://openrouter.ai/keys'));
+
+    ModalDialog.showCustomModal({
+      title: `<i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> ${fromPingFailure ? 'Authentication Required (HTTP 401): ' : ''}Update API Key for ${displayName}`,
+      content: `
+        <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+          ${fromPingFailure ? `
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid var(--accent-amber); padding: 10px; border-radius: 6px; font-size: 0.8rem; color: var(--accent-amber);">
+              <i class="fa-solid fa-triangle-exclamation"></i> <strong>Endpoint Reachable:</strong> The server at <code>${provider.baseUrl}</code> is online, but returned <strong>HTTP 401 / 403 Unauthorized</strong>. Please enter or update your valid API key below to activate this provider.
+            </div>
+          ` : `
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              Enter or update your API key for <strong>${displayName}</strong>. Keys are encrypted with Zero-Trust protection.
+            </div>
+          `}
+          <div class="form-group">
+            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">API Key / Secret Token</label>
+            <div style="position: relative;">
+              <input type="password" id="modal-prov-key-input" class="form-control" placeholder="Enter API key..." value="${prefillKey}" style="padding-right: 36px; width: 100%; box-sizing: border-box;" />
+              <i class="fa-solid fa-eye" id="modal-toggle-key-eye" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-dim);" onclick="const k = document.getElementById('modal-prov-key-input'); k.type = k.type === 'password' ? 'text' : 'password'; this.className = k.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';"></i>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+            <a href="${portalUrl}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Get Free Key from ${displayName} Portal</a>
+            <button type="button" class="btn btn-link btn-xs" style="color: var(--text-dim);" onclick="navigator.clipboard.readText().then(t => { if(t) document.getElementById('modal-prov-key-input').value = t; });">Paste Clipboard</button>
+          </div>
+        </div>
+      `,
+      cancelText: 'Cancel',
+      confirmText: 'Save Key & Activate',
+      onConfirm: async () => {
+        const keyInput = document.getElementById('modal-prov-key-input');
+        const newKey = keyInput ? keyInput.value.trim() : '';
+        if (!newKey) {
+          ModalDialog.showNotification('API key cannot be empty.', 'warning');
+          return;
+        }
+        try {
+          const updateRes = await ApiService.updateProviderApiKey(providerId, newKey);
+          if (updateRes && (updateRes.success || updateRes.provider)) {
+            ModalDialog.showNotification(`API key updated and '${displayName}' activated!`, 'success');
+            window.dispatchEvent(new CustomEvent('fmc-providers-updated'));
+            if (typeof ProvidersView !== 'undefined' && ProvidersView.render) {
+              ProvidersView.render(document.getElementById('app'));
+            }
+            setTimeout(() => ProvidersView.testPing(providerId), 300);
+          } else {
+            ModalDialog.showNotification(`Failed to update key: ${updateRes.error || updateRes.message}`, 'error');
+          }
+        } catch (e) {
+          ModalDialog.showNotification(`Update error: ${e.message}`, 'error');
+        }
+      }
+    });
+    setTimeout(() => document.getElementById('modal-prov-key-input')?.focus(), 150);
+  }
+
   static async testPing(providerId) {
     ModalDialog.showNotification('Pinging provider base endpoint...', 'info');
     try {
       const res = await ApiService.pingProvider(providerId);
       if (res.success) {
         ModalDialog.showNotification(`Ping Successful! Latency: ${res.latencyMs || 45}ms`, 'success');
+      } else if (res.authRequired || res.statusCode === 401 || res.statusCode === 403 || (res.error && res.error.includes('401'))) {
+        // Direct option to add/update API key immediately instead of raw 401 failure
+        ProvidersView.promptEditApiKey(providerId, '', true);
       } else {
         const errInfo = res.errorInfo || (typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getByStatusCode(res.statusCode, res.error || res.message) : { code: 'ERR_PING_FAIL', title: 'Ping Test Failed', definition: res.error || res.message, guidance: 'Check provider API key and Base URL.' });
         ModalDialog.showCustomModal({
