@@ -1,0 +1,22 @@
+{
+  "models": [
+    {
+      "modelId": "gpt-4o-mini",
+      "coreSkill": "Coding",
+      "maxTokens": 8192,
+      "description": "OpenAI GPT‑4o Mini, strong coding capabilities"
+    },
+    {
+      "modelId": "claude-3-5-sonnet",
+      "coreSkill": "Reasoning",
+      "maxTokens": 10000,
+      "description": "Anthropic Claude 3.5 Sonnet, versatile reasoning"
+    },
+    {
+      "modelId": "gemini-1.5-flash",
+      "coreSkill": "Coding",
+      "maxTokens": 8192,
+      "description": "Google Gemini 1.5 Flash, efficient coding"
+    }
+  ]
+}

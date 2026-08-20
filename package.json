@@ -1,0 +1,38 @@
+{
+  "name": "free-models-club",
+  "version": "1.0.0",
+  "description": "Localhost service provider smart chatbot and OpenAI compatible API proxy using free models from multiple providers",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "npx playwright test",
+    "test:unit": "npx vitest run"
+  },
+  "keywords": [
+    "openai-compatible",
+    "free-models",
+    "groq",
+    "gemini",
+    "openrouter",
+    "chatbot",
+    "proxy"
+  ],
+  "author": "jdroidxy",
+  "license": "MIT",
+  "dependencies": {
+    "acorn": "^8.18.0",
+    "body-parser": "^1.20.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.2",
+    "machine-id": "^1.0.0",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "playwright": "^1.45.0",
+    "vitest": "^4.1.10"
+  }
+}

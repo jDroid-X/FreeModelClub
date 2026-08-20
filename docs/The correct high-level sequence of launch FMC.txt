@@ -1,0 +1,302 @@
+The correct high-level sequence I would expect
+
+For FreeModelsClub, I would structure the runtime/application flow approximately like this:
+
+                    APPLICATION START
+                 │                     │
+                 ▼                     ▼
+          AVAILABLE MODELS       Excluded/Logged
+                 │
+                 ▼
+        11. CAPABILITY FILTER
+                 │
+       ┌─────────┼───────────┐
+       ▼         ▼           ▼
+     Chat      Coding      Vision
+       │         │           │
+       └─────────┼───────────┘
+                 ▼
+       12. MODEL ROUTING ENGINE
+                 │
+                 ▼
+       13. PROVIDER/MODEL CACHE
+                 │
+                 ▼
+       14. UI VIEW MODEL / STATE
+                 │
+                 ▼
+              FRONTEND
+                 │
+                 ▼
+            USER REQUEST
+                 │
+                 ▼
+          TASK CLASSIFIER
+                 │
+                 ▼
+          MODEL SELECTION
+                 │
+                 ▼
+          PROVIDER CALL
+                 │
+                 ▼
+       RESPONSE VALIDATION
+                 │
+          ┌──────┴──────┐
+          ▼             ▼
+        PASS           FAIL
+          │             │
+          ▼             ▼
+       RESPONSE      RETRY/FALLBACK
+          │             │
+          └──────┬──────┘
+                 ▼
+             USER/UI
+                 │
+                 ▼
+          USAGE / AUDIT
+                 │
+                 ▼
+          HEALTH UPDATE
+                 │
+                 ▼
+        MODEL/PROVIDER STATE
+                 │
+                 └──────────────► BACKGROUND REFRESH
+The part you correctly identified as missing
+
+The important section is this:
+
+Provider Discovery
+       ↓
+Provider Health
+       ↓
+Model Discovery
+       ↓
+Model Normalization
+       ↓
+Model Validation
+       ↓
+Active Model Filtering
+       ↓
+Capability Filtering
+       ↓
+Model Routing
+       ↓
+UI
+
+The UI should not be responsible for deciding which models are actually usable.
+
+For example, Arena/OpenRouter/Groq/etc. may return a model, but that doesn't automatically mean Free Model Club should display it as available.
+
+A model may be:
+
+disabled
+temporarily unavailable
+API-key unavailable
+outside quota
+rate-limited
+incompatible with the requested endpoint
+lacking tool/function calling
+lacking vision
+unsuitable for coding
+deprecated
+provider-disabled
+context window too small
+temporarily unhealthy
+
+Therefore you need a Model Eligibility Pipeline.
+
+Recommended
+Raw Provider Models
+        ↓
+Normalize
+        ↓
+Validate
+        ↓
+Provider Status
+        ↓
+API-Key Status
+        ↓
+Model Status
+        ↓
+Quota Status
+        ↓
+Capability Detection
+        ↓
+Compatibility Check
+        ↓
+Active Model Filter
+        ↓
+Eligible Model Registry
+        ↓
+Routing Engine
+
+And this should run before the UI consumes the model list.
+
+There are actually 3 sequences
+
+This is where your project architecture becomes much cleaner.
+
+A. Installation sequence
+Install
+ ↓
+Environment check
+ ↓
+Dependencies
+ ↓
+Database creation/migration
+ ↓
+Configuration
+ ↓
+Secrets/API keys
+ ↓
+Initial provider registry
+ ↓
+Initial model discovery
+ ↓
+Validation
+ ↓
+Ready
+B. Application startup sequence
+Bootstrap
+ ↓
+Config
+ ↓
+Database
+ ↓
+Providers
+ ↓
+Health
+ ↓
+Models
+ ↓
+Eligibility
+ ↓
+Routing
+ ↓
+UI
+C. Background synchronization sequence
+
+This is the piece I suspect is missing from your current project:
+
+Scheduler
+    ↓
+Provider Sync
+    ↓
+Fetch Models
+    ↓
+Compare Existing Registry
+    ↓
+New?
+ ┌──┴──┐
+Yes    No
+ │      │
+Add   Compare
+        │
+        ▼
+      Changed?
+     ┌──┴──┐
+    Yes    No
+     │      │
+  Update   Keep
+     │
+     ▼
+Capability Refresh
+     ↓
+Health Check
+     ↓
+Quota/Limit Refresh
+     ↓
+Active/Inactive Filter
+     ↓
+Routing Registry
+     ↓
+UI Cache Refresh
+
+This should operate independently of the frontend.
+
+For your specific Free Model Club
+
+I would therefore divide the system into:
+
+Control Plane
+Configuration
+Provider Registry
+API Keys
+Provider Health
+Model Discovery
+Model Registry
+Model Eligibility
+Capabilities
+Quota
+Routing
+Fallback
+Caching
+Scheduling
+Audit
+Data Plane
+User Request
+      ↓
+Task Classification
+      ↓
+Model Router
+      ↓
+Provider API
+      ↓
+Model
+      ↓
+Response
+Presentation Plane
+Dashboard
+Providers
+Models
+Model Details
+Coding
+Chat
+Usage
+Settings
+Themes
+About
+
+This separation is extremely important.
+
+And one more thing
+
+Theme, UI and model filtering should not be mixed into the same startup sequence.
+
+For example:
+
+Theme Manager
+     ↓
+UI Theme State
+
+is independent of:
+
+Provider
+ ↓
+Model
+ ↓
+Eligibility
+
+The UI simply consumes the already prepared application state.
+
+That gives you:
+
+Database → Services → State → UI
+
+rather than:
+
+UI → Database → API → filter → UI → API → filter → UI
+
+which eventually becomes spaghetti with a user interface attached. 🍝
+
+What I need to do next
+
+If you attach the current sequence/workflow document you are referring to, I can perform a proper sequence audit and return a table like:
+
+Current Step	Current Component	Correct?	Missing Dependency	Move To	Reason
+1	Bootstrap	✅	None	1	Required
+2	UI	❌	Model Registry	Later	UI depends on prepared state
+3	Provider API	⚠️	Health check	Earlier	Required before eligibility
+...	...	...	...	...	...

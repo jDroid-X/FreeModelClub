@@ -1,0 +1,7 @@
+﻿{
+    "port":  12247,
+    "rateLimitRPM":  30,
+    "rateLimitTPM":  70000,
+    "autoStart":  true,
+    "monitoringFrequencyHours":  1
+}

@@ -1,0 +1,9 @@
+node_modules/
+.env
+data/.vault_key
+data/backups/
+data/*.lock
+data/system_logs.json
+data/api_logs.json
+.tray_launcher.lock
+test-results/

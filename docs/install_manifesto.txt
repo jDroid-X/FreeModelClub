@@ -1,0 +1,270 @@
+For jDroid-X Free Model Club, I would make the .bat files behave like a small installer/launcher system, not just a collection of commands. The key principle is:
+
+Install should prepare the environment. Launch should only launch. Never let Launch silently modify the installation.
+
+install.bat Do's
+#	DO	Why
+1	Check that Windows is supported	Prevent incompatible installations
+2	Detect whether the app is already installed	Avoid duplicate installation
+3	Detect the correct application directory	Prevent files being installed in the wrong location
+4	Use %~dp0 for files shipped with the installer	Makes the BAT work regardless of current CMD directory
+5	Check administrator requirements before requesting elevation	Avoid unnecessary UAC prompts
+6	Check required dependencies	Detect missing Python, Node.js, Git, WebView2, etc.
+7	Check dependency versions	Prevent incompatible environments
+8	Create required directories	Keep installation predictable
+9	Create a dedicated virtual environment when applicable	Prevent dependency conflicts
+10	Install dependencies deterministically	Prefer locked/pinned versions where appropriate
+11	Validate every important command's exit code	Stop when installation actually fails
+12	Write an installation log	Makes troubleshooting much easier
+13	Preserve existing user configuration	Never blindly overwrite user settings
+14	Create a backup before modifying existing configuration	Provides rollback
+15	Detect existing API/provider configuration	Avoid destroying configured providers
+16	Create Start Menu/Desktop shortcuts only if requested	Avoid clutter
+17	Register an uninstall mechanism	Clean removal later
+18	Verify the installed application before declaring success	"Files copied" ≠ "installation successful"
+19	Display the exact installed version	Helps support and troubleshooting
+20	Print the final installation location	User should know where it went
+21	Provide a clear success/failure message	Avoid ambiguous completion
+22	Return an appropriate exit code	Useful for automation
+23	Support paths containing spaces	Common Windows requirement
+24	Quote file and directory paths	Prevent path parsing errors
+25	Handle rerunning the installer safely	Installation should be idempotent where possible
+install.bat DON'Ts
+#	DON'T	Problem
+1	❌ Assume the BAT is being executed from its own directory	Launch location can differ
+2	❌ Use hard-coded paths such as C:\jDroid-X without configuration	Breaks on other machines
+3	❌ Delete the existing installation automatically	Can destroy user data
+4	❌ Delete configuration files during upgrades	Provider/API settings may be lost
+5	❌ Overwrite .env or configuration blindly	Can destroy API keys/settings
+6	❌ Store API keys directly inside the BAT	Security risk
+7	❌ Put passwords/tokens in command-line arguments unnecessarily	They can appear in process history/logs
+8	❌ Download random executables without verification	Supply-chain/security risk
+9	❌ Disable Windows Defender/UAC	Dangerous and unnecessary
+10	❌ Modify PATH globally without checking first	Can break other applications
+11	❌ Install dependencies silently and ignore errors	Creates broken installations
+12	❌ Use pause after every command	Makes automation painful
+13	❌ Assume Python/Node/Git exists	Installation will fail unexpectedly
+14	❌ Run everything as Administrator	Violates least-privilege principles
+15	❌ Automatically kill unrelated processes	Can cause data loss
+16	❌ Modify firewall rules without necessity	Creates security exposure
+17	❌ Change registry settings unnecessarily	Harder to uninstall/maintain
+18	❌ Remove existing user data during upgrade	Upgrade should preserve data
+19	❌ Claim success after the final command without validation	False-positive installation
+20	❌ Hide errors with >nul 2>&1 everywhere	Makes debugging nearly impossible
+21	❌ Use endless retry loops	Can make installation appear frozen
+22	❌ Assume internet connectivity	Offline/limited networks exist
+23	❌ Assume a specific drive letter	C: may not be the installation drive
+24	❌ Bundle development-only commands into production installation	Increases complexity
+25	❌ Make install.bat start the application automatically without telling the user	Installation and launch should remain separate
+launch.bat DO's
+
+The launch script should be much simpler.
+
+Its job should essentially be:
+
+Detect → Validate → Prepare runtime → Launch → Monitor
+
+#	DO	Why
+1	Verify the application is installed	Avoid launching a nonexistent installation
+2	Verify required runtime/dependencies exist	Catch broken installations
+3	Locate the application using a reliable path	Avoid path problems
+4	Use the application's configured environment	Don't create a second environment
+5	Check whether another instance is already running	Prevent duplicate servers
+6	Detect an existing service/port	Avoid port conflicts
+7	Start only the required application processes	Keep startup clean
+8	Pass configuration through supported mechanisms	Avoid hard-coded settings
+9	Write a launch log	Useful for debugging
+10	Wait for the application health endpoint when applicable	Confirm the server actually started
+11	Open the UI only after the service is ready	Prevent "localhost refused connection"
+12	Display the actual URL/port	User knows where to go
+13	Handle startup failure clearly	Explain what went wrong
+14	Return a meaningful exit code	Useful for automation
+15	Allow safe repeated launches	Avoid creating duplicate processes
+launch.bat DON'Ts
+#	DON'T	Problem
+1	❌ Install packages every time	Makes startup slow and unpredictable
+2	❌ Run pip install on every launch	Installation ≠ runtime
+3	❌ Modify the database every launch	Can cause corruption/migration problems
+4	❌ Delete caches every launch	Destroys performance benefits
+5	❌ Generate a new configuration every launch	Can overwrite settings
+6	❌ Generate new API keys	Credentials must persist
+7	❌ Kill all Python/Node processes	Could terminate unrelated applications
+8	❌ Assume the desired port is available	Port conflicts are common
+9	❌ Start multiple copies accidentally	Causes duplicate services
+10	❌ Open the browser before the server is ready	Creates false startup failures
+11	❌ Hide startup errors	User needs actionable diagnostics
+12	❌ Use Administrator privileges by default	Unnecessary privilege escalation
+13	❌ Change system PATH	Launch should be isolated
+14	❌ Modify Windows services unless required	Not appropriate for normal launch
+15	❌ Download software during every launch	Network dependency and security risk
+16	❌ Assume the working directory	Causes relative-path failures
+17	❌ Hard-code localhost:3000/localhost:8000 etc.	Configuration may change
+18	❌ Automatically restart forever	Can create an infinite crash loop
+19	❌ Treat a process existing as proof the application is healthy	Process may be hung
+20	❌ Report "started" before health verification	Creates misleading status
+🔐 Security DO's
+
+For Free Model Club, this is especially important because the application may handle provider API keys.
+
+DO
+Keep API keys outside BAT files.
+Prefer encrypted/secure credential storage where practical.
+Mask API keys in logs.
+Never print complete API keys.
+Validate downloaded files.
+Use HTTPS for downloads and API endpoints.
+Verify downloaded installers/checksums when available.
+Use least privilege.
+Restrict file permissions for credential stores.
+Separate application configuration from secrets.
+Keep logs free of authentication headers.
+Provide a way to revoke/delete stored credentials.
+DON'T
+❌ Put sk-... API keys inside install.bat.
+❌ Put API keys inside launch.bat.
+❌ Echo environment variables containing secrets.
+❌ Save secrets in publicly accessible project directories.
+❌ Upload .env files containing real credentials.
+❌ Disable antivirus to make installation work.
+❌ Download scripts from arbitrary URLs and execute them automatically.
+🔄 Upgrade DO's
+
+Your installer should eventually support:
+
+Fresh Install
+     │
+     ▼
+Existing Installation?
+     │
+ ┌───┴────┐
+No       Yes
+│          │
+▼          ▼
+Install   Backup
+│          │
+│          ▼
+│       Upgrade
+│          │
+└────┬─────┘
+     ▼
+Validate
+     │
+     ▼
+Migration Required?
+   │       │
+  No      Yes
+   │       │
+   └───┬───┘
+       ▼
+   Health Check
+       │
+       ▼
+   Installation Complete
+Most important rule
+
+Never confuse installation files with user data.
+
+For example:
+
+jDroid-X/
+│
+├── app/                 ← application
+├── runtime/             ← runtime
+├── models/              ← downloaded models
+├── data/                ← user data
+├── config/              ← configuration
+├── secrets/             ← credentials
+├── logs/                ← logs
+└── backups/             ← recovery
+
+An upgrade should normally replace/update:
+
+app/
+runtime/
+
+while preserving:
+
+models/
+data/
+config/
+secrets/
+
+unless the user explicitly chooses otherwise.
+
+🧪 Final validation checklist
+
+Before install.bat says:
+
+Installation successful
+
+it should ideally verify:
+
+[✓] Windows supported
+[✓] Installation directory available
+[✓] Required runtime available
+[✓] Dependencies available
+[✓] Application files installed
+[✓] Configuration created
+[✓] Existing configuration preserved
+[✓] Database available
+[✓] Required ports available
+[✓] Application executable/runtime found
+[✓] Version detected
+[✓] Basic startup test passed
+[✓] Installation log created
+
+And before launch.bat says:
+
+Free Model Club started
+
+it should verify:
+
+[✓] Installation detected
+[✓] Configuration loaded
+[✓] Runtime available
+[✓] No conflicting instance
+[✓] Port available
+[✓] Backend started
+[✓] Health check passed
+[✓] Frontend available
+[✓] Browser/UI opened
+Best architecture for jDroid-X
+
+I'd keep the responsibilities strictly separated:
+
+install.bat
+
+Install → Configure → Validate → Create shortcuts
+
+update.bat
+
+Backup → Update → Migrate → Validate
+
+launch.bat
+
+Detect → Start → Health-check → Open
+
+stop.bat
+
+Gracefully stop → Verify stopped
+
+uninstall.bat
+
+Confirm → Backup → Remove application → Preserve/delete user data according to explicit choice
+--- NEW ADDITIONS FROM PREVIOUS UPDATE ---
+DO:
+1. DO use explicit error evaluation in CHOICE prompts. Always use `if !errorlevel! equ 1` instead of `if errorlevel 1` to prevent the classic DOS fallthrough bug.
+2. DO ensure `setlocal enabledelayedexpansion` is at the very top of interactive bat files so variables can be evaluated dynamically at runtime.
+3. DO provide options to [I]nstall, [B]ypass, or [A]bort for core dependencies (Node.js, Git) so users in restricted environments can still launch the application.
+4. DO write robust path resolution. When moving bat files into subdirectories (e.g., `scripts/`), use `%~dp0..` to ensure `%APP_DIR%` resolves correctly back to the root workspace.
+5. DO include an explicit `pause >nul` at the end of terminal prompts so windows don`t silently crash or close before the user can read the final output.
+6. DO use `file:///` compatible zero-CORS mechanisms (like JSONP script injection) when building offline HTML splash screens that need to poll a backend.
+
+DONT:
+1. DONT hard-fail the installation just because Git is missing. Always fall back to downloading a .zip release via PowerShell `Invoke-WebRequest`.
+2. DONT hard-fail the installation just because Node.js is missing from the global PATH. `tray_launcher.ps1` has a robust mechanism to download a portable node.exe fallback into the `.node/` directory.
+3. DONT rely on simple `Start-Sleep` timers for browser popups. Synchronize browser launches with the backend using a `status.js` polling loop.
+4. DONT delete user data (the `data/` folder) without an explicit warning and confirmation prompt during uninstallation.
+5. DONT treat `401 Unauthorized` API test pings as failures in the proxy UI. They prove the server endpoint is reachable, which is a network success.
+6. DONT kill the background `node server.js` without also safely killing the n8n automation engine and dropping the System Tray icon locks.
+

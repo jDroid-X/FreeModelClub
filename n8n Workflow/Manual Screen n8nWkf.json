@@ -1,0 +1,201 @@
+{
+  "id": "fmc-manual-screen-workflow",
+  "name": "FMC Manual Screen n8nWkf",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fmc-manual-screen-workflow-trigger",
+      "name": "TRIGGER: ManualView Loaded",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "fmcApiBase",
+              "value": "http://localhost:12247"
+            },
+            {
+              "name": "sessionToken",
+              "value": "fmc_user_session_token"
+            },
+            {
+              "name": "screen",
+              "value": "ManualView"
+            },
+            {
+              "name": "imageVisionEnabled",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "fmc-manual-screen-workflow-input",
+      "name": "INPUT: ManualView Config & Session",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the FMC Manual Screen n8nWkf for ManualView. Purpose: Serve 2-column interactive help documentation, troubleshooting steps, and visual UI architecture guides.. Leverage attached Chat Model, Window Buffer Memory, and Tools to process context and return structured JSON telemetry."
+        }
+      },
+      "id": "fmc-manual-screen-workflow-ai-agent",
+      "name": "AI AGENT: FMC Manual Screen n8nWkf",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemma-3-27b-it",
+        "options": {
+          "baseURL": "http://localhost:12247/v1"
+        }
+      },
+      "id": "fmc-manual-screen-workflow-chat-model",
+      "name": "CHAT MODEL: FMC Proxy (gemma-3-27b-it)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "fmc-proxy-credentials",
+          "name": "FMC Localhost Proxy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "fmc_fmc-manual-screen-workflow_session"
+      },
+      "id": "fmc-manual-screen-workflow-memory",
+      "name": "MEMORY: Window Buffer (ManualView)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "manual_help_tool",
+        "description": "Fetch user manual content and guide data",
+        "method": "GET",
+        "url": "http://localhost:12247/api/help/manual"
+      },
+      "id": "fmc-manual-screen-workflow-tool-1",
+      "name": "TOOL 1: Manual Help API Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL OUTPUT: ManualView\nreturn [{ json: { workflowId: 'fmc-manual-screen-workflow', name: 'FMC Manual Screen n8nWkf', screen: 'ManualView', status: 'AGENT_LOADED', imageCapabilities: true, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "fmc-manual-screen-workflow-final-output",
+      "name": "FINAL OUTPUT: ManualView Agent Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "TRIGGER: ManualView Loaded": {
+      "main": [
+        [
+          {
+            "node": "INPUT: ManualView Config & Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INPUT: ManualView Config & Session": {
+      "main": [
+        [
+          {
+            "node": "AI AGENT: FMC Manual Screen n8nWkf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CHAT MODEL: FMC Proxy (gemma-3-27b-it)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI AGENT: FMC Manual Screen n8nWkf",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEMORY: Window Buffer (ManualView)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI AGENT: FMC Manual Screen n8nWkf",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TOOL 1: Manual Help API Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT: FMC Manual Screen n8nWkf",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI AGENT: FMC Manual Screen n8nWkf": {
+      "main": [
+        [
+          {
+            "node": "FINAL OUTPUT: ManualView Agent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

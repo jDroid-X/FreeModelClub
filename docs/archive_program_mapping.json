@@ -1,0 +1,259 @@
+{
+  "project": "FreeModelsClub Localhost Smart Chatbot Service Provider",
+  "version": "1.5.0",
+  "port": 12247,
+  "architecture": "PonyTail Rule Compliant OOPS MVC Architecture (< 350 lines per file)",
+  "components": {
+    "DatabaseSeed": {
+      "path": "src/models/DatabaseSeed.js",
+      "purpose": "Provides default seed data structures for initial database initialization",
+      "dependencies": []
+    },
+    "Database": {
+      "path": "src/models/Database.js",
+      "purpose": "Thread-safe JSON persistent storage engine with atomic temporary file swapping (.tmp) (< 90 lines)",
+      "dependencies": ["fs", "path", "DatabaseSeed"]
+    },
+    "UserModel": {
+      "path": "src/models/UserModel.js",
+      "purpose": "Manages user credentials authentication (FreeModelsClub@jdroidxy.com)",
+      "dependencies": ["Database"]
+    },
+    "ProviderModel": {
+      "path": "src/models/ProviderModel.js",
+      "purpose": "Data model for AI Provider registration, base URLs, API key masking, and active status",
+      "dependencies": ["Database"]
+    },
+    "AIModel": {
+      "path": "src/models/AIModel.js",
+      "purpose": "Data model for Free AI Models, token limits, context length, families, and core skills",
+      "dependencies": ["Database"]
+    },
+    "ComboModel": {
+      "path": "src/models/ComboModel.js",
+      "purpose": "Data model for Model Combos, strategies, and selected model list persistence",
+      "dependencies": ["Database"]
+    },
+    "LogModel": {
+      "path": "src/models/LogModel.js",
+      "purpose": "Data model for recording API call details, diagnostics, system audit logs",
+      "dependencies": ["Database"]
+    },
+    "HelpModel": {
+      "path": "src/models/HelpModel.js",
+      "purpose": "Manages User Manual step-by-step HIL guide, screen hints, and FAQs",
+      "dependencies": ["Database"]
+    },
+    "KeepAliveAgent": {
+      "path": "src/utils/KeepAliveAgent.js",
+      "purpose": "HTTP and HTTPS Keep-Alive socket connection pooling to minimize proxy handshake latency",
+      "dependencies": ["http", "https"]
+    },
+    "StreamHandlerService": {
+      "path": "src/services/StreamHandlerService.js",
+      "purpose": "Decoupled Server-Sent Events (SSE) stream buffer accumulator and token recorder",
+      "dependencies": ["AIModel", "LogModel"]
+    },
+    "ProviderService": {
+      "path": "src/services/ProviderService.js",
+      "purpose": "Queries provider endpoints (Groq, Gemini, OpenRouter, Together, Mistral, Ollama) and filters free models",
+      "dependencies": ["ProviderModel", "AIModel", "ModelFamilyService", "https", "http"]
+    },
+    "ProviderAgentService": {
+      "path": "src/services/ProviderAgentService.js",
+      "purpose": "Best Coding & Search Model Agent for automated online provider lookup, protocol connector matching, and free tier model specs discovery (< 200 lines)",
+      "dependencies": ["ProviderAgentHelper", "https", "http"]
+    },
+    "ProviderAgentHelper": {
+      "path": "src/services/ProviderAgentHelper.js",
+      "purpose": "Knowledge database helper containing pre-configured free tier provider endpoints, API key rules, and model specs (< 150 lines)",
+      "dependencies": []
+    },
+    "ValidationService": {
+      "path": "src/services/ValidationService.js",
+      "purpose": "Sanitizes and validates URLs, credentials, provider IDs, and request payloads with structured error feedback",
+      "dependencies": []
+    },
+    "ModelFamilyService": {
+      "path": "src/services/ModelFamilyService.js",
+      "purpose": "Classifies models into Model Families (Llama, Qwen, Gemma, DeepSeek, etc.) and Core Skills (Coding, Reasoning, Chat, Vision)",
+      "dependencies": ["AIModel"]
+    },
+    "ProxyEngineService": {
+      "path": "src/services/ProxyEngineService.js",
+      "purpose": "Handles OpenAI compatible endpoint translation (/v1/chat/completions, /v1/models, /v1/models/:model), KeepAlive pooling, and Closed-Loop Auto Failover",
+      "dependencies": ["ProviderModel", "AIModel", "LogModel", "KeepAliveAgent", "StreamHandlerService", "https", "http"]
+    },
+    "CodeSnippetService": {
+      "path": "src/services/CodeSnippetService.js",
+      "purpose": "Generates cURL, Python, Node.js, Go, PHP integration code snippets for endpoints",
+      "dependencies": []
+    },
+    "CSS_Base": {
+      "path": "public/css/base.css",
+      "purpose": "Core design system tokens, typography reset, and CSS variables",
+      "dependencies": []
+    },
+    "CSS_Themes": {
+      "path": "public/css/themes.css",
+      "purpose": "8 Metal-based theme variable overrides (Titanium, Steel, Gunmetal, Aluminum, Platinum, Chrome, Bronze)",
+      "dependencies": ["CSS_Base"]
+    },
+    "CSS_Components": {
+      "path": "public/css/components.css",
+      "purpose": "UI components styling: buttons, inputs, glass cards, modals, toasts, badges, tabs",
+      "dependencies": ["CSS_Base"]
+    },
+    "CSS_Layout": {
+      "path": "public/css/layout.css",
+      "purpose": "Sidebar, top header, main layout, grid systems, playground chat layout",
+      "dependencies": ["CSS_Base"]
+    },
+    "CSS_Master": {
+      "path": "public/css/style.css",
+      "purpose": "Master stylesheet bundle importing all sub-modules (< 20 lines)",
+      "dependencies": ["CSS_Base", "CSS_Themes", "CSS_Components", "CSS_Layout"]
+    },
+    "ModalDialog": {
+      "path": "public/js/components/ModalDialog.js",
+      "purpose": "Reusable glassmorphic modal dialogs and toast notifications",
+      "dependencies": []
+    },
+    "HeaderTelemetry": {
+      "path": "public/js/components/HeaderTelemetry.js",
+      "purpose": "Top bar header telemetry and live token stats",
+      "dependencies": ["public/js/services/api.js"]
+    },
+    "LoginView": {
+      "path": "public/js/views/LoginView.js",
+      "purpose": "Pre-filled default authentication view",
+      "dependencies": ["ModalDialog"]
+    },
+    "DashboardView": {
+      "path": "public/js/views/DashboardView.js",
+      "purpose": "Dashboard metrics & model specs drawer view (20% Left TOC Rail + 80% Workspace) (< 250 lines)",
+      "dependencies": ["ModalDialog", "DashboardViewHelper"]
+    },
+    "DashboardViewHelper": {
+      "path": "public/js/views/DashboardViewHelper.js",
+      "purpose": "Helper module for DashboardView containing tile click detail modals and telemetry row formatters (< 200 lines)",
+      "dependencies": ["ModalDialog", "ApiService"]
+    },
+    "PlaygroundView": {
+      "path": "public/js/views/PlaygroundView.js",
+      "purpose": "Playground chat window & self-healing agent view (20% Left History/Model Rail + 80% Workspace) (< 300 lines)",
+      "dependencies": ["ModalDialog", "HeaderTelemetry", "PlaygroundViewHelper"]
+    },
+    "PlaygroundViewHelper": {
+      "path": "public/js/views/PlaygroundViewHelper.js",
+      "purpose": "Helper module for PlaygroundView containing preset prompts, transcript exporter, and self-healing card renderer (< 150 lines)",
+      "dependencies": ["ModalDialog"]
+    },
+    "RegistrationView": {
+      "path": "public/js/views/RegistrationView.js",
+      "purpose": "Provider registration & live connection ping test (20% Left Provider Rail + 80% Workspace) (< 340 lines)",
+      "dependencies": ["ModalDialog", "RegistrationViewHelper"]
+    },
+    "RegistrationViewHelper": {
+      "path": "public/js/views/RegistrationViewHelper.js",
+      "purpose": "Helper module for RegistrationView containing preset provider mappings, staged models table, and token quota modal (< 170 lines)",
+      "dependencies": ["ModalDialog"]
+    },
+    "ConfigView": {
+      "path": "public/js/views/ConfigView.js",
+      "purpose": "Integration script code snippets & memo box view",
+      "dependencies": ["ModalDialog"]
+    },
+    "ProvidersView": {
+      "path": "public/js/views/ProvidersView.js",
+      "purpose": "Active providers management & key protection view",
+      "dependencies": ["ModalDialog"]
+    },
+    "ModelClubView": {
+      "path": "public/js/views/ModelClubView.js",
+      "purpose": "Model Club taxonomy engine (20% Left Taxonomy Rail + 80% Workspace) (< 200 lines)",
+      "dependencies": ["ModalDialog", "ApiService", "ModelClubViewHelper", "ModelClubComboHelper"]
+    },
+    "ModelClubViewHelper": {
+      "path": "public/js/views/ModelClubViewHelper.js",
+      "purpose": "Helper module for ModelClubView containing comparison matrix, model cards, and combo card renderers (< 240 lines)",
+      "dependencies": ["ModalDialog"]
+    },
+    "SettingsView": {
+      "path": "public/js/views/SettingsView.js",
+      "purpose": "20% Left TOC Navigation Rail + 80% Right Detail Content Pane settings view (< 250 lines)",
+      "dependencies": ["ModalDialog", "ApiService", "SettingsViewHelper", "SettingsAgentHelper", "SettingsToolConnectionHelper", "SettingsUiUxHelper"]
+    },
+    "SettingsViewHelper": {
+      "path": "public/js/views/SettingsViewHelper.js",
+      "purpose": "Helper module for SettingsView containing themes tab HTML, launch rules tab HTML, and ROCAS format agent specification memos",
+      "dependencies": []
+    },
+    "ReportsView": {
+      "path": "public/js/views/ReportsView.js",
+      "purpose": "Diagnostic API logs & System audit log viewer (20% Left Rail + 80% Workspace) (< 170 lines)",
+      "dependencies": ["ModalDialog", "ReportsViewHelper"]
+    },
+    "ReportsViewHelper": {
+      "path": "public/js/views/ReportsViewHelper.js",
+      "purpose": "Helper module for ReportsView handling log detail modal, CSV/JSON export, and telemetry dashboard renderer (< 260 lines)",
+      "dependencies": ["ModalDialog"]
+    },
+    "NavigationHelper": {
+      "path": "public/js/helpers/NavigationHelper.js",
+      "purpose": "Encapsulates layout structure shell, navigation drawer items, and screen hint modals",
+      "dependencies": ["ModalDialog"]
+    },
+    "AppRouterHelper": {
+      "path": "public/js/helpers/AppRouterHelper.js",
+      "purpose": "Router helper for SPA router managing history.pushState, popstate events, and breadcrumbs (< 70 lines)",
+      "dependencies": ["ModalDialog"]
+    },
+    "ManualView": {
+      "path": "public/js/views/ManualView.js",
+      "purpose": "Human-In-Loop User Manual step-by-step guide view with dynamic metal theme card styling (< 230 lines)",
+      "dependencies": []
+    },
+    "FrontendApp": {
+      "path": "public/js/app.js",
+      "purpose": "Lean SPA router & state manager (< 250 lines)",
+      "dependencies": ["public/js/services/api.js", "ModalDialog", "HeaderTelemetry", "AppRouterHelper"]
+    },
+    "LaunchDashboard": {
+      "path": "Launch_Dashboard.bat",
+      "purpose": "Windows batch shortcut script that initiates the PowerShell System Tray Launcher",
+      "dependencies": ["TrayLauncher"]
+    },
+    "TrayLauncher": {
+      "path": "tray_launcher.ps1",
+      "purpose": "Windows PowerShell System Tray application (jDroid-X-FMC) with prerequisite audit, portable Node.js auto-installer fallback, Express server manager, status progress emitter, custom icon, and tray control menu",
+      "dependencies": ["node", "npm", "server.js", "GenerateIcon", "LauncherHTML", "StatusJSON"]
+    },
+    "LauncherHTML": {
+      "path": "public/launcher.html",
+      "purpose": "Standalone browser splash launcher page rendering glassmorphic popup dialog with animated left-to-right running progress bar and auto-redirect",
+      "dependencies": ["CSS_Components", "StatusJSON"]
+    },
+    "StatusJSON": {
+      "path": "public/status.json",
+      "purpose": "Real-time background installation and boot progress status bridge between tray_launcher.ps1 and browser splash page",
+      "dependencies": []
+    },
+    "GenerateIcon": {
+      "path": "generate_icon.ps1",
+      "purpose": "Generates high-resolution custom Windows System Tray icon (jdroidxy.ico) with gradient AI aesthetics",
+      "dependencies": ["System.Drawing"]
+    }
+  },
+  "endpoints": {
+    "Dashboard": "http://localhost:12247/dashboard",
+    "BaseURL": "http://localhost:12247/v1",
+    "API": "http://localhost:12247/v1/api",
+    "Models": "http://localhost:12247/v1/models",
+    "SingleModel": "http://localhost:12247/v1/models/:model",
+    "ChatCompletions": "http://localhost:12247/v1/chat/completions",
+    "TestConnection": "http://localhost:12247/api/providers/test-connection",
+    "AgentLookup": "http://localhost:12247/api/providers/agent-lookup",
+    "HelpManual": "http://localhost:12247/api/help/manual"
+  }
+}

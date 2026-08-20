@@ -1,0 +1,231 @@
+# USER MANUAL SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: User Manual View (http://localhost:3000/manual)
+
+================================================================================
+[2026-07-31 20:11:00] INITIALIZE SCREEN CHANGE LOG & HIL GUIDE
+================================================================================
+Target Screen : ManualView.js
+Requested By  : User Chat Rule & n8n Workflow Design
+Status        : PASS (Active & Verified)
+Changes       :
+	- Initialized screen requirement log for User Manual View.
+	- Verified Human-In-Loop 7-section step-by-step onboarding guide.
+	- Verified FAQ loader and interactive screen hint modals.
+Files Modified:
+	- public/js/views/ManualView.js
+
+=========================================================
+[2026-08-07 14:15:00] DEEP-DIVE AUDIT & USER MANUAL TOC NAVIGATION SYNC
+================================================================
+Target Screen : User Manual View (ManualView.js)
+Requested By  : User Chat (Deep-dive audit & 2-column layout compliance)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Audited ManualView.js 2-column layout (20% TOC rail / 80% detail workspace).
+	- Verified cURL code block copy functions and category search filters.
+Files Modified:
+	- public/js/views/ManualView.js
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 14:26:00] HUMAN-IN-LOOP USABILITY & PRINTABLE MANUAL OPTIONS SYNC
+================================================================
+Target Screen : User Manual View (ManualView.js)
+Requested By  : User Chat (Human-In-Loop Usability & UI/UX Audit)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Enhanced printManual with ModalDialog.showOptionModal offering printable HTML window and Markdown download.
+	- Added clear reset controls for step search textboxes and FAQ accordion triggers.
+Files Modified:
+	- public/js/views/ManualView.js
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 14:47:00] SYSTEM TRAY BACKGROUND JOBS MONITOR INTEGRATION
+================================================================
+Target Screen : System Tray Application (jDroid-X-FMC / tray_launcher.ps1)
+Requested By  : User Chat (Background Jobs Due Diligence & System Tray Menu Item)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Added "Background Jobs & Node Monitor" menu item into jDroid-X-FMC System Tray context menu.
+	- Implemented Show-BackgroundJobsStatus dialog displaying master Node PID, memory usage, single-instance lock status, and active sub-agents.
+	- Verified zero-duplicate process prevention guard on port 12247.
+Files Modified:
+	- tray_launcher.ps1
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:07:00] SINGLE-INSTANCE SYSTEM TRAY & PROCESS LOCK ENFORCEMENT
+================================================================
+Target Screen : System Tray Application (jDroid-X-FMC / tray_launcher.ps1)
+Requested By  : User Chat (Repeated Launch & System Tray Icon Due Diligence)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Integrated Single-Instance System Tray Host Guard into top of tray_launcher.ps1.
+	- Ensures that repeated launches of Launch_Dashboard.bat or tray_launcher.ps1 automatically terminate previous PowerShell tray hosts and Node servers.
+	- Confirmed exactly 1 System Tray Icon and 1 Master Node process regardless of invocation count.
+Files Modified:
+	- tray_launcher.ps1
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:19:00] BAT LAUNCHER FILES RESTORATION & DUAL LAUNCHER CREATION
+================================================================
+Target Screen : Application Launcher (Launch_Dashboard.bat / Launch_Server_Console.bat)
+Requested By  : User Chat (Missing BAT launcher files recovery & launch instructions)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Created Launch_Dashboard.bat in root directory to execute tray_launcher.ps1 with execution policy bypass.
+	- Created Launch_Server_Console.bat for direct visible terminal server debugging.
+	- Verified 1-click execution path and HTTP 200 server readiness on port 12247.
+Files Modified:
+	- Launch_Dashboard.bat
+	- Launch_Server_Console.bat
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:28:00] SYSTEM TRAY OVERFLOW & BACKGROUND MODE AUDIT
+================================================================
+Target Screen : System Tray Application (jDroid-X-FMC / Launch_Dashboard.bat)
+Requested By  : User Chat (Foreground console window & System Tray icon location query)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Configured Launch_Dashboard.bat with -WindowStyle Hidden for silent background execution.
+	- Documented Windows System Tray overflow menu (^) location for jDroid-X-FMC robot icon.
+	- Verified HTTP 200 server response on port 12247.
+Files Modified:
+	- Launch_Dashboard.bat
+	- tray_launcher.ps1
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:32:00] N8N WORKFLOWS LAUNCHER CREATION
+================================================================
+Target Screen : Application Launcher (Launch_n8n_Workflows.bat)
+Requested By  : User Chat (n8n launch batch file restoration query)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Created Launch_n8n_Workflows.bat in project root directory and in n8n Workflow/ folder.
+	- Configured automatic n8n detection and npx fallback for local workflow automation engine on http://localhost:5678.
+Files Modified:
+	- Launch_n8n_Workflows.bat
+	- n8n Workflow/Launch_n8n_Workflows.bat
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:35:00] BATCH LAUNCHER PATH ENVIRONMENT FIX & DETACHED EXECUTION
+================================================================
+Target Screen : Application Launchers (Launch_Dashboard.bat, Launch_Server_Console.bat, Launch_n8n_Workflows.bat)
+Requested By  : User Chat (Batch files execution troubleshooting)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Identified root cause: Portable Node.js install location (C:\jDroid-X-AI-Tools\NodeJS\) missing from standard CMD %PATH%.
+	- Injected explicit PATH fallback into all 3 batch files (C:\jDroid-X-AI-Tools\NodeJS;C:\Program Files\nodejs;%AppData%\npm).
+	- Replaced /b sub-thread start with detached process start in Launch_Dashboard.bat.
+	- Verified 1-click execution for all batch files and HTTP 200 server response.
+Files Modified:
+	- Launch_Dashboard.bat
+	- Launch_Server_Console.bat
+	- Launch_n8n_Workflows.bat
+	- n8n Workflow/Launch_n8n_Workflows.bat
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:43:00] SYSTEM TRAY & BRANDING LOGO UPDATE (JDROIDXLOGO.PNG)
+================================================================
+Target Screen : System Tray Application & Web UI Header (NavigationHelper.js / index.html / tray_launcher.ps1)
+Requested By  : User Chat (Update icons with jdroidxlogo.png)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Converted jdroidxlogo.png to system tray icon format (jdroidxlogo.ico) and favicon.ico.
+	- Updated NavigationHelper.js to render jdroidxlogo.png branding in web app sidebar header.
+	- Registered GET /jdroidxlogo.png route in server.js and verified HTTP 200 image delivery.
+Files Modified:
+	- jdroidxlogo.ico
+	- public/jdroidxlogo.png
+	- public/favicon.ico
+	- public/index.html
+	- public/js/helpers/NavigationHelper.js
+	- server.js
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:45:00] GRACEFUL PORT 12247 EADDRINUSE RESOLUTION
+================================================================
+Target Screen : Server Core Engine (server.js)
+Requested By  : User Screenshot (EADDRINUSE listen error troubleshooting)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Added graceful EADDRINUSE error listener to primary server port 12247 in server.js.
+	- Replaced uncaught exception crash with clean informational notification ("FreeModelsClub Server is ALREADY RUNNING on port 12247!").
+	- Confirmed process exits cleanly with exit code 0 when an existing server is active.
+Files Modified:
+	- server.js
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:47:00] SINGLE-INSTANCE TRAY ICON COUNT AUDIT & ENFORCEMENT
+================================================================
+Target Screen : System Tray Application (jDroid-X-FMC / tray_launcher.ps1)
+Requested By  : User Chat (Check in system tray how many icons are there for this product)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Enhanced Single-Instance System Tray Host Guard in tray_launcher.ps1 with parent process PID protection.
+	- Guaranteed that regardless of how many times Launch_Dashboard.bat is double-clicked, previous tray hosts are terminated.
+	- Verified EXACTLY 1 System Tray Icon (jDroid-X-FMC) sits in the Windows Taskbar notification area.
+Files Modified:
+	- tray_launcher.ps1
+	- requirement/manual.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:52:00] ZERO COMMAND PROMPT WINDOW LAUNCHER & ORPHAN WINDOW CLEANUP
+================================================================
+Target Screen : Application Launchers (Launch_Dashboard.bat / Launch_Silent.vbs)
+Requested By  : User Screenshot (Fix open command prompt taskbar windows)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Terminated all orphan node.exe command prompt windows from taskbar preview.
+	- Upgraded Launch_Dashboard.bat with self-hiding powershell -WindowStyle Hidden relaunch wrapper.
+	- Created Launch_Silent.vbs for 100% native silent launching without command prompt windows.
+	- Verified HTTP 200 server response on port 12247.
+Files Modified:
+	- Launch_Dashboard.bat
+	- Launch_Silent.vbs
+	- requirement/manual.txt
+=========================================================
+================================================================================
+DATE: 2026-08-10 15:53:15 | STATUS: PASS
+CHANGE: Auth header centralization - PlaygroundView 401 fix
+TARGET SCREEN: Playground View, Settings View, Reports View
+MODIFIED FILES:
+  - public/js/services/api.js          [ADD getAuthHeader(), inject in request() + sendChatMessageStream()]
+  - public/js/views/PlaygroundView.js  [REPLACE hardcoded 'Bearer direct-ui' with ApiService.getAuthHeader()]
+  - public/js/views/ReportsView.js     [ADD auth header to direct fetch]
+  - public/js/views/SettingsToolConnectionHelper.js [ADD auth header to test fetches]
+DESCRIPTION: Centralised auth header so all outgoing chat requests use the stored API key.
+================================================================================
+DATE: 2026-08-10 15:53:15 | STATUS: PASS
+CHANGE: User Manual - Enhanced Fresh Installation Check List (8 checks, progress bar, refresh)
+TARGET SCREEN: User Manual View
+MODIFIED FILES:
+  - public/js/views/ManualView.js      [ENHANCE renderChecklist() + ADD refreshChecklist()]
+DESCRIPTION: 8-item checklist: FMC Proxy, Provider Registered, Models Loaded, Ollama, API Keys, Chat Health, Stale Cache, User Session. Progress bar + Refresh button added.
+================================================================================
+DATE: 2026-08-10 15:53:15 | STATUS: PASS
+CHANGE: Dashboard local server indicator fix - FMC Proxy vs Ollama distinction
+TARGET SCREEN: Dashboard View (bottom-left server pill)
+MODIFIED FILES:
+  - public/js/components/HeaderTelemetry.js [FIX updateLocalServerStatusPill()]
+DESCRIPTION: Pill now shows green (FMC Proxy Active) always when dashboard is accessible. Separate Ollama status shown in tooltip. No longer shows red/disconnected when Ollama is not installed.
+================================================================================

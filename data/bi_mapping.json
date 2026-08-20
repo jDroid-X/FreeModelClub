@@ -1,0 +1,98 @@
+{
+  "version": "1.0.0",
+  "description": "Lightweight BI Analytical Reporting Dimension & Metric Mapping Schema",
+  "updatedAt": "2026-08-19T13:40:46.925Z",
+  "errorTaxonomy": {
+    "400": {
+      "code": "BAD_REQUEST",
+      "category": "Invalid Payload / Invalid Model ID",
+      "severity": "WARN"
+    },
+    "401": {
+      "code": "AUTH_FAILURE",
+      "category": "Missing / Invalid Client Bearer Key",
+      "severity": "ERROR"
+    },
+    "404": {
+      "code": "MODEL_NOT_FOUND",
+      "category": "Model Endpoint Removed by Provider",
+      "severity": "ERROR"
+    },
+    "429": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "category": "Provider RPM / TPM Limit Reached",
+      "severity": "WARN"
+    },
+    "500": {
+      "code": "INTERNAL_SERVER_ERROR",
+      "category": "Provider Upstream Exception",
+      "severity": "ERROR"
+    },
+    "502": {
+      "code": "BAD_GATEWAY",
+      "category": "Provider Failover Exhausted",
+      "severity": "ERROR"
+    },
+    "503": {
+      "code": "SERVICE_UNAVAILABLE",
+      "category": "Network Timeout / Provider Offline",
+      "severity": "ERROR"
+    }
+  },
+  "commercialBaselineRatesPer1kTokens": {
+    "Coding": 0.005,
+    "General Knowledge": 0.003,
+    "Reasoning & Math": 0.008,
+    "Vision & Multimodal": 0.01,
+    "Speed & Lightweight": 0.001,
+    "default": 0.004
+  },
+  "slaThresholds": {
+    "excellentMs": 300,
+    "acceptableMs": 1200,
+    "degradedMs": 2500
+  },
+  "toolCategories": {
+    "vscode": {
+      "channelName": "VS Code Extension",
+      "type": "IDE Extension"
+    },
+    "cursor": {
+      "channelName": "Cursor AI Editor",
+      "type": "IDE Extension"
+    },
+    "windsurf": {
+      "channelName": "Windsurf AI Editor",
+      "type": "IDE Extension"
+    },
+    "kiro": {
+      "channelName": "Kiro CLI Tool",
+      "type": "Terminal / CLI"
+    },
+    "antigravity": {
+      "channelName": "Antigravity IDE Agent",
+      "type": "Agent Framework"
+    },
+    "direct-ui": {
+      "channelName": "Playground Web Chat UI",
+      "type": "Web Application"
+    },
+    "unknown": {
+      "channelName": "External API Client",
+      "type": "Direct API"
+    }
+  },
+  "providerTiers": {
+    "groq": "Tier-1 High-Speed Cloud API",
+    "openrouter": "Tier-1 Free Model Aggregator",
+    "gemini": "Tier-1 Enterprise AI Studio",
+    "nvidia": "Tier-1 GPU Cloud Inference",
+    "ollama": "Tier-3 Local Desktop Inference"
+  },
+  "scope": "provider_registration",
+  "data": {
+    "baseUrl": "http://localhost:11434/v1",
+    "displayName": "Test Ollama",
+    "protocol": "Ollama Local API"
+  }
+}

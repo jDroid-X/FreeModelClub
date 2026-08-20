@@ -1,0 +1,8 @@
+{
+  "strategy": "roundRobin",
+  "weights": {
+    "gpt-4o-mini": 5,
+    "claude-3-5-sonnet": 3,
+    "gemini-1.5-flash": 2
+  }
+}

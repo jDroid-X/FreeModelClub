@@ -1,0 +1,62 @@
+FMC APP running sequence
+### 1. Application Startup Sequence (The Control Plane Boot)
+Before the UI is even allowed to render models, the backend (`server.js`) initializes the **Control Plane** to prepare the system state.
+
+1. **Bootstrap & Config:** 
+   - Node.js server boots up.
+   - Global exception handlers and rate limiters are mounted.
+2. **Database & Providers:** 
+   - Loads the existing Provider Registry (e.g., `data/providers.json`).
+   - Auto-registers any known default providers if they are missing.
+3. **Health & Eligibility (The Missing Link):** 
+   - `ProviderMonitorAgent.init()` is fired immediately in the background.
+   - It performs the **Eligibility Pipeline**:
+     - *Provider Health Check:* Pings endpoints to ensure APIs are reachable.
+     - *Model Validation & Filtering:* Cross-references the raw models against capabilities, quota limits, and API-key validity.
+     - *Active Model Filter:* Generates a strict cache of "Eligible" models.
+4. **Routing Engine:** 
+   - The verified eligible models and active combos are cached in memory for the Proxy Engine to use.
+5. **UI State Readiness:** 
+   - The backend is now fully prepped. It waits for the Presentation Plane (Frontend) to request the pre-filtered state.
+
+### 2. Background Synchronization Sequence (Continuous Control Plane)
+Once the server is running, the background agents operate on a continuous loop, completely independent of the frontend:
+
+1. **Scheduler Trigger:** 
+   - Background agents (like the Provider Monitor Agent) wake up on an interval.
+2. **Provider Sync & Fetch Models:** 
+   - Polls active providers for their latest model lists.
+3. **Compare Existing Registry:** 
+   - Checks if new models were added by the provider, or if existing ones changed capabilities.
+4. **Health Check & Quota Refresh:** 
+   - Verifies if API keys hit rate limits (HTTP 429) or if a provider went offline.
+5. **Active/Inactive Filter & Cache Refresh:** 
+   - Automatically removes failing models from the "Active Cache".
+   - Updates the internal Routing Registry so the UI and Proxy Engine immediately drop dead models without needing a hard refresh.
+
+### 3. Presentation Plane Sequence (The Frontend Boot)
+Now that the Control Plane is managing the heavy lifting, the UI boot sequence is much cleaner:
+
+1. **Theme & Layout Manager:** 
+   - `app.js` reads `fmc_theme` and prepares the CSS/DOM shell immediately so the user isn't staring at a blank screen.
+2. **State Hydration:** 
+   - The frontend requests `/api/models/active` and `/api/providers`. 
+   - Because the Control Plane already did the filtering, the UI instantly receives the **Eligible Model Registry**.
+3. **View Rendering:** 
+   - `PlaygroundView` renders the chat interface and populates the dropdowns *only* with the pre-validated models.
+   
+### 4. Data Plane Sequence (User Execution)
+When the user actually hits "Send" in the chat:
+
+1. **User Request:** Prompt is dispatched to the backend.
+2. **Task Classification & Routing:** The backend orchestration (e.g., `ChatOrchestrator` / `ProxyEngineService`) intercepts the request.
+3. **Provider API Call:** The request is routed to the active model.
+4. **Response Validation (Closed-Loop Feedback):** 
+   - If the provider fails or times out, the system triggers a **Retry/Fallback** to the next eligible model in the Combo.
+   - If it passes, the response streams back to the UI.
+5. **Audit & Health Update:** The result (success or fail) is logged to telemetry, which feeds back into the Background Health Check to update the provider's reliability score.
+
+***
+
+**Why this separation matters:**
+By following this exact sequence (`Database → Services → State → UI`), you avoid the "spaghetti" trap where the UI tries to filter active models on the fly. The UI simply consumes the truth prepared by the background agents, ensuring maximum performance and stability.

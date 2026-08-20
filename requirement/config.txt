@@ -1,0 +1,58 @@
+# CONFIG SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Config View (http://localhost:3000/config)
+
+================================================================================
+[2026-07-31 20:11:00] INITIALIZE SCREEN CHANGE LOG & N8N INTEGRATION SNIPPETS
+================================================================================
+Target Screen : ConfigView.js
+Requested By  : User Chat Rule & n8n Workflow Design
+Status        : PASS (Active & Verified)
+Changes       :
+	- Initialized screen requirement log for Config View.
+	- Verified integration code snippets for cURL, Python, Node.js, Go, and PHP.
+	- Verified OpenAI-compatible API base URL endpoints configuration (`http://localhost:12247/v1`).
+Files Modified:
+	- public/js/views/ConfigView.js
+
+[2026-08-05 10:00:33] Implemented Gateway Circuit Breaker & Dynamic Direct Routing overrides. If a provider encounters 3 consecutive failures, it is blacklisted for 5 minutes. Direct model requests to offline or blacklisted providers are dynamically rewrote to healthy alternative models of the same family/tier on the fly. Modified files: src/services/ProxyEngineService.js - PASS
+
+=========================================================
+[2026-08-07 14:15:00] DEEP-DIVE AUDIT & DYNAMIC CONFIGURATION SCHEMA SYNC
+================================================================
+Target Screen : Config View (ConfigView.js)
+Requested By  : User Chat (Deep-dive audit & zero hardcoding rule)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Audited ConfigView.js system parameters and default fallback model configuration.
+	- Synchronized dynamic configuration schema in data/config.json with REST endpoint /api/config.
+Files Modified:
+	- public/js/views/ConfigView.js
+	- data/config.json
+	- requirement/config.txt
+=========================================================
+
+=========================================================
+[2026-08-07 14:26:00] HUMAN-IN-LOOP USABILITY & MEMO BOX OPTIONS SYNC
+================================================================
+Target Screen : Config View (ConfigView.js)
+Requested By  : User Chat (Human-In-Loop Usability & UI/UX Audit)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Added interactive ModalDialog options when opening reference memo URLs ([Open in New Tab] [Copy URL] [Cancel]).
+	- Validated memo text area URL formatting with live validation feedback.
+	- Added clear reset controls for code snippet language selection rail.
+Files Modified:
+	- public/js/views/ConfigView.js
+	- requirement/config.txt
+=========================================================
+[2026-08-19 20:55:00] CLOSED-LOOP SSOT BROADCAST & MEMO PERSISTENCE SYNC
+================================================================
+Target Screen : Config View (ConfigView.js)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Connected addUrl() and confirmRemoveUrl() to window.app.notifyDataChanged() global event bus.
+	- Added try-catch error notifications for failed memo URL disk writes.
+Files Modified:
+	- public/js/views/ConfigView.js
+	- requirement/config.txt
+=========================================================

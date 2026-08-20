@@ -1,0 +1,225 @@
+If you're asking what the "About Me" and "License" pages should look like for the jDroid-X Free Model Club app, I recommend keeping them separate and very clean.
+
+1. About Me / About jDroid-X
+
+I would actually call the page "About jDroid-X" rather than "About Me". It feels more like a product/company page and gives you room to grow.
+
+5
+Suggested layout
+┌─────────────────────────────────────────────────────────┐
+│  ← Settings                         About jDroid-X       │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│                     [ jDroid-X Logo ]                   │
+│                                                         │
+│                    Free Model Club                      │
+│                 Version 1.0.0 • Stable                  │
+│                                                         │
+│     Discover • Compare • Connect • Build                │
+│                                                         │
+│  Free Model Club is a jDroid-X application designed     │
+│  to help developers discover and work with free and     │
+│  accessible AI models from multiple providers.          │
+│                                                         │
+│  ───────────────────────────────────────────────────    │
+│                                                         │
+│  🧑‍💻 Developer                                         │
+│  jDroid-X                                               │
+│                                                         │
+│  🌐 Website                                             │
+│  [ jDroid-X Website ]                                   │
+│                                                         │
+│  💻 Source Code                                         │
+│  [ GitHub Repository ]                                  │
+│                                                         │
+│  📖 Documentation                                       │
+│  [ Documentation ]                                      │
+│                                                         │
+│  🐛 Report a Problem                                    │
+│  [ GitHub Issues ]                                      │
+│                                                         │
+│  ───────────────────────────────────────────────────    │
+│                                                         │
+│             Built with ❤️ by jDroid-X                  │
+│                                                         │
+│                 © 2026 jDroid-X                         │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+Information worth showing
+
+Application
+
+Free Model Club
+Version
+Build number
+Release channel
+Last updated
+
+Developer
+
+jDroid-X
+Website
+GitHub
+Documentation
+Support
+Bug reporting
+
+Technology
+
+You can optionally show:
+
+Built with
+• Electron / Tauri / Android / Web
+• Node.js
+• Python
+• SQLite
+• OpenAI-compatible APIs
+
+Only list technologies actually used by the application.
+
+2. License page
+
+The License page should not simply say "MIT License" unless the entire project is actually released under MIT.
+
+This is particularly important for Free Model Club, because you may have:
+
+jDroid-X source code
+third-party libraries
+provider APIs
+AI models
+model metadata
+icons
+fonts
+images
+open-source dependencies
+
+Each can have different licenses.
+
+Suggested UI
+┌─────────────────────────────────────────────────────────┐
+│  ← Settings                              Licenses        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Free Model Club                                        │
+│  Copyright © 2026 jDroid-X                              │
+│                                                         │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │ jDroid-X Software License                         │  │
+│  │                                                   │  │
+│  │ Copyright © 2026 jDroid-X                         │  │
+│  │                                                   │  │
+│  │ [View Full License]                               │  │
+│  └───────────────────────────────────────────────────┘  │
+│                                                         │
+│  Third-Party Software                                   │
+│                                                         │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │ React                                  MIT        │  │
+│  │ Electron                              MIT        │  │
+│  │ SQLite                                Public     │  │
+│  │ ...                                               │  │
+│  │                                                   │  │
+│  │ [View All Third-Party Licenses]                   │  │
+│  └───────────────────────────────────────────────────┘  │
+│                                                         │
+│  AI Providers                                           │
+│                                                         │
+│  Free Model Club does not own or redistribute           │
+│  third-party AI models unless explicitly stated.       │
+│                                                         │
+│  Model availability, pricing, quotas and API           │
+│  policies are controlled by their respective providers.│
+│                                                         │
+│  [Provider Terms] [Privacy] [Third-Party Notices]       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+3. I recommend three separate legal sections
+
+Don't put everything into one giant legal page.
+
+About
+About jDroid-X
+
+Contains:
+
+Who created it
+What Free Model Club does
+Version
+Website
+GitHub
+Contact
+Credits
+Licenses
+Open Source & Third-Party Licenses
+
+Contains:
+
+Application license
+Dependency licenses
+Copyright notices
+Third-party software
+Fonts/icons/assets
+Legal
+Legal
+
+Contains:
+
+Privacy Policy
+Terms of Use
+Disclaimer
+Third-party provider disclaimer
+AI model disclaimer
+Trademark notice
+
+This separation makes the app feel much more professional.
+
+4. Particularly important for Free Model Club
+
+I'd include this disclaimer:
+
+Free Model Club does not guarantee the availability, performance, pricing, token limits, or free usage quotas of third-party AI providers or models. Provider policies, model availability, API limits, and pricing may change without notice. Users are responsible for complying with the terms and policies of each provider they use.
+
+And another important one:
+
+Free Model Club is an independent jDroid-X application and is not affiliated with, endorsed by, or sponsored by OpenAI, Google, Anthropic, NVIDIA, Microsoft, Meta, xAI, or other third-party AI providers unless explicitly stated.
+
+That becomes especially useful because your application may list models from many companies.
+
+5. A polished About screen
+
+For your branding, I'd make the top section very simple:
+
+             ┌───────────────┐
+             │               │
+             │   jDroid-X    │
+             │               │
+             └───────────────┘
+
+             FREE MODEL CLUB
+
+       One Club. Many Models.
+
+  Discover • Compare • Connect • Build
+
+             Version 1.0.0
+
+       ─────────────────────
+
+             Developed by
+
+               jDroid-X
+
+       ─────────────────────
+
+       GitHub
+       Documentation
+       Website
+       Report an Issue
+       Contact
+
+       ─────────────────────
+
+       © 2026 jDroid-X
+       All rights reserved.
+
+My recommendation: use "About jDroid-X", "Licenses", and "Legal & Privacy" as three separate pages. It keeps the interface uncluttered and gives Free Model Club a proper product identity rather than looking like a developer's utility window.

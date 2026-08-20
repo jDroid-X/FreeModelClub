@@ -1,0 +1,192 @@
+# REPORTS SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
+# Screen: Reports View (http://localhost:3000/reports)
+
+================================================================================
+[2026-07-31 00:39:38] FIX MISSING LOG DETAILS IN REPORTS VIEW
+================================================================================
+Target Screen : ReportsView.js & ReportsViewHelper.js
+Requested By  : User Chat Question
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Discovered missing helper methods (`renderLogsTable`, `updateLatencyBar`, `renderLogDetailModal`, `exportCsv`, `exportJson`) in `ReportsViewHelper.js`.
+	- Added full table renderer with timestamp formatting, model/endpoint, provider, latency badges, and status badges.
+	- Enabled 1-click **Log Diagnostic Inspector** modal (`openLogDetailModal`) to view full JSON payload and error tracebacks.
+
+================================================================================
+[2026-07-31 20:10:00] FIX N8N VISUAL WORKFLOW REPORT TAB IN REPORTS VIEW
+================================================================================
+Target Screen : ReportsView.js & ReportsViewHelper.js
+Requested By  : User Chat Request ("unable to see the n8n report")
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Fixed blank "3. n8n Visual Workflow" tab in ReportsView.
+	- Added missing static method `renderN8nWorkflowTab(container)` in `ReportsViewHelper.js`.
+	- Added live status header (FMC :12247 ping, n8n :5678 health check, live API & system log counters).
+	- Rendered Master Brain Agents overview (15 agents) & 10 Screen Workflow status cards (61 total agents).
+	- Integrated 7-Node Internal Request Pipeline visualization & n8n launch helper button.
+
+================================================================================
+[2026-07-31 20:38:00] 1-CLICK N8N SYNC & MASTER BRAIN AUTO-LAUNCH FEATURE
+================================================================================
+Target Screen : IntegrationController.js / integrationRoutes.js / ReportsView.js / ReportsViewHelper.js
+User Chat Request : "next to Launch n8n, can we have n8n sync - which will do all the steps of importing all the workflows so that on click Launch n8n will directly open the master workflow for testing."
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Added `POST /api/integrations/n8n-sync` backend API endpoint in `IntegrationController.js` & `integrationRoutes.js`.
+	- Added `ApiService.syncN8nWorkflows()` method in `public/js/services/api.js`.
+	- Added vibrant **`⚡ n8n Sync`** button next to **Launch n8n** in `ReportsViewHelper.js` header row.
+	- Clicking **⚡ n8n Sync** strips UTF-8 BOM, imports all 10 screen workflows + Master Brain into n8n database via backend CLI executor, and automatically opens `http://localhost:5678/workflow/fmc-master-brain-centralized-workflow` directly!
+Files Modified:
+	- src/controllers/IntegrationController.js
+	- src/routes/integrationRoutes.js
+	- public/js/services/api.js
+	- public/js/views/ReportsView.js
+	- public/js/views/ReportsViewHelper.js
+	- requirement/reports.txt
+
+================================================================================
+[2026-07-31 22:38:00] NODE LABEL UPDATE & DUAL SERVICE BACKGROUND CHECK
+================================================================================
+Target Screen       : Master FMC n8n Wkf.json / Launch_n8n.bat
+User Chat Request   : "change this with Playground workflow" / "launch n8n background service check"
+Status              : PASS (Completed & Verified)
+Changes             :
+	- Updated Node 2 label in `Master FMC n8n Wkf.json` from `INPUT: MasterInputBrainView Extractor` to `INPUT: Playground Workflow Chatbot Input Payload`.
+	- Re-imported all 11 workflows into n8n database.
+	- Refactored `Launch_n8n.bat` to audit both required background services:
+		1. Port 12247 (FMC Backend Server): Checks if running -> bypasses; if not -> starts `node server.js` in background.
+		2. Port 5678 (n8n Engine): Checks if running -> bypasses; if not -> starts `npx -y n8n start` in background.
+	- Verified dual service boot & instant browser launch to `http://localhost:5678/workflow/fmc-master-brain-centralized-workflow`.
+Files Modified      :
+	- n8n Workflow/Master FMC n8n Wkf.json
+	- Launch_n8n.bat
+	- requirement/reports.txt
+
+---
+DATE: 2026-08-04 22:24:54
+REQUEST: Deep Dive Bug Fix & UI/UX Enhancement - Session Checkpoint 1 Continuation
+TARGET SCREEN: ALL VIEWS (Dashboard, Playground, Registration, Config, Providers, ModelClub, Settings, Reports, Manual)
+MODIFIED FILES:
+  - public/js/app.js: C1 toggleSidebar(), C6 /api/integrations/snippets fix, C8 logout() fix, HeaderTelemetry guard
+  - public/js/helpers/NavigationHelper.js: C2 theme dropdown outside-click-close handler
+  - public/js/views/RegistrationView.js: C3 handleRegister(null) retry fix, C4 fa-circle-exclamation icon fix
+  - public/js/views/ProvidersView.js: Fixed configureQuota ApiService.request() call signature
+  - src/controllers/ProviderController.js: C7 Added missing static ping() method
+  - src/routes/providerRoutes.js: Added POST /:id/ping route
+  - public/js/views/ReportsView.js: U9 clearLogs confirmation dialog, filterSeverity global event fix
+  - public/css/layout.css: C1 sidebar-collapsed CSS rules for toggleSidebar()
+  - public/index.html: Normalized all script version tags to v=1.0.4
+STATUS: PASS
+
+[2026-08-05 10:21:09] Added 6 visual dashboards page in Reports tab. Interactive charts map to data extracted from opencode.ai. Fixed model tooltips and color codes. Rearranged Dashboard layout and renamed OpenCode Go to FreeModelsClub. Modified files: public/js/views/DashboardView.js, public/js/views/DashboardViewHelper.js, public/js/views/ReportsView.js, public/js/views/ReportsViewHelper.js - PASS
+
+[2026-08-05 10:26:47] Fixed syntax error in ReportsViewHelper.js (added missing closing brace for ReportsViewHelper class and restored initial render call for the visual analytics pane) - PASS
+
+[2026-08-05 10:36:02] Replaced static opencode scrape data with dynamic local API logs generator inside ReportsViewHelper.renderVisualDashboardsTab. Usage, Users, Market Share, Leaderboard, and Geo charts now map 100% to live actual database logs matching timeframes. - PASS
+
+[2026-08-05 10:49:32] Expanded visual analytics dashboards to 8 distinct graphs/tables (Token Cost, Cache Ratio, and Session Cost added). Implemented fully dynamic cost and cache metrics calculations in ReportsViewHelper derived from active local API logs. - PASS
+
+[2026-08-05 10:55:09] Upgraded Leaderboard, Market Share, Token Cost, and Session Cost dashboards with rich analytical visual graphs (inline CSS progress bars, dual-stack metric graphs, and a CSS conic-gradient donut pie chart for market share) for advanced data visualization. - PASS
+
+[2026-08-05 14:53:16] Telemetry & Metadata Expansion: Expanded LogModel schema with strategyUsed, selfHealed, retryAttempts, routingPath, hasImage, and routingLatencyMs (PASS)
+
+[2026-08-05 16:26:12] Generated api_diagnostics_report.md and updated ProxyEngineService logic to handle routing optimizations as per prime directive. - PASS
+
+=========================================================
+[2026-08-07 11:55:00] DYNAMIC OLLAMA LOCAL MODELS STATUS VERIFICATION & DUAL REPORT CLASSIFICATION
+================================================================================
+Target Screen : Reports View (Active / Inactive Models lists)
+Requested By  : User Chat (Check active/inactive/blacklisted status of local Ollama models)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Refactored ProviderMonitorAgent.js runAudit() to query live tags list from the local Ollama server if active.
+	- Verified whether registered Ollama models (e.g. llama3.3:latest) are actually installed on the user's PC local Ollama instance.
+	- Mapped model statuses so installed models show in "Active Section" and uninstalled/missing ones show in "Inactive Section" dynamically in the reports and logs panel.
+	- Added caching/throttling mechanisms (5 seconds) to avoid CPU spikes during status updates or periodic loops.
+Files Modified:
+	- src/services/ProviderMonitorAgent.js
+	- src/models/AIModel.js
+	- requirement/reports.txt
+=========================================================
+
+=========================================================
+[2026-08-07 14:15:00] DEEP-DIVE AUDIT & 3-PANEL MODEL STATUS HIERARCHY OVERHAUL
+================================================================
+Target Screen : Reports View (ReportsView.js)
+Requested By  : User Chat (Deep-dive audit & 3-panel status hierarchy)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Overhauled renderTreePanel logic: sorted combos and providers descending by model count.
+	- Color-coded badges: Green (badge-emerald) for 100% active models, Orange (badge-amber) for partial active models.
+	- Nested inactive models strictly under parent provider accordions in Panel 2.
+	- Aligned slide-out metadata drawer vertically centered (top: 50%, translateY(-50%)).
+Files Modified:
+	- public/js/views/ReportsView.js
+	- requirement/reports.txt
+=========================================================
+
+=========================================================
+[2026-08-07 14:26:00] HUMAN-IN-LOOP USABILITY & LOG CLEAR OPTIONS SYNC
+================================================================
+Target Screen : Reports View (ReportsView.js)
+Requested By  : User Chat (Human-In-Loop Usability & UI/UX Audit)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Replaced single clear prompt in clearLogs with ModalDialog.showOptionModal for selective log clearing ([API Logs Only] [System Event Logs Only] [All Logs]).
+	- Connected /api/reports/export endpoint for structured CSV and JSON audit data downloads.
+	- Enhanced latency distribution breakdown and severity pill filter handlers.
+Files Modified:
+	- public/js/views/ReportsView.js
+	- src/controllers/LogController.js
+	- src/routes/reportRoutes.js
+	- requirement/reports.txt
+=========================================================
+
+=========================================================
+[2026-08-07 15:25:00] API & SYSTEM LOG SYNERGY GAP RESOLUTION
+================================================================
+Target Screen : Diagnostic Reports View (ReportsView.js / LogController.js)
+Requested By  : User Chat (Playground Chat Model & System Log Verification)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Tested POST /v1/chat/completions and verified log payload structures across api_logs.json and system_logs.json.
+	- Resolved logging gap by streaming PLAYGROUND_CHAT_INITIATED and PLAYGROUND_STREAM_COMPLETED events into system_logs.json.
+	- Verified instant sync across Diagnostic Log tabs and real-time dashboard stream.
+Files Modified:
+	- src/services/ProxyEngineService.js
+	- src/services/StreamHandlerService.js
+	- requirement/reports.txt
+=========================================================
+
+=========================================================
+[2026-08-20 17:40:00] EXPANDED 8-DIMENSION BI ANALYTICAL SUITE, TOOL DISTRIBUTION FIX & CONTEXTUAL HEADER TELEMETRY
+================================================================
+Target Screen : Reports View & Header Telemetry (ReportsView.js, ReportsViewHelper.js, HeaderTelemetry.js, DashboardView.js, DashboardViewHelper.js, AnalyticsService.js, api.js)
+Requested By  : User Chat Request (Tool distribution screen missing, BI reports add 5-8 more reports, Header tiles opening contextual details & Credits tile to last)
+Status        : PASS (Completed & Verified)
+Changes       :
+	- Fixed Tool Distribution Diagnostic screen by adding missing API client methods (`getToolDistribution`, `getActiveConnections`, `getConflictLog`, `getKnownTools`, `getToolStats`) to `public/js/services/api.js`.
+	- Expanded BI Analytical Reporting to 8 rich dimensions in `AnalyticsService.js` and `ReportsViewHelper.js`:
+		1. Financial Cost Arbitrage & Free Tier Savings vs Commercial Baseline ($0.004/1k).
+		2. Provider Latency Matrix & Benchmark SLA Matrix (Fast, Normal, Degraded).
+		3. Token Velocity & Burn Rate Hourly Forecast (24-hour predictive trend).
+		4. Model Club Combo Routing & Failover Efficiency (Primary vs Fallback distribution).
+		5. Context Window & Payload Distribution (0-32k, 32k-64k, 64k-128k, 128k-200k+).
+		6. Skill Taxonomy & Task Domain Distribution (Coding, Reasoning, Math, General, Creative).
+		7. Error Taxonomy & Failure Mode Heatmap (Categorization across Timeout, Rate Limit, Auth, Offline).
+		8. AI Copilot & IDE Tool Invocations (VS Code Copilot, Cursor IDE, Claude Desktop, Cline, Postman).
+	- Header Telemetry Tile Enhancement:
+		- Added Active Agents (4 agents), Avg Latency (180ms), and System Health (100%) metadata tiles.
+		- Moved Credits Saved tile to the final position on the far right.
+		- Refactored `DashboardView.handleTileClick` and `DashboardViewHelper.handleContextualTileClick` so each tile opens a tailored, context-specific detail modal with direct navigation actions instead of opening identical generic reports.
+	- ReportsView Tab Switch Fix: Cleaned filter and search bars to only show for log views (`api` and `system`) and hide for non-log tabs.
+Files Modified:
+	- public/js/services/api.js
+	- public/js/components/HeaderTelemetry.js
+	- public/js/views/DashboardView.js
+	- public/js/views/DashboardViewHelper.js
+	- public/js/views/ReportsView.js
+	- public/js/views/ReportsViewHelper.js
+	- src/services/AnalyticsService.js
+	- requirement/reports.txt
+=========================================================
