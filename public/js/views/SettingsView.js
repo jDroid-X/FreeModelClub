@@ -879,13 +879,17 @@ class SettingsView {
     }
   }
 
-  static applyTheme(themeId) {
-    document.body.className = '';
-    if (themeId !== 'system-default' && themeId !== 'default') {
-      document.body.classList.add(themeId);
+  static async applyTheme(themeId) {
+    if (window.app && typeof window.app.changeTopTheme === 'function') {
+      await window.app.changeTopTheme(themeId);
+    } else {
+      document.body.className = '';
+      if (themeId !== 'system-default' && themeId !== 'default') {
+        document.body.classList.add(themeId);
+      }
+      localStorage.setItem('fmc_theme', themeId);
+      ModalDialog.showNotification('Theme updated!', 'success');
     }
-    localStorage.setItem('fmc_theme', themeId);
-    ModalDialog.showNotification('Theme updated!', 'success');
     this.switchTab('themes');
   }
 

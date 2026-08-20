@@ -23,6 +23,8 @@ class SettingsThemeHelper {
     const bgSidebar = vars['--bg-sidebar'] || bg;
     const bgHoverOverlay = vars['--bg-hover-overlay'] || 'rgba(255,255,255,0.08)';
     
+    const bgCode = vars['--bg-code'] || '#e2e8f0';
+    const modalOverlay = vars['--modal-overlay'] || 'rgba(0, 0, 0, 0.7)';
     const bColor = vars['--border-color'] || '#334155';
     const bGlow = vars['--border-glow'] || p;
     const accentCyan = vars['--accent-cyan'] || '#06b6d4';
@@ -208,12 +210,13 @@ class SettingsThemeHelper {
             </div>
           </div>
 
-          <!-- Group: Cards & Surfaces -->
+            <!-- Group: Cards & Surfaces -->
           <div class="glass-card" style="padding: 12px; margin-bottom: 12px;">
             <h5 style="margin: 0 0 10px 0; color: var(--accent-cyan); font-size: 0.8rem; text-transform: uppercase;"><i class="fa-solid fa-layer-group"></i> Cards &amp; Surfaces</h5>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               ${this.colorInput('bg-card', 'Card BG', bgCard)}
               ${this.colorInput('bg-card-hover', 'Card Hover', bgCardHover)}
+              ${this.colorInput('bg-code', 'Code BG', bgCode)}
               ${this.colorInput('text-muted', 'Text Muted', tMuted)}
               ${this.colorInput('text-dim', 'Text Dim', tDim)}
               ${this.colorInput('border-radius', 'Border Radius', borderRadius)}
@@ -263,6 +266,7 @@ class SettingsThemeHelper {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               ${this.colorInput('border-color', 'Border Color', bColor)}
               ${this.colorInput('border-glow', 'Border Glow (Hex)', bGlow)}
+              ${this.colorInput('modal-overlay', 'Modal Overlay', modalOverlay)}
             </div>
           </div>
         </div>
@@ -476,28 +480,23 @@ class SettingsThemeHelper {
       glassBlur: isLight ? '10px' : '16px',
       transitionSpeed: isLight ? '0.18s' : '0.2s',
       sidebarWidth: isLight ? '208px' : '200px',
-      topbarHeight: '56px',
-      focusRingColor: accentCyan,
-      monoFontFamily: "'Fira Code', monospace",
-      codeFontSize: isLight ? '13px' : '13px',
-      hoverOverlayOpacity: isLight ? '0.08' : '0.08',
-      contrastShift
+      textDim
     };
   }
 
-  static highlightInput(id) {
-    const inputEl = document.getElementById('editor-' + id);
-    if (!inputEl) return;
-    const container = inputEl.parentElement;
-    if (container) {
-      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      container.style.transition = 'box-shadow 0.3s, background 0.3s';
-      container.style.boxShadow = '0 0 0 2px var(--accent-cyan)';
-      container.style.background = 'rgba(6, 182, 212, 0.1)';
-      setTimeout(() => { 
-        container.style.boxShadow = '';
-        container.style.background = 'rgba(0,0,0,0.2)';
-      }, 1500);
+  static highlightInput(inputId) {
+    const input = document.getElementById('editor-' + inputId);
+    if (input) {
+      input.focus();
+      const parent = input.closest('div');
+      if (parent) {
+        parent.style.boxShadow = '0 0 10px var(--accent-cyan)';
+        parent.style.borderColor = 'var(--accent-cyan)';
+        setTimeout(() => {
+          parent.style.boxShadow = '';
+          parent.style.borderColor = '';
+        }, 1500);
+      }
     }
   }
 
@@ -558,34 +557,40 @@ class SettingsThemeHelper {
     card.style.opacity = glassOpacity;
     card.style.transitionDuration = transitionSpeed;
 
-    const sidebar = card.children[0].children[0];
+    const sidebar = card.children[0]?.children[0];
     if (sidebar) {
       sidebar.style.background = bgSidebar;
       sidebar.style.borderColor = bColor;
       sidebar.style.width = sidebarWidth;
-      sidebar.children[0].style.background = p;
-      sidebar.children[1].style.background = tMuted;
-      sidebar.children[2].style.background = tDim;
+      if (sidebar.children[0]) sidebar.children[0].style.background = p;
+      if (sidebar.children[1]) sidebar.children[1].style.background = tMuted;
+      if (sidebar.children[2]) sidebar.children[2].style.background = tDim;
     }
 
-    const mainContent = card.children[0].children[1];
+    const mainContent = card.children[0]?.children[1];
     if (mainContent) {
       const header = mainContent.children[0];
-      header.children[0].style.fontFamily = font;
-      header.children[0].style.fontSize = fSize + 'rem';
-      header.children[0].style.fontWeight = fWeight;
-      header.children[0].style.fontStyle = fStyle;
-      header.children[0].style.color = tMain;
-      header.children[1].style.color = tMuted;
+      if (header) {
+        if (header.children[0]) {
+          header.children[0].style.fontFamily = font;
+          header.children[0].style.fontSize = fSize + 'rem';
+          header.children[0].style.fontWeight = fWeight;
+          header.children[0].style.fontStyle = fStyle;
+          header.children[0].style.color = tMain;
+        }
+        if (header.children[1]) header.children[1].style.color = tMuted;
+      }
       
       const innerCard = mainContent.children[1];
       if (innerCard) {
         innerCard.style.background = bgCard;
         innerCard.style.borderColor = bColor;
         innerCard.style.borderRadius = borderRadius;
-        innerCard.children[0].children[0].style.color = tMain;
-        innerCard.children[0].children[1].style.color = tOnSecondary;
-        innerCard.children[1].style.color = tDim;
+        if (innerCard.children[0]) {
+          if (innerCard.children[0].children[0]) innerCard.children[0].children[0].style.color = tMain;
+          if (innerCard.children[0].children[1]) innerCard.children[0].children[1].style.color = tOnSecondary;
+        }
+        if (innerCard.children[1]) innerCard.children[1].style.color = tDim;
       }
 
       for (let i = 1; i <= 6; i++) {
@@ -599,12 +604,16 @@ class SettingsThemeHelper {
 
       const buttons = mainContent.children[2];
       if (buttons) {
-        buttons.children[0].style.background = p;
-        buttons.children[0].style.color = tOnPrimary;
-        buttons.children[1].style.background = bgHoverOverlay;
-        buttons.children[1].style.opacity = hoverOpacity;
-        buttons.children[1].style.borderColor = bColor;
-        buttons.children[1].style.color = tMain;
+        if (buttons.children[0]) {
+          buttons.children[0].style.background = p;
+          buttons.children[0].style.color = tOnPrimary;
+        }
+        if (buttons.children[1]) {
+          buttons.children[1].style.background = bgHoverOverlay;
+          buttons.children[1].style.opacity = hoverOpacity;
+          buttons.children[1].style.borderColor = bColor;
+          buttons.children[1].style.color = tMain;
+        }
       }
     }
   }
@@ -629,7 +638,7 @@ class SettingsThemeHelper {
       '--border-color': val('border-color'),
       '--border-glow': val('border-glow'),
       '--font-main': val('font-main'),
-      '--font-size-base': val('font-size-base') + 'rem',
+      '--font-size-base': val('font-size-base') ? (val('font-size-base').includes('rem') ? val('font-size-base') : val('font-size-base') + 'rem') : '0.82rem',
       '--font-weight-base': val('font-weight-base'),
       '--font-style-base': val('font-style-base'),
       '--primary': val('primary'),
@@ -654,11 +663,14 @@ class SettingsThemeHelper {
       '--focus-ring-color': val('focus-ring-color'),
       '--mono-font-family': val('mono-font-family'),
       '--code-font-size': val('code-font-size'),
-      '--hover-overlay-opacity': val('hover-overlay-opacity')
+      '--hover-overlay-opacity': val('hover-overlay-opacity'),
+      '--bg-code': val('bg-code'),
+      '--modal-overlay': val('modal-overlay')
     };
 
-    const endpoint = isEdit ? `/api/themes/${themeId}` : '/api/themes';
-    const method = isEdit ? 'PUT' : 'POST';
+    const targetThemeId = (isEdit && themeId) ? themeId : ('theme-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    const endpoint = (isEdit && themeId) ? `/api/themes/${themeId}` : '/api/themes';
+    const method = (isEdit && themeId) ? 'PUT' : 'POST';
 
     try {
       const res = await ApiService.request(endpoint, {
@@ -668,16 +680,22 @@ class SettingsThemeHelper {
       });
 
       if (res && res.success) {
-        if (isEdit && localStorage.getItem('fmc_theme') === themeId) {
-          SettingsView.applyTheme(themeId);
-        } else {
-          SettingsView.switchTab('themes');
+        const savedId = (res.theme && res.theme.id) ? res.theme.id : targetThemeId;
+        ModalDialog.showNotification(`Theme "${name}" saved and applied!`, 'success');
+        
+        // Immediately apply the saved theme across the running app
+        if (window.app && typeof window.app.changeTopTheme === 'function') {
+          await window.app.changeTopTheme(savedId);
+        } else if (typeof SettingsView !== 'undefined' && SettingsView.applyTheme) {
+          await SettingsView.applyTheme(savedId);
         }
       } else {
-        ModalDialog.showNotification('Failed to save theme.', 'error');
+        ModalDialog.showNotification('Failed to save theme: ' + (res?.message || 'Server error'), 'error');
       }
     } catch(err) {
       ModalDialog.showNotification('Error saving theme: ' + err.message, 'error');
     }
   }
 }
+
+window.SettingsThemeHelper = SettingsThemeHelper;

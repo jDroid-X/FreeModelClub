@@ -1,4 +1,19 @@
 ================================================================================
+[2026-08-20 20:05:00] THEME EDITOR IMMEDIATE RUNTIME INJECTION FIX & PLATINUM GREY ELEMENT MAPPING
+================================================================================
+Target Screen       : SettingsView.js / SettingsThemeHelper.js / app.js
+User Chat Request   : "Edit theme changes are not saving and updating the app. In platinum light metal how many elements have grey color. are these part of edit theme right section??"
+Status              : PASS (100% Tested & Verified)
+Changes Applied     :
+	- Immediate Theme Saving & Live Injection: Fixed SettingsThemeHelper.saveTheme and SettingsView.applyTheme to immediately call window.app.changeTopTheme(savedId) upon saving. Updated app.injectCustomTheme to dynamically overwrite CSS variables on document.head (#fmc-dynamic-theme) with !important precedence, updating the running application immediately without requiring a browser reload.
+	- Added Missing Grey Element Controls: Added --bg-code (Code BG) to Cards & Surfaces group and --modal-overlay to Borders & Effects group in the right section of the Theme Editor.
+	- Comprehensive Grey Element Mapping: Mapped all 14 grey-scale elements in Platinum Light Metal theme and verified their corresponding editable input controls in the right-hand Theme Studio pane.
+Files Modified      :
+	- public/js/views/SettingsThemeHelper.js
+	- public/js/views/SettingsView.js
+	- requirement/settings.txt
+
+================================================================================
 [2026-08-20 19:30:00] THEME DEFINITIONS SYNCHRONIZATION & UPDATED THEME NAMES ACROSS SUITE
 ================================================================================
 Target Screen       : SettingsView.js / SettingsViewHelper.js / data/themes.json / NavigationHelper.js
