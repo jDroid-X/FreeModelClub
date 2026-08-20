@@ -10,33 +10,33 @@ class SettingsViewHelper {
     return [
       // 7 Official Metal Themes (Differentiated: Complementary/Split-Comp/Triadic Accents)
       { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#dde7f1', bg: '#eef3f8', sidebar: '#64748b', card: '#ffffff', text: '#0f172a', contrast: '20% Cool Light', icon: 'fa-shield-halved' },
-      { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#3b82f6', bg: '#120e04', sidebar: '#1a1406', card: '#241b08', text: '#fffbeb', contrast: '25% Warm + Blue', icon: 'fa-crown' },
-      { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#6b5b4e', bg: '#f0ece6', sidebar: '#8b7d6b', card: '#faf8f5', text: '#1c1410', contrast: '18% Warm Stone', icon: 'fa-gem' },
-      { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#38bdf8', bg: '#070a10', sidebar: '#0c111a', card: '#161e2c', text: '#f8fafc', contrast: '25% Cool Cyan', icon: 'fa-cube' },
-      { id: 'theme-bronze', name: 'Bronze Dark Metal', category: 'Metal', accent: '#14b8a6', bg: '#201810', sidebar: '#2e2014', card: '#382818', text: '#fff7ed', contrast: '12% Mid + Teal', icon: 'fa-hammer' },
-      { id: 'theme-copper', name: 'Copper Dark Metal', category: 'Metal', accent: '#a855f7', bg: '#1b0c08', sidebar: '#280f0b', card: '#3a1a14', text: '#fef2f2', contrast: '25% Warm + Purple', icon: 'fa-coins' },
-      { id: 'theme-obsidian', name: 'Obsidian Dark Metal', category: 'Metal', accent: '#22c55e', bg: '#020304', sidebar: '#040604', card: '#080c08', text: '#d4f4dd', contrast: '2% Void + Green', icon: 'fa-circle-dot' },
+      { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#3b82f6', bg: '#181204', sidebar: '#241b07', card: '#34270d', text: '#fffbeb', contrast: '25% Warm Gold + Blue', icon: 'fa-crown' },
+      { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#6b5b4e', bg: '#f4efe6', sidebar: '#786c5e', card: '#fdfbf7', text: '#1c1510', contrast: '18% Warm Stone Light', icon: 'fa-gem' },
+      { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#00b4d8', bg: '#080c14', sidebar: '#0f1726', card: '#162032', text: '#f0f8ff', contrast: '25% Stealth Cyan', icon: 'fa-cube' },
+      { id: 'theme-bronze', name: 'Bronze Dark Metal', category: 'Metal', accent: '#14b8a6', bg: '#261a10', sidebar: '#382618', card: '#4a3422', text: '#fff7ed', contrast: '14% Mid + Seafoam', icon: 'fa-hammer' },
+      { id: 'theme-copper', name: 'Copper Dark Metal', category: 'Metal', accent: '#a855f7', bg: '#200a06', sidebar: '#300f09', card: '#44160d', text: '#fff1f0', contrast: '25% Copper + Purple', icon: 'fa-coins' },
+      { id: 'theme-obsidian', name: 'Obsidian Dark Metal', category: 'Metal', accent: '#22c55e', bg: '#020303', sidebar: '#060a07', card: '#0b120c', text: '#dcfce7', contrast: '2% Void + Laser Green', icon: 'fa-circle-dot' },
 
-      // 5 Natural Themes
-      { id: 'theme-emerald-forest', name: 'Emerald Forest', category: 'Natural', accent: '#10b981', bg: '#042f2e', sidebar: '#02201f', card: '#064e3b', text: '#f0fdf4', contrast: '25% Forest Depth', icon: 'fa-tree' },
-      { id: 'theme-deep-ocean', name: 'Deep Ocean', category: 'Natural', accent: '#0284c7', bg: '#03071e', sidebar: '#020514', card: '#071b38', text: '#f0f9ff', contrast: '25% Abyssal Depth', icon: 'fa-water' },
-      { id: 'theme-nordic-pine', name: 'Nordic Pine', category: 'Natural', accent: '#059669', bg: '#0f281e', sidebar: '#0a1b14', card: '#16382b', text: '#ecfdf5', contrast: '25% Nordic Spruce', icon: 'fa-leaf' },
-      { id: 'theme-sahara-desert', name: 'Sahara Desert', category: 'Natural', accent: '#d97706', bg: '#2c1808', sidebar: '#1f1105', card: '#3d230d', text: '#fffbeb', contrast: '25% Dune Warmth', icon: 'fa-sun' },
-      { id: 'theme-autumn-maple', name: 'Autumn Maple', category: 'Natural', accent: '#e11d48', bg: '#2b0d0d', sidebar: '#1e0909', card: '#3f1414', text: '#fff1f2', contrast: '25% Burgundy Foliage', icon: 'fa-fire' },
+      // 5 Natural Themes (Ecosystem Spectrum)
+      { id: 'theme-emerald-forest', name: 'Emerald Forest', category: 'Natural', accent: '#10b981', bg: '#03241b', sidebar: '#053629', card: '#084c3b', text: '#f0fdf4', contrast: '25% Amazon Pine + Lime', icon: 'fa-tree' },
+      { id: 'theme-deep-ocean', name: 'Deep Ocean', category: 'Natural', accent: '#00f0ff', bg: '#020817', sidebar: '#04132e', card: '#08204d', text: '#f0f9ff', contrast: '25% Abyssal Aqua + Coral', icon: 'fa-water' },
+      { id: 'theme-nordic-pine', name: 'Nordic Pine', category: 'Natural', accent: '#2dd4bf', bg: '#091f1a', sidebar: '#0f2d26', card: '#174036', text: '#ecfdf5', contrast: '25% Fjord Mint + Amber', icon: 'fa-leaf' },
+      { id: 'theme-sahara-desert', name: 'Sahara Desert', category: 'Natural', accent: '#f59e0b', bg: '#2b1404', sidebar: '#3d1d06', card: '#542808', text: '#fffbeb', contrast: '25% Dune Gold + Oasis', icon: 'fa-sun' },
+      { id: 'theme-autumn-maple', name: 'Autumn Maple', category: 'Natural', accent: '#e11d48', bg: '#26060c', sidebar: '#3a0912', card: '#500d1a', text: '#fff1f2', contrast: '25% Crimson Wine + Gold', icon: 'fa-fire' },
 
-      // 5 Cosmic Themes
-      { id: 'theme-nebula-violet', name: 'Nebula Violet', category: 'Cosmic', accent: '#a855f7', bg: '#110726', sidebar: '#0b041a', card: '#1c0d3a', text: '#faf5ff', contrast: '25% Starlight Violet', icon: 'fa-wand-magic-sparkles' },
-      { id: 'theme-galaxy-starlight', name: 'Galaxy Starlight', category: 'Cosmic', accent: '#6366f1', bg: '#08081a', sidebar: '#050512', card: '#11122e', text: '#eef2ff', contrast: '25% Celestial Void', icon: 'fa-star' },
-      { id: 'theme-solar-flare', name: 'Solar Flare', category: 'Cosmic', accent: '#ea580c', bg: '#1a0500', sidebar: '#120300', card: '#290a00', text: '#fff7ed', contrast: '25% Magma Corona', icon: 'fa-meteor' },
-      { id: 'theme-aurora-borealis', name: 'Aurora Borealis', category: 'Cosmic', accent: '#00ff87', bg: '#031716', sidebar: '#02100f', card: '#072624', text: '#f0fdfa', contrast: '25% Northern Light', icon: 'fa-wind' },
-      { id: 'theme-deep-cosmos', name: 'Deep Cosmos', category: 'Cosmic', accent: '#4f46e5', bg: '#030308', sidebar: '#020205', card: '#0a0a1a', text: '#ffffff', contrast: '25% Supermassive Void', icon: 'fa-globe' },
+      // 5 Cosmic Themes (Astral Spectrum)
+      { id: 'theme-nebula-violet', name: 'Nebula Violet', category: 'Cosmic', accent: '#c026d3', bg: '#130424', sidebar: '#1e0738', card: '#2c0a52', text: '#faf5ff', contrast: '25% Cosmic Orchid + Cyan', icon: 'fa-wand-magic-sparkles' },
+      { id: 'theme-galaxy-starlight', name: 'Galaxy Starlight', category: 'Cosmic', accent: '#6366f1', bg: '#050716', sidebar: '#0a0e2a', card: '#101742', text: '#eef2ff', contrast: '25% Pulsar Indigo + Gold', icon: 'fa-star' },
+      { id: 'theme-solar-flare', name: 'Solar Flare', category: 'Cosmic', accent: '#ff4500', bg: '#1c0500', sidebar: '#2b0800', card: '#420d00', text: '#fff7ed', contrast: '25% Plasma Orange + Yellow', icon: 'fa-meteor' },
+      { id: 'theme-aurora-borealis', name: 'Aurora Borealis', category: 'Cosmic', accent: '#00ffaa', bg: '#021415', sidebar: '#042022', card: '#073033', text: '#f0fdfa', contrast: '25% Polar Emerald + Aqua', icon: 'fa-wind' },
+      { id: 'theme-deep-cosmos', name: 'Deep Cosmos', category: 'Cosmic', accent: '#8b5cf6', bg: '#030208', sidebar: '#070514', card: '#0f0b24', text: '#f5f3ff', contrast: '25% Gravitational Violet', icon: 'fa-globe' },
 
-      // 5 Popular Internet Themes
-      { id: 'theme-dracula', name: 'Dracula Dark', category: 'Popular', accent: '#bd93f9', bg: '#1e1f29', sidebar: '#191a21', card: '#282a36', text: '#f8f8f2', contrast: '25% Classic Vampire', icon: 'fa-moon' },
-      { id: 'theme-tokyo-night', name: 'Tokyo Night', category: 'Popular', accent: '#7aa2f7', bg: '#13141f', sidebar: '#10101a', card: '#1a1b26', text: '#c0caf5', contrast: '25% Neon Tokyo', icon: 'fa-city' },
-      { id: 'theme-catppuccin', name: 'Catppuccin Mocha', category: 'Popular', accent: '#cba6f7', bg: '#181825', sidebar: '#11111b', card: '#1e1e2e', text: '#cdd6f4', contrast: '25% Pastel Mocha', icon: 'fa-cat' },
-      { id: 'theme-nord-ice', name: 'Nord Ice', category: 'Popular', accent: '#88c0d0', bg: '#242933', sidebar: '#1d212a', card: '#2e3440', text: '#eceff4', contrast: '25% Arctic Frost', icon: 'fa-snowflake' },
-      { id: 'theme-cyberpunk', name: 'Cyberpunk Neon', category: 'Popular', accent: '#fee715', bg: '#0b0914', sidebar: '#07050d', card: '#161226', text: '#ffffff', contrast: '25% Night City 2077', icon: 'fa-bolt' }
+      // 5 Popular Internet Themes (Iconic Specifications)
+      { id: 'theme-dracula', name: 'Dracula Dark', category: 'Popular', accent: '#bd93f9', bg: '#1e1f29', sidebar: '#282a36', card: '#343746', text: '#f8f8f2', contrast: '25% Dracula Purple + Pink', icon: 'fa-moon' },
+      { id: 'theme-tokyo-night', name: 'Tokyo Night', category: 'Popular', accent: '#7aa2f7', bg: '#16161e', sidebar: '#1a1b26', card: '#24283b', text: '#c0caf5', contrast: '25% Tokyo Storm + Magenta', icon: 'fa-city' },
+      { id: 'theme-catppuccin', name: 'Catppuccin Mocha', category: 'Popular', accent: '#cba6f7', bg: '#11111b', sidebar: '#181825', card: '#1e1e2e', text: '#cdd6f4', contrast: '25% Mocha Mauve + Peach', icon: 'fa-cat' },
+      { id: 'theme-nord-ice', name: 'Nord Ice', category: 'Popular', accent: '#88c0d0', bg: '#242933', sidebar: '#2e3440', card: '#3b4252', text: '#eceff4', contrast: '25% Arctic Frost + Aurora', icon: 'fa-snowflake' },
+      { id: 'theme-cyberpunk', name: 'Cyberpunk Neon', category: 'Popular', accent: '#fee715', bg: '#07050e', sidebar: '#100c1e', card: '#1a1330', text: '#ffffff', contrast: '25% Laser Yellow + Pink', icon: 'fa-bolt' }
     ];
   }
 

@@ -428,270 +428,383 @@ body.theme-obsidian {
 }
 
 /* ==========================================
-   5 NATURAL THEMES (Earth, Water & Flora)
+   5 NATURAL THEMES (Earth, Water, Forest & Flora)
+   ========================================== */
 
-/* 8. Emerald Forest */
+/* 8. Emerald Forest — Deep Amazon Rainforest: Pine jade base (H:160°) + Neon Lime & Mint (H:85°/140°) */
 body.theme-emerald-forest {
-  --bg-dark: #042f2e;
-  --bg-card: rgba(6, 78, 59, 0.92);
-  --bg-card-hover: rgba(10, 95, 73, 0.96);
-  --bg-sidebar: #02201f;
-  --bg-input: rgba(4, 47, 46, 0.9);
-  --bg-code: rgba(2, 32, 31, 0.95);
+  --bg-dark: #03241b;
+  --bg-card: rgba(8, 76, 59, 0.94);
+  --bg-card-hover: rgba(12, 102, 79, 0.98);
+  --bg-sidebar: #053629;
+  --bg-input: rgba(6, 54, 42, 0.92);
+  --bg-code: rgba(2, 28, 21, 0.96);
   --border-color: rgba(16, 185, 129, 0.38);
-  --border-glow: rgba(52, 211, 153, 0.75);
+  --border-glow: rgba(132, 204, 22, 0.78);
   --tile-glow-bg: rgba(16, 185, 129, 0.18);
   --primary: #10b981;
   --primary-hover: #059669;
   --primary-light: #34d399;
+  --secondary: #84cc16;
+  --btn-secondary-bg: #14532d;
+  --btn-secondary-color: #f0fdf4;
+  --btn-secondary-hover: #166534;
+  --item-sub-bg: rgba(16, 185, 129, 0.15);
   --accent-cyan: #2dd4bf;
-  --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --accent-emerald: #10b981;
+  --accent-amber: #84cc16;
   --accent-rose: #f43f5e;
   --text-main: #f0fdf4;
   --text-muted: #dcfce7;
-  --text-dim: #bbf7d0;
+  --text-dim: #86efac;
   --tile-shadow: 0 8px 32px rgba(16, 185, 129, 0.28);
+  --modal-overlay: rgba(3, 36, 27, 0.9);
+  --icon-color: #34d399;
+  --icon-hover-color: #84cc16;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.12) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(8, 76, 59, 0.25), rgba(3, 36, 27, 0.75));
 }
 
-/* 9. Deep Ocean */
+/* 9. Deep Ocean — Abyssal Mariana Trench: Midnight navy (H:222°) + Bioluminescent Aqua & Coral Pink (H:185°/340°) */
 body.theme-deep-ocean {
-  --bg-dark: #03071e;
-  --bg-card: rgba(7, 27, 56, 0.92);
-  --bg-card-hover: rgba(12, 39, 78, 0.96);
-  --bg-sidebar: #020514;
-  --bg-input: rgba(5, 19, 39, 0.9);
-  --bg-code: rgba(2, 8, 18, 0.95);
-  --border-color: rgba(56, 189, 248, 0.38);
-  --border-glow: rgba(56, 189, 248, 0.75);
-  --tile-glow-bg: rgba(56, 189, 248, 0.18);
-  --primary: #0284c7;
-  --primary-hover: #0369a1;
-  --primary-light: #38bdf8;
-  --accent-cyan: #38bdf8;
-  --accent-emerald: #34d399;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
+  --bg-dark: #020817;
+  --bg-card: rgba(8, 32, 77, 0.94);
+  --bg-card-hover: rgba(12, 46, 108, 0.98);
+  --bg-sidebar: #04132e;
+  --bg-input: rgba(6, 23, 56, 0.92);
+  --bg-code: rgba(2, 10, 24, 0.96);
+  --border-color: rgba(0, 240, 255, 0.38);
+  --border-glow: rgba(255, 107, 139, 0.78);
+  --tile-glow-bg: rgba(0, 240, 255, 0.18);
+  --primary: #00f0ff;
+  --primary-hover: #00c4d4;
+  --primary-light: #67e8f9;
+  --secondary: #ff6b8b;
+  --btn-secondary-bg: #0c4a6e;
+  --btn-secondary-color: #f0f9ff;
+  --btn-secondary-hover: #075985;
+  --item-sub-bg: rgba(0, 240, 255, 0.14);
+  --accent-cyan: #00f0ff;
+  --accent-emerald: #38bdf8;
+  --accent-amber: #facc15;
+  --accent-rose: #ff6b8b;
   --text-main: #f0f9ff;
   --text-muted: #e0f2fe;
-  --text-dim: #bae6fd;
-  --tile-shadow: 0 8px 32px rgba(2, 132, 199, 0.3);
+  --text-dim: #7dd3fc;
+  --tile-shadow: 0 8px 32px rgba(0, 240, 255, 0.3);
+  --modal-overlay: rgba(2, 8, 23, 0.92);
+  --icon-color: #00f0ff;
+  --icon-hover-color: #ff6b8b;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(0, 240, 255, 0.12) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(8, 32, 77, 0.25), rgba(2, 8, 23, 0.75));
 }
 
-/* 10. Nordic Pine */
+/* 10. Nordic Pine — Scandinavian Winter Fjord: Glacial evergreen (H:165°) + Frost Mint & Arctic Amber (H:170°/40°) */
 body.theme-nordic-pine {
-  --bg-dark: #0f281e;
-  --bg-card: rgba(22, 56, 43, 0.92);
-  --bg-card-hover: rgba(30, 74, 57, 0.96);
-  --bg-sidebar: #0a1b14;
-  --bg-input: rgba(15, 40, 30, 0.9);
-  --bg-code: rgba(8, 22, 16, 0.95);
-  --border-color: rgba(52, 211, 153, 0.35);
-  --border-glow: rgba(52, 211, 153, 0.75);
-  --tile-glow-bg: rgba(52, 211, 153, 0.18);
-  --primary: #059669;
-  --primary-hover: #047857;
-  --primary-light: #34d399;
+  --bg-dark: #091f1a;
+  --bg-card: rgba(23, 64, 54, 0.94);
+  --bg-card-hover: rgba(32, 88, 74, 0.98);
+  --bg-sidebar: #0f2d26;
+  --bg-input: rgba(17, 48, 40, 0.92);
+  --bg-code: rgba(6, 18, 15, 0.96);
+  --border-color: rgba(45, 212, 191, 0.35);
+  --border-glow: rgba(245, 158, 11, 0.75);
+  --tile-glow-bg: rgba(45, 212, 191, 0.16);
+  --primary: #2dd4bf;
+  --primary-hover: #14b8a6;
+  --primary-light: #5eead4;
+  --secondary: #f59e0b;
+  --btn-secondary-bg: #134e4a;
+  --btn-secondary-color: #f0fdfa;
+  --btn-secondary-hover: #115e59;
+  --item-sub-bg: rgba(45, 212, 191, 0.15);
   --accent-cyan: #22d3ee;
-  --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --accent-emerald: #2dd4bf;
+  --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
   --text-main: #ecfdf5;
-  --text-muted: #d1fae5;
-  --text-dim: #a7f3d0;
-  --tile-shadow: 0 8px 32px rgba(5, 150, 105, 0.28);
+  --text-muted: #ccfbf1;
+  --text-dim: #99f6e4;
+  --tile-shadow: 0 8px 32px rgba(45, 212, 191, 0.25);
+  --modal-overlay: rgba(9, 31, 26, 0.9);
+  --icon-color: #2dd4bf;
+  --icon-hover-color: #f59e0b;
 }
 
-/* 11. Sahara Desert */
+/* 11. Sahara Desert — Sunlit Sand Dunes: Terracotta & Ochre (H:28°) + Blazing Dune Gold & Oasis Blue (H:38°/200°) */
 body.theme-sahara-desert {
-  --bg-dark: #2c1808;
-  --bg-card: rgba(61, 35, 13, 0.92);
-  --bg-card-hover: rgba(82, 47, 18, 0.96);
-  --bg-sidebar: #1f1105;
-  --bg-input: rgba(44, 24, 8, 0.9);
-  --bg-code: rgba(26, 14, 4, 0.95);
-  --border-color: rgba(245, 158, 11, 0.38);
-  --border-glow: rgba(251, 191, 36, 0.78);
-  --tile-glow-bg: rgba(245, 158, 11, 0.18);
-  --primary: #d97706;
-  --primary-hover: #b45309;
+  --bg-dark: #2b1404;
+  --bg-card: rgba(84, 40, 8, 0.94);
+  --bg-card-hover: rgba(110, 52, 11, 0.98);
+  --bg-sidebar: #3d1d06;
+  --bg-input: rgba(60, 28, 6, 0.92);
+  --bg-code: rgba(24, 10, 3, 0.96);
+  --border-color: rgba(245, 158, 11, 0.4);
+  --border-glow: rgba(2, 132, 199, 0.8);
+  --tile-glow-bg: rgba(245, 158, 11, 0.2);
+  --primary: #f59e0b;
+  --primary-hover: #d97706;
   --primary-light: #fbbf24;
-  --accent-cyan: #38bdf8;
-  --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
-  --accent-rose: #f43f5e;
+  --secondary: #0284c7;
+  --btn-secondary-bg: #78350f;
+  --btn-secondary-color: #fffbeb;
+  --btn-secondary-hover: #92400e;
+  --item-sub-bg: rgba(245, 158, 11, 0.16);
+  --accent-cyan: #0284c7;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #ea580c;
   --text-main: #fffbeb;
   --text-muted: #fef3c7;
   --text-dim: #fde68a;
-  --tile-shadow: 0 8px 32px rgba(217, 119, 6, 0.3);
+  --tile-shadow: 0 8px 32px rgba(245, 158, 11, 0.32);
+  --modal-overlay: rgba(43, 20, 4, 0.9);
+  --icon-color: #fbbf24;
+  --icon-hover-color: #0284c7;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(245, 158, 11, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(84, 40, 8, 0.25), rgba(43, 20, 4, 0.75));
 }
 
-/* 12. Autumn Maple */
+/* 12. Autumn Maple — Kyoto Crimson Forest: Wine burgundy (H:348°) + Crimson Maple & Golden Leaf (H:345°/45°) */
 body.theme-autumn-maple {
-  --bg-dark: #2b0d0d;
-  --bg-card: rgba(63, 20, 20, 0.92);
-  --bg-card-hover: rgba(84, 27, 27, 0.96);
-  --bg-sidebar: #1e0909;
-  --bg-input: rgba(43, 13, 13, 0.9);
-  --bg-code: rgba(24, 7, 7, 0.95);
-  --border-color: rgba(225, 29, 72, 0.38);
-  --border-glow: rgba(251, 113, 133, 0.78);
-  --tile-glow-bg: rgba(225, 29, 72, 0.18);
+  --bg-dark: #26060c;
+  --bg-card: rgba(80, 13, 26, 0.94);
+  --bg-card-hover: rgba(108, 18, 35, 0.98);
+  --bg-sidebar: #3a0912;
+  --bg-input: rgba(56, 9, 18, 0.92);
+  --bg-code: rgba(22, 4, 8, 0.96);
+  --border-color: rgba(225, 29, 72, 0.42);
+  --border-glow: rgba(251, 191, 36, 0.8);
+  --tile-glow-bg: rgba(225, 29, 72, 0.2);
   --primary: #e11d48;
   --primary-hover: #be123c;
   --primary-light: #fb7185;
+  --secondary: #f59e0b;
+  --btn-secondary-bg: #881337;
+  --btn-secondary-color: #fff1f2;
+  --btn-secondary-hover: #9f1239;
+  --item-sub-bg: rgba(225, 29, 72, 0.16);
   --accent-cyan: #38bdf8;
   --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
-  --accent-rose: #f43f5e;
+  --accent-amber: #f59e0b;
+  --accent-rose: #e11d48;
   --text-main: #fff1f2;
   --text-muted: #ffe4e6;
   --text-dim: #fecdd3;
-  --tile-shadow: 0 8px 32px rgba(225, 29, 72, 0.3);
+  --tile-shadow: 0 8px 32px rgba(225, 29, 72, 0.35);
+  --modal-overlay: rgba(38, 6, 12, 0.9);
+  --icon-color: #fb7185;
+  --icon-hover-color: #f59e0b;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(225, 29, 72, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(80, 13, 26, 0.25), rgba(38, 6, 12, 0.75));
 }
 
 /* ==========================================
    5 COSMIC THEMES (Galaxies, Stars & Aurora)
    ========================================== */
 
-/* 13. Nebula Violet */
+/* 13. Nebula Violet — Interstellar Stellar Dust: Cosmic ultraviolet (H:270°) + Electric Orchid & Starlight Cyan (H:290°/190°) */
 body.theme-nebula-violet {
-  --bg-dark: #110726;
-  --bg-card: rgba(28, 13, 58, 0.92);
-  --bg-card-hover: rgba(40, 19, 82, 0.96);
-  --bg-sidebar: #0b041a;
-  --bg-input: rgba(20, 8, 42, 0.9);
-  --bg-code: rgba(9, 3, 20, 0.95);
-  --border-color: rgba(168, 85, 247, 0.38);
-  --border-glow: rgba(192, 132, 252, 0.78);
-  --tile-glow-bg: rgba(168, 85, 247, 0.18);
-  --primary: #a855f7;
-  --primary-hover: #9333ea;
-  --primary-light: #c084fc;
-  --accent-cyan: #38bdf8;
+  --bg-dark: #130424;
+  --bg-card: rgba(44, 10, 82, 0.94);
+  --bg-card-hover: rgba(62, 14, 116, 0.98);
+  --bg-sidebar: #1e0738;
+  --bg-input: rgba(32, 7, 60, 0.92);
+  --bg-code: rgba(12, 3, 24, 0.96);
+  --border-color: rgba(192, 38, 211, 0.4);
+  --border-glow: rgba(6, 182, 212, 0.8);
+  --tile-glow-bg: rgba(192, 38, 211, 0.2);
+  --primary: #c026d3;
+  --primary-hover: #a21caf;
+  --primary-light: #e879f9;
+  --secondary: #06b6d4;
+  --btn-secondary-bg: #581c87;
+  --btn-secondary-color: #faf5ff;
+  --btn-secondary-hover: #6b21a8;
+  --item-sub-bg: rgba(192, 38, 211, 0.16);
+  --accent-cyan: #06b6d4;
   --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --accent-amber: #facc15;
   --accent-rose: #f43f5e;
   --text-main: #faf5ff;
   --text-muted: #f3e8ff;
   --text-dim: #e9d5ff;
-  --tile-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+  --tile-shadow: 0 8px 32px rgba(192, 38, 211, 0.35);
+  --modal-overlay: rgba(19, 4, 36, 0.92);
+  --icon-color: #e879f9;
+  --icon-hover-color: #06b6d4;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(192, 38, 211, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(44, 10, 82, 0.25), rgba(19, 4, 36, 0.75));
 }
 
-/* 14. Galaxy Starlight */
+/* 14. Galaxy Starlight — Infinite Celestial Space: Deepest indigo void (H:235°) + Electric Indigo & Supernova Gold (H:240°/50°) */
 body.theme-galaxy-starlight {
-  --bg-dark: #08081a;
-  --bg-card: rgba(17, 18, 46, 0.92);
-  --bg-card-hover: rgba(25, 26, 66, 0.96);
-  --bg-sidebar: #050512;
-  --bg-input: rgba(12, 13, 33, 0.9);
-  --bg-code: rgba(5, 5, 15, 0.95);
-  --border-color: rgba(99, 102, 241, 0.38);
-  --border-glow: rgba(129, 140, 248, 0.78);
-  --tile-glow-bg: rgba(99, 102, 241, 0.18);
+  --bg-dark: #050716;
+  --bg-card: rgba(16, 23, 66, 0.94);
+  --bg-card-hover: rgba(24, 34, 96, 0.98);
+  --bg-sidebar: #0a0e2a;
+  --bg-input: rgba(12, 17, 48, 0.92);
+  --bg-code: rgba(4, 6, 18, 0.96);
+  --border-color: rgba(99, 102, 241, 0.4);
+  --border-glow: rgba(250, 204, 21, 0.8);
+  --tile-glow-bg: rgba(99, 102, 241, 0.2);
   --primary: #6366f1;
   --primary-hover: #4f46e5;
   --primary-light: #818cf8;
+  --secondary: #facc15;
+  --btn-secondary-bg: #1e1b4b;
+  --btn-secondary-color: #eef2ff;
+  --btn-secondary-hover: #312e81;
+  --item-sub-bg: rgba(99, 102, 241, 0.16);
   --accent-cyan: #38bdf8;
   --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
+  --accent-amber: #facc15;
   --accent-rose: #f43f5e;
   --text-main: #eef2ff;
   --text-muted: #e0e7ff;
   --text-dim: #c7d2fe;
-  --tile-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+  --tile-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
+  --modal-overlay: rgba(5, 7, 22, 0.92);
+  --icon-color: #818cf8;
+  --icon-hover-color: #facc15;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(16, 23, 66, 0.25), rgba(5, 7, 22, 0.75));
 }
 
-/* 15. Solar Flare */
+/* 15. Solar Flare — Nuclear Prominence: Dark coronal void (H:15°) + Roaring Plasma Orange & Corona Yellow (H:16°/55°) */
 body.theme-solar-flare {
-  --bg-dark: #1a0500;
-  --bg-card: rgba(41, 10, 0, 0.92);
-  --bg-card-hover: rgba(61, 15, 0, 0.96);
-  --bg-sidebar: #120300;
-  --bg-input: rgba(31, 8, 0, 0.9);
-  --bg-code: rgba(15, 3, 0, 0.95);
-  --border-color: rgba(255, 69, 0, 0.4);
-  --border-glow: rgba(251, 146, 60, 0.8);
-  --tile-glow-bg: rgba(255, 69, 0, 0.2);
-  --primary: #ea580c;
-  --primary-hover: #c2410c;
+  --bg-dark: #1c0500;
+  --bg-card: rgba(66, 13, 0, 0.94);
+  --bg-card-hover: rgba(92, 19, 0, 0.98);
+  --bg-sidebar: #2b0800;
+  --bg-input: rgba(46, 9, 0, 0.92);
+  --bg-code: rgba(18, 3, 0, 0.96);
+  --border-color: rgba(255, 69, 0, 0.45);
+  --border-glow: rgba(253, 224, 71, 0.85);
+  --tile-glow-bg: rgba(255, 69, 0, 0.22);
+  --primary: #ff4500;
+  --primary-hover: #dc2626;
   --primary-light: #fb923c;
+  --secondary: #fde047;
+  --btn-secondary-bg: #7c2d12;
+  --btn-secondary-color: #fff7ed;
+  --btn-secondary-hover: #9a3412;
+  --item-sub-bg: rgba(255, 69, 0, 0.18);
   --accent-cyan: #38bdf8;
   --accent-emerald: #34d399;
-  --accent-amber: #fbbf24;
-  --accent-rose: #f43f5e;
+  --accent-amber: #fde047;
+  --accent-rose: #ff4500;
   --text-main: #fff7ed;
   --text-muted: #ffedd5;
   --text-dim: #fed7aa;
-  --tile-shadow: 0 8px 32px rgba(234, 88, 12, 0.35);
+  --tile-shadow: 0 8px 32px rgba(255, 69, 0, 0.4);
+  --modal-overlay: rgba(28, 5, 0, 0.92);
+  --icon-color: #fb923c;
+  --icon-hover-color: #fde047;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 69, 0, 0.18) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(66, 13, 0, 0.25), rgba(28, 5, 0, 0.75));
 }
 
-/* 16. Aurora Borealis */
+/* 16. Aurora Borealis — Arctic Northern Lights: Midnight sky (H:182°) + Aurora Emerald & Polar Aqua (H:155°/190°) */
 body.theme-aurora-borealis {
-  --bg-dark: #031716;
-  --bg-card: rgba(7, 38, 36, 0.92);
-  --bg-card-hover: rgba(11, 56, 53, 0.96);
-  --bg-sidebar: #02100f;
-  --bg-input: rgba(5, 27, 26, 0.9);
-  --bg-code: rgba(2, 12, 11, 0.95);
-  --border-color: rgba(0, 255, 135, 0.38);
-  --border-glow: rgba(96, 239, 255, 0.78);
-  --tile-glow-bg: rgba(0, 255, 135, 0.18);
-  --primary: #00ff87;
+  --bg-dark: #021415;
+  --bg-card: rgba(7, 48, 51, 0.94);
+  --bg-card-hover: rgba(10, 68, 72, 0.98);
+  --bg-sidebar: #042022;
+  --bg-input: rgba(5, 34, 36, 0.92);
+  --bg-code: rgba(1, 12, 13, 0.96);
+  --border-color: rgba(0, 255, 170, 0.4);
+  --border-glow: rgba(0, 210, 255, 0.8);
+  --tile-glow-bg: rgba(0, 255, 170, 0.2);
+  --primary: #00ffaa;
   --primary-hover: #10b981;
-  --primary-light: #60efff;
-  --accent-cyan: #60efff;
-  --accent-emerald: #00ff87;
+  --primary-light: #67e8f9;
+  --secondary: #00d2ff;
+  --btn-secondary-bg: #042f2e;
+  --btn-secondary-color: #f0fdfa;
+  --btn-secondary-hover: #115e59;
+  --item-sub-bg: rgba(0, 255, 170, 0.16);
+  --accent-cyan: #00d2ff;
+  --accent-emerald: #00ffaa;
   --accent-amber: #fbbf24;
   --accent-rose: #f43f5e;
   --text-main: #f0fdfa;
   --text-muted: #ccfbf1;
   --text-dim: #99f6e4;
-  --tile-shadow: 0 8px 32px rgba(0, 255, 135, 0.28);
+  --tile-shadow: 0 8px 32px rgba(0, 255, 170, 0.32);
+  --modal-overlay: rgba(2, 20, 21, 0.92);
+  --icon-color: #00ffaa;
+  --icon-hover-color: #00d2ff;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 170, 0.14) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(7, 48, 51, 0.25), rgba(2, 20, 21, 0.75));
 }
 
-/* 17. Deep Cosmos */
+/* 17. Deep Cosmos — Gravitational Singularity: Ultra-deep space (H:250°) + Pulsar Violet & Quantum Teal (H:265°/175°) */
 body.theme-deep-cosmos {
-  --bg-dark: #030308;
-  --bg-card: rgba(10, 10, 26, 0.94);
-  --bg-card-hover: rgba(18, 18, 42, 0.98);
-  --bg-sidebar: #020205;
-  --bg-input: rgba(8, 8, 20, 0.92);
-  --bg-code: rgba(3, 3, 10, 0.96);
-  --border-color: rgba(79, 70, 229, 0.38);
-  --border-glow: rgba(6, 182, 212, 0.78);
-  --tile-glow-bg: rgba(79, 70, 229, 0.18);
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #06b6d4;
+  --bg-dark: #030208;
+  --bg-card: rgba(15, 11, 36, 0.94);
+  --bg-card-hover: rgba(23, 17, 54, 0.98);
+  --bg-sidebar: #070514;
+  --bg-input: rgba(10, 8, 25, 0.92);
+  --bg-code: rgba(2, 1, 6, 0.96);
+  --border-color: rgba(139, 92, 246, 0.4);
+  --border-glow: rgba(20, 184, 166, 0.8);
+  --tile-glow-bg: rgba(139, 92, 246, 0.2);
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --primary-light: #a78bfa;
+  --secondary: #14b8a6;
+  --btn-secondary-bg: #2e1065;
+  --btn-secondary-color: #f5f3ff;
+  --btn-secondary-hover: #3b0764;
+  --item-sub-bg: rgba(139, 92, 246, 0.16);
   --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
+  --accent-emerald: #14b8a6;
   --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
-  --text-main: #ffffff;
-  --text-muted: #e0e7ff;
-  --text-dim: #c7d2fe;
-  --tile-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
+  --text-main: #f5f3ff;
+  --text-muted: #ede9fe;
+  --text-dim: #ddd6fe;
+  --tile-shadow: 0 8px 32px rgba(139, 92, 246, 0.35);
+  --modal-overlay: rgba(3, 2, 8, 0.94);
+  --icon-color: #a78bfa;
+  --icon-hover-color: #14b8a6;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.16) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(15, 11, 36, 0.25), rgba(3, 2, 8, 0.75));
 }
 
 /* ==========================================
-   5 POPULAR INTERNET THEMES (Dracula, Tokyo, Nord, Catppuccin, Cyberpunk)
+   5 POPULAR INTERNET THEMES (Dracula, Tokyo, Catppuccin, Nord, Cyberpunk)
    ========================================== */
 
-/* 18. Dracula Dark */
+/* 18. Dracula Dark — Iconic Vampire Gothic: Charcoal (#282a36) + Dracula Purple & Pink (#bd93f9 / #ff79c6) */
 body.theme-dracula {
   --bg-dark: #1e1f29;
-  --bg-card: rgba(40, 42, 54, 0.94);
-  --bg-card-hover: rgba(52, 55, 70, 0.98);
-  --bg-sidebar: #191a21;
-  --bg-input: rgba(33, 34, 44, 0.92);
+  --bg-card: rgba(52, 55, 70, 0.94);
+  --bg-card-hover: rgba(68, 71, 90, 0.98);
+  --bg-sidebar: #282a36;
+  --bg-input: rgba(40, 42, 54, 0.92);
   --bg-code: rgba(20, 20, 28, 0.96);
-  --border-color: rgba(189, 147, 249, 0.38);
-  --border-glow: rgba(255, 121, 198, 0.78);
-  --tile-glow-bg: rgba(189, 147, 249, 0.18);
+  --border-color: rgba(189, 147, 249, 0.4);
+  --border-glow: rgba(255, 121, 198, 0.8);
+  --tile-glow-bg: rgba(189, 147, 249, 0.2);
   --primary: #bd93f9;
   --primary-hover: #a77be8;
   --primary-light: #ff79c6;
+  --secondary: #ff79c6;
+  --btn-secondary-bg: #44475a;
+  --btn-secondary-color: #f8f8f2;
+  --btn-secondary-hover: #6272a4;
+  --item-sub-bg: rgba(189, 147, 249, 0.16);
   --accent-cyan: #8be9fd;
   --accent-emerald: #50fa7b;
   --accent-amber: #f1fa8c;
@@ -699,23 +812,31 @@ body.theme-dracula {
   --text-main: #f8f8f2;
   --text-muted: #e2e2dc;
   --text-dim: #6272a4;
-  --tile-shadow: 0 8px 32px rgba(189, 147, 249, 0.3);
+  --tile-shadow: 0 8px 32px rgba(189, 147, 249, 0.35);
+  --modal-overlay: rgba(30, 31, 41, 0.92);
+  --icon-color: #bd93f9;
+  --icon-hover-color: #ff79c6;
 }
 
-/* 19. Tokyo Night */
+/* 19. Tokyo Night — Storm Cyberpunk: Dark Storm Navy (#1a1b26) + Tokyo Neon Blue & Magenta (#7aa2f7 / #bb9af7) */
 body.theme-tokyo-night {
-  --bg-dark: #13141f;
-  --bg-card: rgba(26, 27, 38, 0.94);
-  --bg-card-hover: rgba(36, 40, 59, 0.98);
-  --bg-sidebar: #10101a;
-  --bg-input: rgba(21, 22, 32, 0.92);
+  --bg-dark: #16161e;
+  --bg-card: rgba(36, 40, 59, 0.94);
+  --bg-card-hover: rgba(48, 54, 79, 0.98);
+  --bg-sidebar: #1a1b26;
+  --bg-input: rgba(26, 27, 38, 0.92);
   --bg-code: rgba(13, 14, 21, 0.96);
-  --border-color: rgba(122, 162, 247, 0.38);
-  --border-glow: rgba(187, 154, 247, 0.78);
-  --tile-glow-bg: rgba(122, 162, 247, 0.18);
+  --border-color: rgba(122, 162, 247, 0.4);
+  --border-glow: rgba(187, 154, 247, 0.8);
+  --tile-glow-bg: rgba(122, 162, 247, 0.2);
   --primary: #7aa2f7;
   --primary-hover: #5d87e5;
   --primary-light: #bb9af7;
+  --secondary: #bb9af7;
+  --btn-secondary-bg: #24283b;
+  --btn-secondary-color: #c0caf5;
+  --btn-secondary-hover: #414868;
+  --item-sub-bg: rgba(122, 162, 247, 0.16);
   --accent-cyan: #7dcfff;
   --accent-emerald: #9ece6a;
   --accent-amber: #e0af68;
@@ -723,23 +844,31 @@ body.theme-tokyo-night {
   --text-main: #c0caf5;
   --text-muted: #a9b1d6;
   --text-dim: #565f89;
-  --tile-shadow: 0 8px 32px rgba(122, 162, 247, 0.3);
+  --tile-shadow: 0 8px 32px rgba(122, 162, 247, 0.35);
+  --modal-overlay: rgba(22, 22, 30, 0.92);
+  --icon-color: #7aa2f7;
+  --icon-hover-color: #bb9af7;
 }
 
-/* 20. Catppuccin Mocha */
+/* 20. Catppuccin Mocha — Soothing Pastel: Crust/Base (#11111b / #1e1e2e) + Mocha Mauve & Peach (#cba6f7 / #fab387) */
 body.theme-catppuccin {
-  --bg-dark: #181825;
+  --bg-dark: #11111b;
   --bg-card: rgba(30, 30, 46, 0.94);
   --bg-card-hover: rgba(49, 50, 68, 0.98);
-  --bg-sidebar: #11111b;
+  --bg-sidebar: #181825;
   --bg-input: rgba(24, 24, 37, 0.92);
   --bg-code: rgba(17, 17, 27, 0.96);
-  --border-color: rgba(203, 166, 247, 0.38);
-  --border-glow: rgba(180, 190, 254, 0.78);
-  --tile-glow-bg: rgba(203, 166, 247, 0.18);
+  --border-color: rgba(203, 166, 247, 0.4);
+  --border-glow: rgba(250, 179, 135, 0.8);
+  --tile-glow-bg: rgba(203, 166, 247, 0.2);
   --primary: #cba6f7;
   --primary-hover: #b48ead;
   --primary-light: #b4befe;
+  --secondary: #fab387;
+  --btn-secondary-bg: #313244;
+  --btn-secondary-color: #cdd6f4;
+  --btn-secondary-hover: #45475a;
+  --item-sub-bg: rgba(203, 166, 247, 0.16);
   --accent-cyan: #89dceb;
   --accent-emerald: #a6e3a1;
   --accent-amber: #f9e2af;
@@ -747,53 +876,75 @@ body.theme-catppuccin {
   --text-main: #cdd6f4;
   --text-muted: #bac2de;
   --text-dim: #6c7086;
-  --tile-shadow: 0 8px 32px rgba(203, 166, 247, 0.3);
+  --tile-shadow: 0 8px 32px rgba(203, 166, 247, 0.35);
+  --modal-overlay: rgba(17, 17, 27, 0.92);
+  --icon-color: #cba6f7;
+  --icon-hover-color: #fab387;
 }
 
-/* 21. Nord Ice */
+/* 21. Nord Ice — Polar Blizzard: Polar Night (#242933) + Frost Cyan & Aurora Green (#88c0d0 / #a3be8c) */
 body.theme-nord-ice {
   --bg-dark: #242933;
-  --bg-card: rgba(46, 52, 64, 0.94);
-  --bg-card-hover: rgba(59, 66, 82, 0.98);
-  --bg-sidebar: #1d212a;
-  --bg-input: rgba(43, 48, 59, 0.92);
+  --bg-card: rgba(59, 66, 82, 0.94);
+  --bg-card-hover: rgba(76, 86, 106, 0.98);
+  --bg-sidebar: #2e3440;
+  --bg-input: rgba(46, 52, 64, 0.92);
   --bg-code: rgba(24, 27, 34, 0.96);
-  --border-color: rgba(136, 192, 208, 0.38);
-  --border-glow: rgba(143, 188, 187, 0.78);
-  --tile-glow-bg: rgba(136, 192, 208, 0.18);
+  --border-color: rgba(136, 192, 208, 0.4);
+  --border-glow: rgba(163, 190, 140, 0.8);
+  --tile-glow-bg: rgba(136, 192, 208, 0.2);
   --primary: #88c0d0;
   --primary-hover: #81a1c1;
   --primary-light: #8fbcbb;
+  --secondary: #a3be8c;
+  --btn-secondary-bg: #434c5e;
+  --btn-secondary-color: #eceff4;
+  --btn-secondary-hover: #4c566a;
+  --item-sub-bg: rgba(136, 192, 208, 0.16);
   --accent-cyan: #88c0d0;
   --accent-emerald: #a3be8c;
   --accent-amber: #ebcb8b;
   --accent-rose: #bf616a;
   --text-main: #eceff4;
   --text-muted: #e5e9f0;
-  --text-dim: #4c566a;
-  --tile-shadow: 0 8px 32px rgba(136, 192, 208, 0.3);
+  --text-dim: #d8dee9;
+  --tile-shadow: 0 8px 32px rgba(136, 192, 208, 0.35);
+  --modal-overlay: rgba(36, 41, 51, 0.92);
+  --icon-color: #88c0d0;
+  --icon-hover-color: #a3be8c;
 }
 
-/* 22. Cyberpunk Neon */
+/* 22. Cyberpunk Neon — Dystopian High Voltage: Deep Carbon (#07050e) + Laser Yellow & Hot Neon Pink (#fee715 / #ff007f) */
 body.theme-cyberpunk {
-  --bg-dark: #0b0914;
-  --bg-card: rgba(22, 18, 38, 0.94);
-  --bg-card-hover: rgba(35, 29, 58, 0.98);
-  --bg-sidebar: #07050d;
+  --bg-dark: #07050e;
+  --bg-card: rgba(26, 19, 48, 0.94);
+  --bg-card-hover: rgba(42, 31, 76, 0.98);
+  --bg-sidebar: #100c1e;
   --bg-input: rgba(17, 14, 30, 0.92);
   --bg-code: rgba(9, 7, 16, 0.96);
   --border-color: rgba(254, 231, 21, 0.45);
   --border-glow: rgba(255, 0, 127, 0.85);
-  --tile-glow-bg: rgba(254, 231, 21, 0.2);
+  --tile-glow-bg: rgba(254, 231, 21, 0.22);
   --primary: #fee715;
   --primary-hover: #e5cf10;
   --primary-light: #ff007f;
+  --secondary: #ff007f;
+  --btn-secondary-bg: #2a1b4e;
+  --btn-secondary-color: #fee715;
+  --btn-secondary-hover: #3d2770;
+  --item-sub-bg: rgba(254, 231, 21, 0.18);
   --accent-cyan: #00f0ff;
   --accent-emerald: #00ff66;
   --accent-amber: #fee715;
   --accent-rose: #ff007f;
   --text-main: #ffffff;
   --text-muted: #fef08a;
-  --text-dim: #a855f7;
+  --text-dim: #ff66cc;
   --tile-shadow: 0 8px 32px rgba(254, 231, 21, 0.35);
+  --modal-overlay: rgba(7, 5, 14, 0.94);
+  --icon-color: #fee715;
+  --icon-hover-color: #ff007f;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(255, 0, 127, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, rgba(26, 19, 48, 0.25), rgba(7, 5, 14, 0.75));
 }
