@@ -188,6 +188,11 @@ body.theme-platinum {
   --primary: #dde7f1;
   --primary-hover: #c4d5e7;
   --primary-light: #dde7f1;
+  --secondary: #6588dd;
+  --btn-secondary-bg: #6588dd;
+  --btn-secondary-color: #ffffff;
+  --btn-secondary-hover: #5074c8;
+  --item-sub-bg: rgba(101, 136, 221, 0.12);
   --accent-cyan: #0ea5e9;
   --accent-emerald: #14b8a6;
   --accent-amber: #f59e0b;

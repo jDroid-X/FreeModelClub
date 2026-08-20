@@ -129,16 +129,16 @@
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
 }
 
-/* 25% Darker Button Background than Card Background */
+/* 25% Darker Button Background than Card Background (or Theme-Specific Variable) */
 .btn-secondary, button.btn-secondary, .tray-btn-premium, .collapse-sidebar-btn {
-  background: color-mix(in srgb, var(--bg-card) 75%, black 25%) !important;
-  color: var(--text-main);
+  background: var(--btn-secondary-bg, color-mix(in srgb, var(--bg-card) 75%, black 25%)) !important;
+  color: var(--btn-secondary-color, var(--text-main)) !important;
   border: 2px solid var(--border-color) !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:hover, button.btn-secondary:hover, .tray-btn-premium:hover, .collapse-sidebar-btn:hover {
-  background: color-mix(in srgb, var(--bg-card) 65%, black 35%) !important;
+  background: var(--btn-secondary-hover, color-mix(in srgb, var(--bg-card) 65%, black 35%)) !important;
   border-color: var(--border-glow) !important;
 }
 

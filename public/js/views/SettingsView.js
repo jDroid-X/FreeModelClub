@@ -728,7 +728,7 @@ class SettingsView {
       </div>
 
       <!-- Category Navigation Filter Pills -->
-      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; background: var(--item-sub-bg, rgba(0,0,0,0.3)); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
         <button class="btn btn-xs ${currentFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('all')" style="font-size: 0.72rem; padding: 3px 8px;">
           <i class="fa-solid fa-border-all"></i> All Themes (22)
         </button>
@@ -772,7 +772,7 @@ class SettingsView {
               </div>
 
               <!-- 4-Color Substrate Swatches with Labels -->
-              <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 6px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="background: var(--item-sub-bg, rgba(0,0,0,0.25)); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 6px; display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 4px;" title="Base Canvas (--bg-dark): ${t.bg}">
                   <span style="width: 14px; height: 14px; border-radius: 50%; background: ${t.bg}; border: 1px solid rgba(255,255,255,0.3); display: inline-block;"></span>
                   <span style="font-size: 0.6rem; color: var(--text-dim);">Base</span>
@@ -827,7 +827,7 @@ class SettingsView {
                   <span>Luminance: <strong style="color: var(--text-main);">Custom Blend</strong></span>
                   ${isActive ? '<span style="color: var(--accent-amber); font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Active</span>' : ''}
                 </div>
-                <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 6px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background: var(--item-sub-bg, rgba(0,0,0,0.25)); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 6px; display: flex; justify-content: space-between; align-items: center;">
                   <div style="display: flex; align-items: center; gap: 4px;" title="Base: ${bgColor}">
                     <span style="width: 14px; height: 14px; border-radius: 50%; background: ${bgColor}; border: 1px solid rgba(255,255,255,0.3); display: inline-block;"></span>
                     <span style="font-size: 0.6rem; color: var(--text-dim);">Base</span>
