@@ -4,6 +4,28 @@
 ================================================================================
 
 --------------------------------------------------------------------------------
+[2026-08-20 18:55:00] | Gemini First Preference Default & Interactive HTTP 401 Key Update Modal
+--------------------------------------------------------------------------------
+Change Request   : Put Gemini Provider is the first preference in fresh installation. In place of giving 401 http error (if API key do not match) give option to add or update the API key when provider page is open or checked. At the time of registering Playground chatbot - selectbox is not receives updated providers and models by default. Always show latest and highest model on top in selectbox for the selected providers.
+Target Screen    : Providers View, Registration View, Playground View, ProviderController.js
+Modified Files   : 
+  - src/models/DatabaseSeed.js
+  - src/controllers/ProviderController.js
+  - src/routes/providerRoutes.js
+  - public/js/services/api.js
+  - public/js/views/ProvidersView.js
+  - public/js/views/RegistrationView.js
+  - public/js/views/PlaygroundView.js
+  - public/js/views/ModelDropdownHelper.js
+  - requirement/providers.txt
+Description      :
+  1. Gemini First Preference: Google Gemini configured as #1 top preference in default seed providers, active config, and Playground initialization.
+  2. Smart Model Tier Ranking: Implemented ModelDropdownHelper.rankModelTier() prioritizing generation recency (2.5 > 2.0 > R1 > 4o > 3.3 > 3.1) and capability tiers (Pro/Ultra > Plus > Flash/Versatile > Lite).
+  3. Interactive HTTP 401/403 Key Update Modal: Replaced dead-end 401 ping errors with promptEditApiKey modal offering direct "Save & Re-test" with quick portal links to Google AI Studio, Groq Console, and OpenRouter.
+  4. Reactive Playground Synchronization: Dispatches 'fmc-providers-updated' on provider registration/key updates to dynamically rehydrate selectboxes with latest active models.
+Status           : PASS (100% Verified & Tested)
+
+--------------------------------------------------------------------------------
 [2026-08-20 17:52:00] | Provider Validation Guard & Corrupted Unnamed Records Purge
 --------------------------------------------------------------------------------
 Change Request   : In Provider how its possible to have unknown name providers (it is practically not possible).

@@ -2,6 +2,22 @@
 # Screen: Playground View (http://localhost:12247/playground)
 
 ================================================================================
+[2026-08-20 18:58:00] GEMINI FIRST PREFERENCE, HIGHEST/LATEST MODEL RANKING & REACTIVE SELECT SYNC
+================================================================================
+Target Screen : PlaygroundView.js / ModelDropdownHelper.js / PlaygroundViewHelper.js
+Requested By  : User Chat (Put Gemini Provider is the first preference in fresh installation... Always show latest and highest model on top in selectbox for the selected providers... Playground chatbot selectbox receives updated providers and models by default)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Gemini Preference Default: Playground initializes with Gemini as first choice (#1 in provider dropdown and active configuration).
+	- Smart Model Tier Ranking: Applied ModelDropdownHelper.rankModelTier() so the highest capability and most recent version models (2.5 Pro > 2.5 Flash > 2.0 Flash > 1.5 Pro > 1.5 Flash; Llama 3.3 70B > 3.1 8B) appear at the very top of the selectbox.
+	- Reactive Selectbox Updates: Subscribed to 'fmc-providers-updated' custom event so newly registered or updated providers instantly re-populate #chat-provider-select and #ollama-model-select without requiring page reload.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/js/views/ModelDropdownHelper.js
+	- public/js/views/PlaygroundViewHelper.js
+	- requirement/playground.txt
+
+================================================================================
 [2026-08-20 17:55:00] PLAYGROUND 13PX ICONS & DYNAMIC THEME PRIMARY/SECONDARY HOVER COLORS
 ================================================================================
 Target Screen : PlaygroundView.js / PlaygroundViewHelper.js / components.css
