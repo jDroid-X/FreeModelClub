@@ -39,7 +39,7 @@ class MediaController {
     try {
       const res = await ApiService.generateImage(promptText, 'ai_ui_art');
       if (res.success && res.imageUrl) {
-        const msgBody = `🎨 **Antigravity Image Engine Result**:\n\nPrompt: "${promptText}"\n\n![Generated UI Graphic](${res.imageUrl})\n\n*(Saved to Local Desk)*`;
+        const msgBody = `🎨 **jDroid-X Image Engine Result**:\n\nPrompt: "${promptText}"\n\n![Generated UI Graphic](${res.imageUrl})\n\n*(Saved to Local Desk)*`;
         onResultCallback(true, msgBody);
       } else {
         ModalDialog.showNotification('Image generation failed: ' + (res.error || 'Unknown error'), 'danger');

@@ -16,6 +16,16 @@ class FolderTreeView {
     return `<div class="alert alert-danger" style="font-size: 0.75rem; padding: 10px;">${error}</div>`;
   }
 
+  static joinPath(base, child) {
+    if (!base) return child || '';
+    if (!child) return base || '';
+    const isWindows = base.includes('\\') || /^[a-zA-Z]:/.test(base);
+    const sep = isWindows ? '\\' : '/';
+    const cleanBase = base.endsWith('\\') || base.endsWith('/') ? base.slice(0, -1) : base;
+    const cleanChild = child.startsWith('\\') || child.startsWith('/') ? child.slice(1) : child;
+    return `${cleanBase}${sep}${cleanChild}`;
+  }
+
   static navigateBrowser(path) {
     if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.navigateBrowser === 'function') {
       PlaygroundView.navigateBrowser(path);
@@ -37,13 +47,21 @@ class FolderTreeView {
       try {
         const dirHandle = await window.showDirectoryPicker();
         if (dirHandle && dirHandle.name) {
-          // Note: Browser sandbox provides handle; notify user or use standard path navigation
-          ModalDialog.showNotification(`Selected folder: ${dirHandle.name}`, 'success');
+          const defaultBase = localStorage.getItem('fmc_ide_workspace') || 'C:\\Workspace';
+          const manualPath = prompt(`Selected folder handle: "${dirHandle.name}". Please confirm or enter the absolute folder path:`, FolderTreeView.joinPath(defaultBase, dirHandle.name));
+          if (manualPath) {
+            FolderTreeView.selectBrowserPath(manualPath);
+          }
         }
       } catch (e) {
         if (e.name !== 'AbortError') {
           console.warn('Native picker error:', e);
         }
+      }
+    } else {
+      const manualPath = prompt('Enter absolute folder path:');
+      if (manualPath) {
+        FolderTreeView.selectBrowserPath(manualPath);
       }
     }
   }
@@ -64,28 +82,44 @@ class FolderTreeView {
     if (currentPath) {
       const match = currentPath.match(/^([a-zA-Z]:\\(?:Users|home)\\[^\\]+)/i);
       if (match) userHome = match[1];
-      const driveMatch = currentPath.match(/^([a-zA-Z]:\\)/);
-      if (driveMatch) baseRoot = driveMatch[1];
+      const driveMatch = currentPath.match(/^([a-zA-Z]:\\?)/);
+      if (driveMatch) baseRoot = driveMatch[1].endsWith('\\') ? driveMatch[1] : driveMatch[1] + '\\';
     }
     const homePath = userHome || 'C:\\Users\\Default';
     
+    // Render drive buttons if detected by backend
+    const drives = (res && Array.isArray(res.drives) && res.drives.length > 0) ? res.drives : ['C:'];
+    const driveButtonsHtml = drives.map(d => {
+      const dRoot = d.endsWith('\\') ? d : `${d}\\`;
+      const isCurrentDrive = baseRoot.toUpperCase().startsWith(d.toUpperCase());
+      return `
+        <button type="button" class="btn ${isCurrentDrive ? 'btn-cyan' : 'btn-secondary'} btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${dRoot.replace(/\\/g, '\\\\')}')">
+          <i class="fa-solid fa-hard-drive"></i> ${d}
+        </button>
+      `;
+    }).join(' ');
+
     const shortcutsHtml = `
       <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.68rem; align-items: center;">
-        <span style="color: var(--text-dim); font-size: 0.65rem; margin-right: 2px;"><i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i> Jumps:</span>
-        <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${baseRoot.replace(/\\/g, '\\\\')}')"><i class="fa-solid fa-hard-drive"></i> Root (${baseRoot})</button>
+        <span style="color: var(--text-dim); font-size: 0.65rem; margin-right: 2px;"><i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i> Drives:</span>
+        ${driveButtonsHtml}
         ${userHome ? `
           <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Desktop')"><i class="fa-solid fa-desktop"></i> Desktop</button>
           <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem;" onclick="FolderTreeView.navigateBrowser('${homePath.replace(/\\/g, '\\\\')}\\\\Documents')"><i class="fa-solid fa-folder-open"></i> Documents</button>
         ` : ''}
-        <button type="button" class="btn btn-cyan btn-xs" style="padding: 2px 6px; font-size: 0.65rem; margin-left: auto;" onclick="FolderTreeView.pickNativeFolder()"><i class="fa-solid fa-computer"></i> Native Picker</button>
+        <button type="button" class="btn btn-cyan btn-xs" style="padding: 2px 6px; font-size: 0.65rem; margin-left: auto;" onclick="FolderTreeView.pickNativeFolder()"><i class="fa-solid fa-keyboard"></i> Path Input</button>
       </div>
     `;
 
     let itemsHtml = '';
+    if (res.warning) {
+      itemsHtml += `<div style="padding: 6px 8px; font-size: 0.7rem; color: var(--accent-amber); background: rgba(251,191,36,0.1); border-radius: 4px; margin-bottom: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> ${res.warning}</div>`;
+    }
+
     if (!res.items || res.items.length === 0) {
-      itemsHtml = `<div style="text-align: center; color: var(--text-muted); font-size: 0.72rem; padding: 15px;">Empty Folder</div>`;
+      itemsHtml += `<div style="text-align: center; color: var(--text-muted); font-size: 0.72rem; padding: 15px;">Empty or Restricted Folder</div>`;
     } else {
-      itemsHtml = res.items.map(item => {
+      itemsHtml += res.items.map(item => {
         const escapedPath = item.path.replace(/\\/g, '\\\\');
         if (item.isDir) {
           return `

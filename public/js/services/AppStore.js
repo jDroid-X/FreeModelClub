@@ -104,6 +104,20 @@ class AppStore {
         }
       }
     }
+
+    // Closed-loop reactive sync for provider and model changes
+    if (eventName === 'PROVIDER_STATE_CHANGED' || eventName === 'MODELS_MUTATED' || eventName === 'DATA_CHANGED') {
+      try {
+        if (typeof window.HeaderTelemetry !== 'undefined' && typeof window.HeaderTelemetry.loadAndRender === 'function') {
+          window.HeaderTelemetry.loadAndRender(null, true);
+        }
+      } catch (e) {
+        console.warn('[AppStore] HeaderTelemetry reactive refresh notice:', e.message);
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('fmc_data_changed', { detail: { eventName, data } }));
+      } catch (e) {}
+    }
   }
 
   /**
@@ -151,8 +165,11 @@ class AppStore {
   }
 }
 
-// Global Singleton instance
-window.appStore = window.appStore || new AppStore();
+// Global Singleton instances for both case conventions
+const _globalAppStore = window.appStore || window.AppStore || new AppStore();
+window.appStore = _globalAppStore;
+window.AppStore = _globalAppStore;
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = window.appStore;
+  module.exports = _globalAppStore;
 }

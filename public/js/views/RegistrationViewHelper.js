@@ -42,13 +42,13 @@ class RegistrationViewHelper {
             const rowStyle = isDeprecated ? 'opacity: 0.6; filter: grayscale(100%);' : '';
             return `
             <tr style="${rowStyle}">
-              <td style="text-align: center;"><input type="checkbox" class="staged-model-cb" value="${m.id}" /></td>
-              <td>
-                <strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.name || m.modelId)}</strong>
-                ${isDeprecated ? '<span class="badge badge-rose" style="font-size: 0.6rem; margin-left: 4px;">Deprecated</span>' : ''}
+              <td style="text-align: center; padding: 3px 4px;"><input type="checkbox" class="staged-model-cb" value="${m.id}" /></td>
+              <td style="padding: 3px 6px;">
+                <strong style="color: var(--text-main); font-size: 0.76rem;">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.name || m.modelId)}</strong>
+                ${isDeprecated ? '<span class="badge badge-rose" style="font-size: 0.58rem; margin-left: 4px;">Deprecated</span>' : ''}
               </td>
-              <td>
-                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'family', this.value)" ${isDeprecated ? 'disabled' : ''}>
+              <td style="padding: 3px 6px;">
+                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 3px; font-size: 0.72rem; padding: 2px 4px; height: 22px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'family', this.value)" ${isDeprecated ? 'disabled' : ''}>
                   <option value="General" ${(!m.family || m.family === 'General') ? 'selected' : ''}>General</option>
                   <option value="Llama" ${m.family === 'Llama' ? 'selected' : ''}>Llama</option>
                   <option value="Qwen" ${m.family === 'Qwen' ? 'selected' : ''}>Qwen</option>
@@ -59,28 +59,8 @@ class RegistrationViewHelper {
                   <option value="Custom" ${m.family === 'Custom' ? 'selected' : ''}>Custom</option>
                 </select>
               </td>
-              <td>
-                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'coreSkill', this.value)" ${isDeprecated ? 'disabled' : ''}>
-                  <option value="General Knowledge" ${(!m.coreSkill || m.coreSkill === 'General Knowledge') ? 'selected' : ''}>General Knowledge</option>
-                  <option value="Coding" ${m.coreSkill === 'Coding' ? 'selected' : ''}>Coding</option>
-                  <option value="Math & Logic" ${m.coreSkill === 'Math & Logic' ? 'selected' : ''}>Math & Logic</option>
-                  <option value="Vision" ${m.coreSkill === 'Vision' ? 'selected' : ''}>Vision</option>
-                ${isDeprecated ? '<span class="badge badge-rose" style="font-size: 0.6rem; margin-left: 4px;">Deprecated</span>' : ''}
-              </td>
-              <td>
-                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'family', this.value)" ${isDeprecated ? 'disabled' : ''}>
-                  <option value="General" ${(!m.family || m.family === 'General') ? 'selected' : ''}>General</option>
-                  <option value="Llama" ${m.family === 'Llama' ? 'selected' : ''}>Llama</option>
-                  <option value="Qwen" ${m.family === 'Qwen' ? 'selected' : ''}>Qwen</option>
-                  <option value="Mistral" ${m.family === 'Mistral' ? 'selected' : ''}>Mistral</option>
-                  <option value="Gemini" ${m.family === 'Gemini' ? 'selected' : ''}>Gemini</option>
-                  <option value="Claude" ${m.family === 'Claude' ? 'selected' : ''}>Claude</option>
-                  <option value="DeepSeek" ${m.family === 'DeepSeek' ? 'selected' : ''}>DeepSeek</option>
-                  <option value="Custom" ${m.family === 'Custom' ? 'selected' : ''}>Custom</option>
-                </select>
-              </td>
-              <td>
-                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.75rem; padding: 2px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'coreSkill', this.value)" ${isDeprecated ? 'disabled' : ''}>
+              <td style="padding: 3px 6px;">
+                <select style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 3px; font-size: 0.72rem; padding: 2px 4px; height: 22px;" onchange="RegistrationView.updateStagedModel('${m.id}', 'coreSkill', this.value)" ${isDeprecated ? 'disabled' : ''}>
                   <option value="General Knowledge" ${(!m.coreSkill || m.coreSkill === 'General Knowledge') ? 'selected' : ''}>General Knowledge</option>
                   <option value="Coding" ${m.coreSkill === 'Coding' ? 'selected' : ''}>Coding</option>
                   <option value="Math & Logic" ${m.coreSkill === 'Math & Logic' ? 'selected' : ''}>Math & Logic</option>
@@ -89,14 +69,14 @@ class RegistrationViewHelper {
                   <option value="Fast Chat" ${m.coreSkill === 'Fast Chat' ? 'selected' : ''}>Fast Chat</option>
                 </select>
               </td>
-              <td>${m.contextWindow ? (typeof m.contextWindow === 'number' ? (m.contextWindow / 1000) + 'k' : m.contextWindow) : '128k'} tokens</td>
-              <td>
-                <button type="button" class="btn btn-secondary btn-xs" onclick="RegistrationView.removeStagedModel('${m.id}')" title="Remove from list">
+              <td style="padding: 3px 6px; font-size: 0.72rem; color: var(--text-muted);">${m.contextWindow ? (typeof m.contextWindow === 'number' ? (m.contextWindow / 1000) + 'k' : m.contextWindow) : '128k'}</td>
+              <td style="padding: 3px 6px;">
+                <button type="button" class="btn btn-secondary btn-xs" style="padding: 1px 5px;" onclick="RegistrationView.removeStagedModel('${m.id}')" title="Remove from list">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
                 ${isDeprecated ? `
-                <button type="button" class="btn btn-danger btn-xs" onclick="RegistrationView.deleteDeprecatedModel('${m.id}')" title="Permanently Delete DB Record" style="margin-left: 4px;">
-                  <i class="fa-solid fa-trash"></i> Delete
+                <button type="button" class="btn btn-danger btn-xs" onclick="RegistrationView.deleteDeprecatedModel('${m.id}')" title="Permanently Delete DB Record" style="margin-left: 4px; padding: 1px 5px;">
+                  <i class="fa-solid fa-trash"></i>
                 </button>
                 ` : ''}
               </td>

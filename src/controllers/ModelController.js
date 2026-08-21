@@ -77,6 +77,10 @@ class ModelController {
       const model = AIModel.getById(req.params.id);
       if (!model) return res.status(404).json({ success: false, error: 'Model not found' });
       const updated = AIModel.update(model.id, { status: model.status === 'Active' ? 'Inactive' : 'Active' });
+      try {
+        const ActiveModelAgent = require('../services/ActiveModelAgent');
+        ActiveModelAgent.runClassification();
+      } catch (e) {}
       return res.json({ success: true, model: updated });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -85,6 +89,10 @@ class ModelController {
     try {
       const updated = AIModel.update(req.params.id, req.body || {});
       if (!updated) return res.status(404).json({ success: false, error: 'Model not found' });
+      try {
+        const ActiveModelAgent = require('../services/ActiveModelAgent');
+        ActiveModelAgent.runClassification();
+      } catch (e) {}
       return res.json({ success: true, model: updated });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -99,6 +107,10 @@ class ModelController {
         return res.status(400).json({ success: false, error: 'Validation Error: updates object is required.' });
       }
       const result = AIModel.updateBatch(modelIds, updates);
+      try {
+        const ActiveModelAgent = require('../services/ActiveModelAgent');
+        ActiveModelAgent.runClassification();
+      } catch (e) {}
       return res.json({ success: true, count: result.count, updated: result.updated });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }

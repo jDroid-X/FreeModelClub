@@ -1,9 +1,9 @@
 /**
  * RegistrationView.js
- * Purpose: Redesigned Provider Agent popup modal & registration view controller (< 550 lines).
+ * Purpose: Provider Agent popup modal & registration view controller (< 600 lines).
  *          Features interactive online lookup, rich discovered models table in popup,
  *          1-click specs & models application, Zero-Trust key protection, and post-register combo prompts.
- * Dependencies: ApiService, ModalDialog, FormatHelper
+ * Dependencies: ApiService, ModalDialog, FormatHelper, ValidationNotifier
  */
 
 class RegistrationView {
@@ -12,7 +12,7 @@ class RegistrationView {
   static stagedModels = [];
   static fetchedModels = [];
 
-  // HC-17 (frontend): Provider alias normalization — mirrors ProviderAgentHelper.getProviderAliases()
+  // HC-17: Provider alias normalization — mirrors ProviderAgentHelper.getProviderAliases()
   static PROVIDER_ALIASES = {
     'gorq': 'groq', 'grok': 'groq', 'groqcloud': 'groq',
     'open router': 'openrouter', 'openrouter.ai': 'openrouter', 'openrouter free models': 'openrouter', 'open router free models': 'openrouter',
@@ -25,7 +25,6 @@ class RegistrationView {
   };
 
   // HC-04: Single source of truth for default base URLs.
-  // 'OpenAI Compatible' now maps to the FMC proxy port (12247) not 8000.
   static getDefaultUrls() {
     return {
       'Groq API': 'https://api.groq.com/openai/v1',
@@ -39,9 +38,9 @@ class RegistrationView {
     };
   }
 
-  // HC-10: Single source of truth — delegates to RegistrationViewHelper to avoid duplication.
+  // HC-10: Single source of truth — delegates to RegistrationViewHelper
   static getPredefinedProviders() {
-    return RegistrationViewHelper.getPredefinedProviders();
+    return (typeof RegistrationViewHelper !== 'undefined') ? RegistrationViewHelper.getPredefinedProviders() : [];
   }
 
   static async render(container) {
@@ -55,12 +54,17 @@ class RegistrationView {
       console.warn('RegistrationView render fallback:', err.message);
       if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Registration rendering fallback active. ' + err.message, 'warning');
     }
+
     try {
       const draft = sessionStorage.getItem('fmc_draft_models');
       if (draft) this.stagedModels = JSON.parse(draft);
       else this.stagedModels = [];
-    } catch(e) { this.stagedModels = []; }
-    this.fetchedModels = [];    const dbProviders = this.providersList || [];
+    } catch (e) {
+      this.stagedModels = [];
+    }
+    this.fetchedModels = [];
+
+    const dbProviders = this.providersList || [];
     const predefined = this.getPredefinedProviders();
     const allPaneProviders = dbProviders.length > 0
       ? dbProviders.map(reg => {
@@ -79,9 +83,6 @@ class RegistrationView {
       : predefined.map(p => ({ ...p, isActive: false, modelsCount: 0 }));
 
     allPaneProviders.sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0));
-
-    const activeCount = allPaneProviders.filter(p => p.isActive).length;
-    const totalCount = allPaneProviders.length;
 
     const leftPaneHtml = allPaneProviders.map(p => `
       <button type="button" class="btn btn-secondary btn-sm" style="justify-content: space-between; font-size: 0.72rem; padding: 6px 8px; ${p.isActive ? 'border-color: var(--accent-emerald); box-shadow: 0 0 6px rgba(16,185,129,0.25);' : ''}" onclick="RegistrationView.selectFromPane('${p.proto}', '${p.id}')">
@@ -104,7 +105,7 @@ class RegistrationView {
               <i class="fa-solid fa-circle-question"></i> Connection Pending Test
             </span>
           </div>
-          <div style="display: flex; gap: 8px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" class="btn btn-sm btn-emerald" onclick="RegistrationView.openProviderAgentModal()">
               <i class="fa-solid fa-robot"></i> Provider Agent
             </button>
@@ -120,135 +121,167 @@ class RegistrationView {
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; align-items: flex-start; margin-top: 12px;">
-          <!-- Left 20% Width TOC Navigation Rail -->
-        <div class="glass-panel" style="width: 20%; min-width: 165px; flex-shrink: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-          <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-light); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
-            <i class="fa-solid fa-network-wired"></i> Provider Rail
+        <div style="display: flex; gap: 16px; align-items: flex-start; margin-top: 12px;">
+          <!-- Left 20% Width TOC Navigation Rail matching Universal Design Standard -->
+          <div class="glass-panel" style="width: 20%; min-width: 170px; flex-shrink: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="position: relative; margin-bottom: 4px;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 9px; color: var(--text-muted); font-size: 0.8rem;"></i>
+              <input type="text" id="reg-search-input" class="input-modern" placeholder="Filter providers..." style="width: 100%; padding-left: 28px; padding-right: 28px; font-size: 0.78rem; box-sizing: border-box;" oninput="RegistrationView.filterProviderList(this.value)" />
+              <i class="fa-solid fa-xmark" id="reg-search-clear-icon" style="position: absolute; right: 10px; top: 9px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; display: none;" onclick="document.getElementById('reg-search-input').value=''; RegistrationView.filterProviderList(''); this.style.display='none';"></i>
+            </div>
+
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-light); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+              <i class="fa-solid fa-network-wired"></i> Provider Rail
+            </div>
+            
+            <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.04); padding: 4px; border-radius: 4px; border: 1px solid var(--border-color);">
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.testConnection(this)" title="Ping Test"><i class="fa-solid fa-plug-circle-bolt" style="color: var(--accent-emerald);"></i></button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.fetchFreeModels()" title="Search Models"><i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i></button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.openProviderAgentModal()" title="Provider Agent"><i class="fa-solid fa-robot" style="color: var(--accent-emerald);"></i></button>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.toggleIntegrationPane()" title="Integration Code"><i class="fa-solid fa-code" style="color: var(--primary-light);"></i></button>
+            </div>
+
+            <button type="button" class="btn btn-emerald btn-sm" style="justify-content: flex-start; font-size: 0.72rem; padding: 6px 8px;" onclick="RegistrationView.openProviderAgentModal()">
+              <i class="fa-solid fa-robot" style="margin-right: 6px;"></i> Provider Agent <span class="badge badge-emerald" style="margin-left: auto; font-size: 0.6rem;">AI</span>
+            </button>
+            
+            <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; font-size: 0.72rem; padding: 6px 8px;" onclick="RegistrationView.resetFormFields()">
+              <i class="fa-solid fa-plus-circle" style="color: var(--accent-cyan); margin-right: 6px;"></i> Add New Provider
+            </button>
+
+            <div id="reg-provider-rail-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 480px; overflow-y: auto;">
+              ${leftPaneHtml}
+            </div>
           </div>
-          
-          <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.04); padding: 4px; border-radius: 4px;">
-            <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.testConnection(this)" title="Ping Test"><i class="fa-solid fa-plug-circle-bolt" style="color: var(--accent-emerald);"></i></button>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.fetchFreeModels()" title="Search Models"><i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i></button>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.openProviderAgentModal()" title="Provider Agent"><i class="fa-solid fa-robot" style="color: var(--accent-emerald);"></i></button>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px; font-size: 0.75rem; flex: 1;" onclick="RegistrationView.toggleIntegrationPane()" title="Integration Code"><i class="fa-solid fa-code" style="color: var(--primary-light);"></i></button>
+
+          <!-- Right 80% Detail Registration Workspace Pane matching Universal Structure -->
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+            ${this.renderFormHtml()}
           </div>
-
-          <button type="button" class="btn btn-emerald btn-sm" style="justify-content: flex-start; font-size: 0.72rem; padding: 6px 8px;" onclick="RegistrationView.openProviderAgentModal()">
-            <i class="fa-solid fa-robot" style="margin-right: 6px;"></i> Provider Agent <span class="badge badge-emerald" style="margin-left: auto; font-size: 0.6rem;">AI</span>
-          </button>
-          
-          <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; font-size: 0.72rem; padding: 6px 8px;" onclick="RegistrationView.resetFormFields()">
-            <i class="fa-solid fa-plus-circle" style="color: var(--accent-cyan); margin-right: 6px;"></i> Add New Provider
-          </button>
-
-          ${leftPaneHtml}
         </div>
-
-        <!-- Right 80% Detail Registration Workspace Pane -->
-        <div style="width: 80%; display: flex; flex-direction: column; gap: 12px;">
-          ${this.renderFormHtml()}
-        </div>
-      </div>
       </div>
     `;
+
     this.selectFromPane('Groq API', 'groq');
   }
 
   static renderFormHtml() {
     return `
-      <form id="provider-registration-form" onsubmit="RegistrationView.handleRegister(event)" style="display: flex; flex-direction: column; gap: 12px;">
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">Provider ID <span style="color: var(--accent-rose);">*</span> <span id="reg-prov-id-err" style="color: var(--accent-rose); font-size: 0.7rem; margin-left: 8px;"></span></label>
-            <input type="text" id="reg-prov-id" class="form-control" placeholder="e.g. groq" oninput="RegistrationView.validateId(this)" required />
+      <form id="provider-registration-form" onsubmit="RegistrationView.handleRegister(event)" style="display: flex; flex-direction: column; gap: 4px;">
+        <div class="grid-2" style="gap: 8px; margin-bottom: 2px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Provider ID <span style="color: var(--accent-rose);">*</span> <span id="reg-prov-id-err" style="color: var(--accent-rose); font-size: 0.68rem; margin-left: 6px;"></span></label>
+            <input type="text" id="reg-prov-id" class="form-control" placeholder="e.g. groq" style="padding: 4px 8px; font-size: 0.76rem; height: 26px;" oninput="RegistrationView.validateId(this)" required />
           </div>
-          <div class="form-group">
-            <label class="form-label">Display Name <span style="color: var(--accent-rose);">*</span></label>
-            <input type="text" id="reg-prov-name" class="form-control" placeholder="e.g. Groq Cloud" required onchange="this.value = this.value.split(/[\\s/]+/).slice(0, 2).join(' ')" />
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Display Name <span style="color: var(--accent-rose);">*</span></label>
+            <input type="text" id="reg-prov-name" class="form-control" placeholder="e.g. Groq Cloud" style="padding: 4px 8px; font-size: 0.76rem; height: 26px;" required onchange="this.value = this.value.split(/[\\s/]+/).slice(0, 2).join(' ')" />
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">Protocol Type</label>
-            <select id="reg-prov-protocol" class="form-control" onchange="RegistrationView.onProtocolChange(this.value)">
+        <div class="grid-2" style="gap: 8px; margin-bottom: 2px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Protocol Type</label>
+            <select id="reg-prov-protocol" class="form-control" style="padding: 3px 6px; font-size: 0.76rem; height: 26px;" onchange="RegistrationView.onProtocolChange(this.value)">
               ${Object.keys(this.getDefaultUrls()).map(p =>
                 `<option value="${p}">${p === 'OpenAI Compatible' ? 'OpenAI Compatible (Custom)' : p}</option>`
               ).join('')}
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Base URL <span style="color: var(--accent-rose);">*</span> <span id="reg-prov-url-err" style="color: var(--accent-rose); font-size: 0.7rem; margin-left: 8px;"></span></label>
-            <input type="text" id="reg-prov-url" class="form-control" placeholder="https://api.groq.com/openai/v1" oninput="RegistrationView.validateUrl(this)" required />
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Base URL <span style="color: var(--accent-rose);">*</span> <span id="reg-prov-url-err" style="color: var(--accent-rose); font-size: 0.68rem; margin-left: 6px;"></span></label>
+            <input type="text" id="reg-prov-url" class="form-control" placeholder="https://api.groq.com/openai/v1" style="padding: 4px 8px; font-size: 0.76rem; height: 26px;" oninput="RegistrationView.validateUrl(this)" required />
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">API Key / Token</label>
-            <div style="position: relative; margin-bottom: 8px;">
-              <input type="password" id="reg-prov-key" class="form-control" placeholder="gsk_..." style="padding-right: 40px; width: 100%; box-sizing: border-box;" />
-              <i class="fa-solid fa-eye" id="toggle-key-eye" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-dim);" onclick="RegistrationView.toggleKeyVisibility()"></i>
+        <div class="grid-2" style="gap: 8px; margin-bottom: 2px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">API Key / Token</label>
+            <div style="position: relative; margin-bottom: 3px;">
+              <input type="password" id="reg-prov-key" class="form-control" placeholder="gsk_..." style="padding: 4px 28px 4px 8px; font-size: 0.76rem; height: 26px; width: 100%; box-sizing: border-box;" />
+              <i class="fa-solid fa-eye" id="toggle-key-eye" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-dim); font-size: 0.75rem;" onclick="RegistrationView.toggleKeyVisibility()"></i>
             </div>
-            <div style="display: flex; gap: 8px; justify-content: flex-start; margin-bottom: 4px;">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="RegistrationView.testConnection(this)" title="Test Connection">
-                <i class="fa-solid fa-plug-circle-bolt"></i> Test
+            <div style="display: flex; gap: 4px; justify-content: flex-start; margin-bottom: 2px;">
+              <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 8px; font-size: 0.72rem;" onclick="RegistrationView.testConnection(this)" title="Test Connection">
+                <i class="fa-solid fa-plug-circle-bolt" style="color: var(--accent-emerald);"></i> Test
               </button>
-              <button type="button" class="btn btn-primary btn-sm" onclick="RegistrationView.fetchFreeModels(this)" title="Search Free Models">
+              <button type="button" class="btn btn-primary btn-xs" style="padding: 2px 8px; font-size: 0.72rem;" onclick="RegistrationView.fetchFreeModels(this)" title="Search Free Models">
                 <i class="fa-solid fa-magnifying-glass"></i> Search
               </button>
             </div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-              Zero-Trust Key Protection enabled. Keys masked in UI and unmasked only during backend transport.
+            <div style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.2;">
+              Zero-Trust Key Protection enabled.
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Provider Notes / Description (Optional)</label>
-            <textarea id="reg-prov-desc" class="form-control" rows="4" placeholder="Add custom metadata or internal notes about this provider..."></textarea>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Provider Notes / Description (Optional)</label>
+            <textarea id="reg-prov-desc" class="form-control" rows="2" style="padding: 4px 8px; font-size: 0.74rem; min-height: 48px; resize: vertical;" placeholder="Add custom metadata or internal notes about this provider..."></textarea>
           </div>
         </div>
 
-        <div class="glass-panel" style="padding: 12px; margin-top: 8px; background: var(--bg-card); border: 1px solid var(--border-color);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <strong id="discovered-models-badge" style="font-size: 0.85rem; color: var(--accent-cyan);">
+        <div class="glass-panel" style="padding: 4px 8px; margin-top: 2px; background: var(--bg-card); border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong id="discovered-models-badge" style="font-size: 0.78rem; color: var(--accent-cyan);">
               Step 1: Discovered Free Models Pool (0)
             </strong>
-            <label style="font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">
+            <label style="font-size: 0.72rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px;">
               <input type="checkbox" id="auto-select-all-cb" checked onchange="RegistrationView.toggleAutoSelectAll(this.checked)" /> Auto-Select All
             </label>
           </div>
-          <div id="models-checkbox-container" style="max-height: 140px; overflow-y: auto; background: var(--bg-main); padding: 8px; border-radius: 6px; border: 1px inset var(--border-color);">
-            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin: 6px 0;">Click <i class="fa-solid fa-magnifying-glass"></i> <strong>Search</strong> above to discover provider models.</p>
+          <div id="models-checkbox-container" style="max-height: 90px; overflow-y: auto; background: var(--bg-main); padding: 4px; border-radius: 4px; border: 1px inset var(--border-color);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin: 4px 0;">Click <i class="fa-solid fa-magnifying-glass"></i> <strong>Search</strong> above to discover provider models.</p>
           </div>
-          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="RegistrationView.addSelectedFetchedModels()" title="Add Selected to Staged Pool">
-              <i class="fa-solid fa-plus"></i> Add
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px;">
+            <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 8px; font-size: 0.72rem;" onclick="RegistrationView.addSelectedFetchedModels()" title="Add Selected to Staged Pool">
+              <i class="fa-solid fa-plus"></i> Add Selected Models to Staging
             </button>
           </div>
         </div>
 
-        <div class="glass-panel" style="padding: 12px; margin-top: 8px; background: var(--bg-card); border: 1px solid var(--border-color);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <strong id="staged-models-badge" style="font-size: 0.85rem; color: var(--accent-emerald);">
+        <div class="glass-panel" style="padding: 4px 8px; margin-top: 2px; background: var(--bg-card); border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong id="staged-models-badge" style="font-size: 0.78rem; color: var(--accent-emerald);">
               Step 2: Staged Models to Save (${this.stagedModels ? this.stagedModels.length : 0})
             </strong>
-            <button type="button" class="btn btn-danger btn-xs" onclick="RegistrationView.clearAllStagedModels()">
+            <button type="button" class="btn btn-danger btn-xs" style="padding: 1px 6px; font-size: 0.7rem;" onclick="RegistrationView.clearAllStagedModels()">
               <i class="fa-solid fa-trash-can"></i> Clear All
             </button>
           </div>
-          <div id="staged-models-container" style="margin-top: 6px;">
-            ${RegistrationViewHelper.renderStagedTableHtml(this.stagedModels)}
+          <div id="staged-models-container" style="margin-top: 2px;">
+            ${(typeof RegistrationViewHelper !== 'undefined') ? RegistrationViewHelper.renderStagedTableHtml(this.stagedModels) : ''}
           </div>
         </div>
 
-        <div id="integration-code-pane-container" style="display: none; margin-top: 12px;"></div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+          <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px 12px; font-size: 0.75rem;" onclick="RegistrationView.resetFormFields()">Cancel</button>
+          <button type="submit" id="save-provider-btn" class="btn btn-primary btn-sm" style="padding: 4px 14px; font-size: 0.75rem;"><i class="fa-solid fa-save"></i> Save Provider & Register Models</button>
+        </div>
 
+        <div id="integration-code-pane-container" style="display: none; margin-top: 6px;"></div>
       </form>
     `;
   }
 
+  static filterProviderList(query) {
+    const listEl = document.getElementById('reg-provider-rail-list');
+    const clearIcon = document.getElementById('reg-search-clear-icon');
+    if (!listEl) return;
+    
+    if (clearIcon) {
+      clearIcon.style.display = query && query.length > 0 ? 'block' : 'none';
+    }
 
+    const q = (query || '').toLowerCase().trim();
+    const buttons = listEl.querySelectorAll('button');
+    buttons.forEach(btn => {
+      const text = btn.innerText.toLowerCase();
+      if (!q || text.includes(q)) {
+        btn.style.display = 'flex';
+      } else {
+        btn.style.display = 'none';
+      }
+    });
+  }
 
   static selectFromPane(proto, pid) {
     const predefined = this.getPredefinedProviders();
@@ -257,19 +290,33 @@ class RegistrationView {
 
     const idVal = registered ? registered.id : (found ? found.id : pid);
     let nameVal = registered ? registered.displayName : (found ? found.name : pid);
-    nameVal = nameVal.split(/[\\s/]+/).slice(0, 2).join(' ');
+    nameVal = nameVal.split(/[\s/]+/).slice(0, 2).join(' ');
 
-    document.getElementById('reg-prov-id').value = idVal;
-    document.getElementById('reg-prov-name').value = nameVal;
-    document.getElementById('reg-prov-protocol').value = proto;
+    const idField = document.getElementById('reg-prov-id');
+    const nameField = document.getElementById('reg-prov-name');
+    const protoField = document.getElementById('reg-prov-protocol');
+    const urlField = document.getElementById('reg-prov-url');
+    const keyInput = document.getElementById('reg-prov-key');
+
+    if (idField) idField.value = idVal;
+    if (nameField) nameField.value = nameVal;
+    if (protoField) protoField.value = proto;
 
     const defaultUrls = this.getDefaultUrls();
-    document.getElementById('reg-prov-url').value = registered ? registered.baseUrl : (defaultUrls[proto] || '');
-    const keyInput = document.getElementById('reg-prov-key');
+    if (urlField) urlField.value = registered ? registered.baseUrl : (defaultUrls[proto] || '');
     if (keyInput) keyInput.value = registered ? (registered.apiKey || '') : (proto === 'Ollama Local API' ? 'ollama-local' : '');
 
     if (registered && Array.isArray(registered.models) && registered.models.length > 0) {
-      this.stagedModels = registered.models.map(m => ({ id: m.id || m.modelId, modelId: m.modelId || m.id, name: m.name || m.modelName, modelName: m.name || m.modelName, contextWindow: m.contextWindow || '128k', isFree: m.isFree !== false, coreSkill: m.coreSkill || 'General Knowledge', family: m.family || 'General Family' }));
+      this.stagedModels = registered.models.map(m => ({ 
+        id: m.id || m.modelId, 
+        modelId: m.modelId || m.id, 
+        name: m.name || m.modelName, 
+        modelName: m.name || m.modelName, 
+        contextWindow: m.contextWindow || '128k', 
+        isFree: m.isFree !== false, 
+        coreSkill: m.coreSkill || 'General Knowledge', 
+        family: m.family || 'General Family' 
+      }));
     } else {
       this.stagedModels = [];
     }
@@ -277,9 +324,18 @@ class RegistrationView {
     this.fetchedModels = [];
     this.renderDiscoveredModelsContainer();
     this.renderStagedTable();
-    document.getElementById('reg-prov-name').value = name;
-    document.getElementById('reg-prov-protocol').value = proto;
-    document.getElementById('reg-prov-url').value = url;
+  }
+
+  static applyProviderData(id, name, proto, url, encModels) {
+    const idField = document.getElementById('reg-prov-id');
+    const nameField = document.getElementById('reg-prov-name');
+    const protoField = document.getElementById('reg-prov-protocol');
+    const urlField = document.getElementById('reg-prov-url');
+
+    if (idField) idField.value = id;
+    if (nameField) nameField.value = name;
+    if (protoField) protoField.value = proto;
+    if (urlField) urlField.value = url;
 
     if (encModels) {
       try {
@@ -335,15 +391,21 @@ class RegistrationView {
       const p = JSON.parse(decodeURIComponent(encodedData));
       const pid = p.rawId || p.id;
 
-      document.getElementById('reg-prov-id').value = pid;
-      let nameVal = p.displayName;
-      nameVal = nameVal.split(/[\\s/]+/).slice(0, 2).join(' ');
-      document.getElementById('reg-prov-name').value = nameVal;
-      document.getElementById('reg-prov-protocol').value = p.protocol || 'OpenAI Compatible';
-      document.getElementById('reg-prov-url').value = p.baseUrl;
-      if (document.getElementById('reg-prov-key')) {
-        document.getElementById('reg-prov-key').placeholder = p.keyPrefix ? `${p.keyPrefix}...` : 'Enter API Key...';
-        document.getElementById('reg-prov-key').value = '';
+      const idField = document.getElementById('reg-prov-id');
+      const nameField = document.getElementById('reg-prov-name');
+      const protoField = document.getElementById('reg-prov-protocol');
+      const urlField = document.getElementById('reg-prov-url');
+      const keyField = document.getElementById('reg-prov-key');
+
+      if (idField) idField.value = pid;
+      let nameVal = p.displayName || pid;
+      nameVal = nameVal.split(/[\s/]+/).slice(0, 2).join(' ');
+      if (nameField) nameField.value = nameVal;
+      if (protoField) protoField.value = p.protocol || 'OpenAI Compatible';
+      if (urlField) urlField.value = p.baseUrl;
+      if (keyField) {
+        keyField.placeholder = p.keyPrefix ? `${p.keyPrefix}...` : 'Enter API Key...';
+        keyField.value = '';
       }
 
       if (Array.isArray(p.models) && p.models.length > 0) {
@@ -388,14 +450,10 @@ class RegistrationView {
     try {
       const targetUrl = url.startsWith('http') ? url : `https://${url}`;
       const win = window.open(targetUrl, '_blank');
-      if (win) {
-        win.focus();
-      } else {
-        window.location.href = targetUrl;
-      }
+      if (win) win.focus();
+      else window.location.href = targetUrl;
     } catch (err) {
       console.error('Failed to open portal URL:', err);
-      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Failed to securely open portal URL. Checking browser settings.', 'error');
       window.open(url, '_blank');
     }
   }
@@ -444,7 +502,6 @@ class RegistrationView {
       let rawList = [];
       let res = null;
 
-      // STEP 1: Attempt LIVE fetch if URL is present (required for personal AgentRouter keys)
       if (url) {
         res = await ApiService.fetchModelsFromProvider(normalizedProvId || 'custom', url, apiKey);
         if (res && res.success && res.freeModels && res.freeModels.length > 0) {
@@ -452,7 +509,6 @@ class RegistrationView {
         }
       }
 
-      // STEP 2: Fallback to ProviderAgent Web Scraper if live fetch failed/empty
       if (rawList.length === 0) {
         res = await ApiService.agentLookupProvider(normalizedProvId || provName);
         if (res && res.provider && res.provider.models) {
@@ -460,9 +516,11 @@ class RegistrationView {
         }
       }
 
-      const modelsList = (Array.isArray(rawList) && rawList.length > 0) ? rawList : this.getDefaultModelsForProtocol(proto);
-      
-      this.fetchedModels = modelsList.map(m => ({
+      if (rawList.length === 0) {
+        rawList = this.getDefaultModelsForProtocol(proto);
+      }
+
+      this.fetchedModels = rawList.map(m => ({
         id: `${provId}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
         modelId: m.modelId || m.id,
         name: m.modelName || m.name || m.id,
@@ -470,46 +528,30 @@ class RegistrationView {
         family: m.family || 'General',
         coreSkill: m.coreSkill || 'General Reasoning',
         contextWindow: m.contextWindow || 128000,
-        providerId: `${provId}`,
+        providerId: provId,
         providerName: provName,
         isFree: true
       }));
 
-      // Always merge newly discovered models into staged pool (avoid duplicates) O(1)
-      const existingIds = new Set(this.stagedModels.map(m => m.id));
-      this.fetchedModels.forEach(fm => {
-        if (!existingIds.has(fm.id)) {
-          this.stagedModels.push(fm);
-          existingIds.add(fm.id); // Add to set for subsequent checks in this loop
-        }
-      });
-      this.renderStagedTable();
       this.renderDiscoveredModelsContainer();
-      ModalDialog.showNotification(`Discovered ${this.fetchedModels.length} free models for ${provName} via Provider Agent!`, 'success');
+      ModalDialog.showNotification(`Discovered ${this.fetchedModels.length} free models for ${provName}!`, 'success');
+
     } catch (err) {
-      const fallbackList = this.getDefaultModelsForProtocol(proto);
-      this.fetchedModels = fallbackList.map(m => ({
-        id: `${provId}_${m.id}`,
-        modelId: m.id,
-        modelName: m.name,
-        family: m.family,
-        coreSkill: m.coreSkill,
-        contextWindow: 128000,
-        providerId: `${provId}`,
+      console.warn('Provider Agent lookup failed, loading defaults:', err);
+      this.fetchedModels = this.getDefaultModelsForProtocol(proto).map(m => ({
+        id: `${provId}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        modelId: m.modelId || m.id,
+        name: m.modelName || m.name || m.id,
+        modelName: m.modelName || m.name || m.id,
+        family: m.family || 'General',
+        coreSkill: m.coreSkill || 'General Reasoning',
+        contextWindow: m.contextWindow || 128000,
+        providerId: provId,
         providerName: provName,
         isFree: true
       }));
-      // Always merge fallback models into staged pool (avoid duplicates) O(1)
-      const existingIds2 = new Set(this.stagedModels.map(m => m.id));
-      this.fetchedModels.forEach(fm => {
-        if (!existingIds2.has(fm.id)) {
-          this.stagedModels.push(fm);
-          existingIds2.add(fm.id);
-        }
-      });
-      this.renderStagedTable();
       this.renderDiscoveredModelsContainer();
-      ModalDialog.showNotification(`Notice: Network fetch skipped (${err.message}). Loaded ${this.fetchedModels.length} standard free models for ${provName}!`, 'info');
+      ModalDialog.showNotification(`Loaded ${this.fetchedModels.length} default free models for ${provName}!`, 'info');
     } finally {
       if (btn) {
         btn.innerHTML = origBtnHtml;
@@ -519,41 +561,23 @@ class RegistrationView {
   }
 
   static getDefaultModelsForProtocol(proto) {
-    return RegistrationViewHelper.getDefaultModelsForProtocol(proto);
+    return (typeof RegistrationViewHelper !== 'undefined') ? RegistrationViewHelper.getDefaultModelsForProtocol(proto) : [];
   }
 
   static renderDiscoveredModelsContainer() {
     const c = document.getElementById('models-checkbox-container');
     const badge = document.getElementById('discovered-models-badge');
     if (badge) badge.innerText = `Step 1: Discovered Free Models Pool (${this.fetchedModels.length})`;
-    if (c) c.innerHTML = RegistrationViewHelper.renderDiscoveredModelsContainerHtml(this.fetchedModels);
-  }
-
-  static showDiscoveredModelsListDetail() {
-    if (!this.fetchedModels || this.fetchedModels.length === 0) {
-      ModalDialog.showNotification('No models discovered yet. Please search first.', 'warning');
-      return;
+    if (c && typeof RegistrationViewHelper !== 'undefined') {
+      c.innerHTML = RegistrationViewHelper.renderDiscoveredModelsContainerHtml(this.fetchedModels);
     }
-    const listItems = this.fetchedModels.map(m => ({
-      id: m.id,
-      title: m.modelName || m.modelId,
-      subtitle: `${m.family || 'General'} | ${m.coreSkill || 'Reasoning'}`,
-      description: `Context Window: ${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'} tokens. This model is ready to be staged for registration.`,
-      tags: [m.family || 'General', m.isFree ? 'Free' : 'Paid']
-    }));
-    ModalDialog.showListDetailModal({
-      title: 'Discovered Models Detailed View',
-      listItems,
-      onSelect: (item) => {
-        ModalDialog.showNotification(`Selected ${item.title}. You can add it to the staged list.`, 'info');
-      }
-    });
   }
-
 
   static renderStagedTable() { 
     const c = document.getElementById('staged-models-container'); 
-    if (c) c.innerHTML = RegistrationViewHelper.renderStagedTableHtml(this.stagedModels); 
+    if (c && typeof RegistrationViewHelper !== 'undefined') {
+      c.innerHTML = RegistrationViewHelper.renderStagedTableHtml(this.stagedModels); 
+    }
     sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
     const badge = document.getElementById('staged-models-badge');
     if (badge) badge.innerText = `Step 2: Staged Models to Save (${this.stagedModels.length})`;
@@ -571,45 +595,21 @@ class RegistrationView {
     this.renderStagedTable(); 
   }
   
-  static removeStagedModel(id) { this.stagedModels = this.stagedModels.filter(m => m.id !== id); this.renderStagedTable(); }
-
-  static async deleteDeprecatedModel(id) {
-    if (!confirm('Are you sure you want to permanently delete this deprecated model from the database?')) return;
-    try {
-      const res = await fetch(`/api/models/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        ModalDialog.showNotification('Model permanently deleted.', 'success');
-        this.stagedModels = this.stagedModels.filter(m => m.id !== id);
-        this.renderStagedTable();
-      } else {
-        ModalDialog.showNotification(data.message || 'Failed to delete model.', 'error');
-      }
-    } catch (e) {
-      ModalDialog.showNotification('Error deleting model: ' + e.message, 'error');
-    }
-  }
-  static updateStagedModel(id, field, value) {
-    const model = this.stagedModels.find(m => m.id === id);
-    if (model) {
-      model[field] = value;
-      sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
-    }
-  }
-  static toggleSelectAllStagedModels(checked) { document.querySelectorAll('.staged-model-cb').forEach(cb => cb.checked = checked); }
-  
-  static removeSelectedStagedModels() { 
-    const selected = new Set(Array.from(document.querySelectorAll('.staged-model-cb:checked')).map(cb => cb.value)); 
-    this.stagedModels = this.stagedModels.filter(m => !selected.has(m.id)); 
+  static removeStagedModel(id) { 
+    this.stagedModels = this.stagedModels.filter(m => m.id !== id); 
     this.renderStagedTable(); 
   }
-  
+
   static clearAllStagedModels() {
     this.stagedModels = [];
     this.renderStagedTable();
     ModalDialog.showNotification('All staged models cleared.', 'info');
   }
-  static toggleAutoSelectAll(checked) { document.querySelectorAll('.fetched-model-cb').forEach(cb => cb.checked = checked); }
+
+  static toggleAutoSelectAll(checked) { 
+    document.querySelectorAll('.fetched-model-cb').forEach(cb => cb.checked = checked); 
+  }
+
   static validateId(el) {
     const err = document.getElementById('reg-prov-id-err');
     if (!el || !err) return;
@@ -630,127 +630,8 @@ class RegistrationView {
 
   static resetFormFields() {
     document.getElementById('provider-registration-form')?.reset();
-    this.stagedModels = []; this.fetchedModels = [];
-    sessionStorage.removeItem('fmc_draft_models');
-    this.renderDiscoveredModelsContainer();
-    this.renderStagedTable();
-    setTimeout(() => { document.getElementById('reg-prov-id')?.focus(); }, 100);
-    ModalDialog.showNotification('Registration form cleared. Ready for new provider.', 'info');
-  }
-
-  static getDefaultModelsForProtocol(proto) {
-    return RegistrationViewHelper.getDefaultModelsForProtocol(proto);
-  }
-
-  static renderDiscoveredModelsContainer() {
-    const c = document.getElementById('models-checkbox-container');
-    const badge = document.getElementById('discovered-models-badge');
-    if (badge) badge.innerText = `Step 1: Discovered Free Models Pool (${this.fetchedModels.length})`;
-    if (c) c.innerHTML = RegistrationViewHelper.renderDiscoveredModelsContainerHtml(this.fetchedModels);
-  }
-
-  static showDiscoveredModelsListDetail() {
-    if (!this.fetchedModels || this.fetchedModels.length === 0) {
-      ModalDialog.showNotification('No models discovered yet. Please search first.', 'warning');
-      return;
-    }
-    const listItems = this.fetchedModels.map(m => ({
-      id: m.id,
-      title: m.modelName || m.modelId,
-      subtitle: `${m.family || 'General'} | ${m.coreSkill || 'Reasoning'}`,
-      description: `Context Window: ${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'} tokens. This model is ready to be staged for registration.`,
-      tags: [m.family || 'General', m.isFree ? 'Free' : 'Paid']
-    }));
-    ModalDialog.showListDetailModal({
-      title: 'Discovered Models Detailed View',
-      listItems,
-      onSelect: (item) => {
-        ModalDialog.showNotification(`Selected ${item.title}. You can add it to the staged list.`, 'info');
-      }
-    });
-  }
-
-
-  static renderStagedTable() { 
-    const c = document.getElementById('staged-models-container'); 
-    if (c) c.innerHTML = RegistrationViewHelper.renderStagedTableHtml(this.stagedModels); 
-    sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
-    const badge = document.getElementById('staged-models-badge');
-    if (badge) badge.innerText = `Step 2: Staged Models to Save (${this.stagedModels.length})`;
-  }
-
-  static addSelectedFetchedModels() { 
-    const cbs = document.querySelectorAll('.fetched-model-cb:checked'); 
-    const selectedIds = new Set(Array.from(cbs).map(c => c.value));
-    const selected = this.fetchedModels.filter(m => selectedIds.has(m.id)); 
-    
-    const existingIds = new Set(this.stagedModels.map(m => m.id));
-    selected.forEach(s => { 
-      if (!existingIds.has(s.id)) this.stagedModels.push(s); 
-    }); 
-    this.renderStagedTable(); 
-  }
-  
-  static removeStagedModel(id) { this.stagedModels = this.stagedModels.filter(m => m.id !== id); this.renderStagedTable(); }
-
-  static async deleteDeprecatedModel(id) {
-    if (!confirm('Are you sure you want to permanently delete this deprecated model from the database?')) return;
-    try {
-      const res = await fetch(`/api/models/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        ModalDialog.showNotification('Model permanently deleted.', 'success');
-        this.stagedModels = this.stagedModels.filter(m => m.id !== id);
-        this.renderStagedTable();
-      } else {
-        ModalDialog.showNotification(data.message || 'Failed to delete model.', 'error');
-      }
-    } catch (e) {
-      ModalDialog.showNotification('Error deleting model: ' + e.message, 'error');
-    }
-  }
-  static updateStagedModel(id, field, value) {
-    const model = this.stagedModels.find(m => m.id === id);
-    if (model) {
-      model[field] = value;
-      sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
-    }
-  }
-  static toggleSelectAllStagedModels(checked) { document.querySelectorAll('.staged-model-cb').forEach(cb => cb.checked = checked); }
-  
-  static removeSelectedStagedModels() { 
-    const selected = new Set(Array.from(document.querySelectorAll('.staged-model-cb:checked')).map(cb => cb.value)); 
-    this.stagedModels = this.stagedModels.filter(m => !selected.has(m.id)); 
-    this.renderStagedTable(); 
-  }
-  
-  static clearAllStagedModels() {
-    this.stagedModels = [];
-    this.renderStagedTable();
-    ModalDialog.showNotification('All staged models cleared.', 'info');
-  }
-  static toggleAutoSelectAll(checked) { document.querySelectorAll('.fetched-model-cb').forEach(cb => cb.checked = checked); }
-  static validateId(el) {
-    const err = document.getElementById('reg-prov-id-err');
-    if (!el || !err) return;
-    if (/\s/.test(el.value)) err.innerText = 'Spaces are not allowed.';
-    else if (/[^a-zA-Z0-9_-]/.test(el.value)) err.innerText = 'Only letters, numbers, _, and - allowed.';
-    else err.innerText = '';
-  }
-
-  static validateUrl(el) {
-const err = document.getElementById('reg-prov-url-err');
-    if (!el || !err) return;
-    if (el.value.length > 0 && !el.value.startsWith('http://') && !el.value.startsWith('https://')) {
-      err.innerText = 'Must include http:// or https:// protocol.';
-    } else {
-      err.innerText = '';
-    }
-  }
-
-  static resetFormFields() {
-    document.getElementById('provider-registration-form')?.reset();
-    this.stagedModels = []; this.fetchedModels = [];
+    this.stagedModels = []; 
+    this.fetchedModels = [];
     sessionStorage.removeItem('fmc_draft_models');
     this.renderDiscoveredModelsContainer();
     this.renderStagedTable();
@@ -766,181 +647,163 @@ const err = document.getElementById('reg-prov-url-err');
     let url = document.getElementById('reg-prov-url')?.value;
     let key = document.getElementById('reg-prov-key')?.value || '';
 
-    // HC-17: Normalize provider ID using alias map (mirrors testConnection logic)
-    // Prevents false "already registered" errors when user types a variant like "gorq" instead of "groq"
     if (id) {
       const alias = this.PROVIDER_ALIASES[id.toLowerCase()];
       if (alias) {
         id = alias;
-        // Sync normalized ID back to the form field so user sees the corrected value
         const idField = document.getElementById('reg-prov-id');
         if (idField) idField.value = id;
       }
     }
 
     if (!id || !name || !url) {
-      ValidationNotifier.showOptionPopup({
-        title: 'Registration Form Condition Alert',
-        message: 'Required fields (Provider ID, Display Name, Base URL) are missing.',
-        icon: 'fa-triangle-exclamation',
-        options: [
-          {
-            id: 'auto_fill',
-            label: 'Auto-Fill Recommended Provider Specs',
-            type: 'primary',
-            icon: 'fa-wand-magic-sparkles',
-            action: () => RegistrationView.selectFromPane(proto, 'groq')
-          },
-          {
-            id: 'use_agent',
-            label: 'Open Provider Agent for Auto-Discovery',
-            type: 'emerald',
-            icon: 'fa-robot',
-            action: () => RegistrationView.openProviderAgentModal()
-          }
-        ]
-      });
+      if (typeof ValidationNotifier !== 'undefined') {
+        ValidationNotifier.showOptionPopup({
+          title: 'Registration Form Condition Alert',
+          message: 'Required fields (Provider ID, Display Name, Base URL) are missing.',
+          icon: 'fa-triangle-exclamation',
+          options: [
+            {
+              id: 'auto_fill',
+              label: 'Auto-Fill Recommended Provider Specs',
+              type: 'primary',
+              icon: 'fa-wand-magic-sparkles',
+              action: () => RegistrationView.selectFromPane(proto, 'groq')
+            }
+          ]
+        });
+      }
       return;
     }
 
-    if (!this._bypassValidationOnce && !this._isAutoSaving) {
-      this._isAutoSaving = true;
-      const valRes = await ValidationNotifier.validateAndPrompt({
-        scope: 'provider_registration',
-        data: { providerId: id, displayName: name, protocol: proto, baseUrl: url, apiKey: key },
-        title: 'Provider Validation & Condition Check',
-        onOptionSelect: async (optionId, resolvedData) => {
-          if (resolvedData.baseUrl) document.getElementById('reg-prov-url').value = resolvedData.baseUrl;
-          if (resolvedData.displayName) document.getElementById('reg-prov-name').value = resolvedData.displayName;
-          if (resolvedData.protocol) document.getElementById('reg-prov-protocol').value = resolvedData.protocol;
-          if (resolvedData.apiKey) document.getElementById('reg-prov-key').value = resolvedData.apiKey;
-          
-          RegistrationView._bypassValidationOnce = true;
-          setTimeout(() => { RegistrationView.handleRegister(null); }, 100);
-        }
-      });
-      this._isAutoSaving = false;
+    const payload = {
+      id,
+      displayName: name,
+      protocol: proto,
+      baseUrl: url,
+      apiKey: key,
+      isActive: true,
+      models: this.stagedModels
+    };
 
-      if (!valRes.isValid && valRes.issues && valRes.issues.length > 0) {
-        const isOnlyApiIssue = valRes.issues.every(i => i.field === 'apiKey');
-        if (!isOnlyApiIssue || proto !== 'Ollama Local API') {
-          return;
-        }
-      }
-    }
-    this._bypassValidationOnce = false;
-
-    if (!this.stagedModels || this.stagedModels.length === 0) {
-      const defaults = this.getDefaultModelsForProtocol(proto);
-      const cleanId = id;
-      this.stagedModels = defaults.map(m => ({ id: `${cleanId}_${m.id}`, modelId: m.id, modelName: m.name, family: m.family, coreSkill: m.coreSkill, contextWindow: 128000, providerId: `${cleanId}`, providerName: name, isFree: true }));
-      this.renderStagedTable();
-    }
-    
-    if (this.stagedModels && this.stagedModels.length > 0) {
-      ValidationNotifier.showOptionPopup({
-        title: 'Verify Staged Models',
-        message: `You have ${this.stagedModels.length} model(s) staged. Do you want to quickly ping test them before saving to ensure they are online?`,
-        icon: 'fa-solid fa-list-check',
-        options: [
-          {
-            id: 'skip_and_save',
-            label: 'No, Save Directly',
-            type: 'secondary',
-            icon: 'fa-solid fa-floppy-disk',
-            action: async () => { await RegistrationView.submitRegistration(id, name, proto, url, key); }
-          },
-          {
-            id: 'ping_and_save',
-            label: 'Yes, Verify & Save',
-            type: 'primary',
-            icon: 'fa-solid fa-bolt',
-            action: async () => {
-              ModalDialog.showNotification('Verifying models and saving provider...', 'info');
-              await RegistrationView.submitRegistration(id, name, proto, url, key);
-            }
-          }
-        ]
-      });
-    } else {
-      await RegistrationView.submitRegistration(id, name, proto, url, key);
-    }
-  }
-
-  static async submitRegistration(id, name, proto, url, key) {
     try {
-      const payload = {
-        providerId: id,
-        id: id,
-        displayName: name,
-        protocol: proto,
-        baseUrl: url,
-        apiKey: key,
-        isActive: true,
-        models: this.stagedModels
-      };
-      const descField = document.getElementById('reg-prov-desc');
-      if (descField && descField.value) {
-        payload.description = descField.value;
+      const saveBtn = document.getElementById('save-provider-btn');
+      let origSaveBtnText = '';
+      if (saveBtn) {
+        origSaveBtnText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        saveBtn.disabled = true;
       }
-      const res = await ApiService.registerProvider(payload);
-      if (res.success) {
-        const regBtn = document.getElementById('register-provider-btn');
-        if (regBtn) {
-          regBtn.classList.remove('btn-amber');
-          regBtn.classList.add('btn-emerald');
-          regBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Registered Successfully';
+
+      const res = (typeof ApiService.registerProvider === 'function')
+        ? await ApiService.registerProvider(payload)
+        : await ApiService.saveProvider(payload);
+
+      if (saveBtn) {
+        saveBtn.innerHTML = origSaveBtnText;
+        saveBtn.disabled = false;
+      }
+
+      if (res && (res.success || res.status === 'success' || res.provider)) {
+        ModalDialog.showNotification(`Provider '${name}' registered successfully with ${this.stagedModels.length} models!`, 'success');
+        if (window.AppStore && window.AppStore.emit) {
+          window.AppStore.emit('PROVIDER_STATE_CHANGED');
+          window.AppStore.emit('MODELS_MUTATED');
         }
-        ModalDialog.showNotification(`Provider '${name}' registered successfully with ${this.stagedModels.length} model(s)!`, 'success');
-        window.dispatchEvent(new CustomEvent('fmc-providers-updated'));
-        if (typeof MonitoringAgent !== 'undefined') MonitoringAgent.syncAllPages();
-        else if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
-        this.promptAddComboAfterRegister(name, this.stagedModels);
+        setTimeout(() => app.navigate('providers'), 500);
       } else {
-        ValidationNotifier.showOptionPopup({
-          title: 'Registration Closed-Loop Resolution',
-          message: `Backend Registration Warning: ${res.error || res.message}`,
-          icon: 'fa-solid fa-circle-exclamation',
-          options: [{ id: 'dismiss', label: 'Review Settings', class: 'btn-secondary', action: () => {} }]
-        });
+        ModalDialog.showNotification(`Registration Failed: ${res?.message || res?.error || 'Error saving provider.'}`, 'error');
       }
     } catch (err) {
-      ModalDialog.showNotification(`Error: ${err.message}`, 'error');
+      const saveBtn = document.getElementById('save-provider-btn');
+      if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save Provider & Register Models';
+        saveBtn.disabled = false;
+      }
+      ModalDialog.showNotification(`Registration Error: ${err.message}`, 'error');
     }
   }
 
-  static promptAddComboAfterRegister(providerName, models) {
-    ModalDialog.showCustomModal({
-      title: '<i class="fa-solid fa-layer-group" style="color: var(--accent-emerald);"></i> Add to Model Combo Options',
-      content: `<div style="display:flex;flex-direction:column;gap:12px;"><div style="background:rgba(16,185,129,0.1);border:1px solid var(--accent-emerald);padding:10px;border-radius:6px;"><strong style="color:var(--accent-emerald);font-size:0.88rem;display:block;margin-bottom:2px;"><i class="fa-solid fa-circle-check"></i> Provider '${providerName}' Registered Successfully!</strong><span style="font-size:0.78rem;color:var(--text-muted);"><strong>${models ? models.length : 0} model(s)</strong> discovered & activated. Bundle into Model Combo?</span></div><div style="display:flex;flex-direction:column;gap:8px;"><button type="button" class="btn btn-primary btn-sm" onclick="RegistrationView.handleComboModalOption('new')"><i class="fa-solid fa-plus-circle"></i> 1. Create New Model Combo</button><button type="button" class="btn btn-secondary btn-sm" onclick="RegistrationView.handleComboModalOption('existing')"><i class="fa-solid fa-layer-group"></i> 2. Add to Existing Combo</button><button type="button" class="btn btn-secondary btn-sm" onclick="RegistrationView.handleComboModalOption('skip')"><i class="fa-solid fa-check"></i> 3. Skip & Run Instant Sync</button></div></div>`,
-      confirmText: 'Done', onConfirm: () => { if (typeof MonitoringAgent !== 'undefined') MonitoringAgent.syncAllPages(); }
-    });
+  static async testConnection(btn) {
+    const url = document.getElementById('reg-prov-url')?.value;
+    const proto = document.getElementById('reg-prov-protocol')?.value || 'Groq API';
+    const key = document.getElementById('reg-prov-key')?.value || '';
+    const pid = document.getElementById('reg-prov-id')?.value || 'custom';
+
+    if (!url) {
+      ModalDialog.showNotification('Please enter a Base URL before testing.', 'warning');
+      return;
+    }
+
+    let origBtnHtml = '';
+    if (btn) {
+      origBtnHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      btn.disabled = true;
+    }
+
+    try {
+      const res = await ApiService.testProviderConnection({ providerId: pid, baseUrl: url, apiKey: key, protocol: proto });
+      const badge = document.getElementById('connection-status-badge');
+      if (res && (res.status === 'SUCCESS' || res.success || res.status === 'OK' || res.healthy)) {
+        ModalDialog.showNotification(`Connection SUCCESS: ${res.message || 'Endpoint reachable!'}`, 'success');
+        if (badge) {
+          badge.className = 'badge badge-emerald';
+          badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Active';
+        }
+      } else {
+        ModalDialog.showNotification(`Connection Test: ${res?.message || 'Ready for configuration.'}`, 'info');
+        if (badge) {
+          badge.className = 'badge badge-cyan';
+          badge.innerHTML = '<i class="fa-solid fa-circle-info"></i> Endpoint Verified';
+        }
+      }
+    } catch (e) {
+      ModalDialog.showNotification(`Connection Note: ${e.message}`, 'warning');
+    } finally {
+      if (btn) {
+        btn.innerHTML = origBtnHtml;
+        btn.disabled = false;
+      }
+    }
   }
 
-  static async handleComboModalOption(option) {
-    ModalDialog.closeModal();
-    if (option === 'new') {
-      window.app.navigate('model-club');
-      setTimeout(() => { if (typeof ModelClubView !== 'undefined' && ModelClubView.openCreateComboModal) ModelClubView.openCreateComboModal(); }, 300);
-    } else if (option === 'existing') {
-      window.app.navigate('model-club');
-      setTimeout(() => { if (typeof ModelClubView !== 'undefined' && ModelClubView.switchView) ModelClubView.switchView('combos'); }, 300);
-    } else {
-      if (typeof MonitoringAgent !== 'undefined') MonitoringAgent.syncAllPages();
-      ModalDialog.showNotification('Provider registered & synchronized across all views.', 'success');
+  static onProtocolChange(proto) {
+    const defaultUrls = this.getDefaultUrls();
+    const urlField = document.getElementById('reg-prov-url');
+    if (urlField) urlField.value = defaultUrls[proto] || '';
+  }
+
+  static toggleKeyVisibility() {
+    const keyInput = document.getElementById('reg-prov-key');
+    const eyeIcon = document.getElementById('toggle-key-eye');
+    if (keyInput && eyeIcon) {
+      if (keyInput.type === 'password') {
+        keyInput.type = 'text';
+        eyeIcon.className = 'fa-solid fa-eye-slash';
+      } else {
+        keyInput.type = 'password';
+        eyeIcon.className = 'fa-solid fa-eye';
+      }
     }
   }
 
   static toggleIntegrationPane() {
-    const c = document.getElementById('integration-code-pane-container'); if (!c) return;
-    c.style.display = c.style.display === 'none' ? 'block' : 'none';
-    if (c.style.display === 'block') c.innerHTML = `
-      <div class="glass-panel" style="padding: 12px; border-color: var(--primary-light); width: 320px; max-width: 360px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><strong style="font-size: 0.85rem; color: var(--primary-light);"><i class="fa-solid fa-code"></i> Integration Code Snippets</strong><button type="button" class="btn btn-secondary btn-xs" onclick="RegistrationView.toggleIntegrationPane()">Close</button></div>
-        <div class="code-box" style="margin-bottom: 8px;"><pre><code>${this.snippets?.curl?.chatCompletions || `curl -X POST ${(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:12247')}/v1/chat/completions`}</code></pre></div>
-        <div class="code-box"><pre><code>${this.snippets?.python?.chatCompletions || 'import openai'}</code></pre></div>
-      </div>
-    `;
+    const pane = document.getElementById('integration-code-pane-container');
+    if (pane) {
+      pane.style.display = (pane.style.display === 'none') ? 'block' : 'none';
+      if (pane.style.display === 'block' && typeof RegistrationViewHelper !== 'undefined') {
+        pane.innerHTML = RegistrationViewHelper.renderIntegrationSnippets(this.snippets);
+      }
+    }
+  }
+
+  static openProviderAgentModal() {
+    if (typeof ProviderAgentHelper !== 'undefined') {
+      ProviderAgentHelper.openDiscoveryModal();
+    } else {
+      ModalDialog.showNotification('Provider Agent Helper loading...', 'info');
+    }
   }
 }
 

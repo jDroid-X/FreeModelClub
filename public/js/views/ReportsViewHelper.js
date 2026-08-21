@@ -518,6 +518,8 @@ class ReportsViewHelper {
   }
 
   static renderLogDetailModal(log) {
+    const modelId = log.modelId || '';
+    const provId = log.providerId || '';
     ModalDialog.showCustomModal({
       title: '<i class="fa-solid fa-bug" style="color: var(--accent-cyan);"></i> Log Diagnostic Inspector',
       content: `
@@ -527,10 +529,10 @@ class ReportsViewHelper {
             <span><strong>Timestamp:</strong> ${new Date(log.timestamp).toLocaleString()}</span>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-            <div><strong>Model:</strong> ${log.modelId || 'N/A'}</div>
-            <div><strong>Provider:</strong> ${this.getProviderDisplay(log)}</div>
+            <div><strong>Model:</strong> <span style="color: var(--accent-cyan);">${log.modelId || 'N/A'}</span></div>
+            <div><strong>Provider:</strong> <span style="color: var(--accent-emerald);">${this.getProviderDisplay(log)}</span></div>
             <div><strong>Latency:</strong> ${log.latencyMs || 0}ms</div>
-            <div><strong>Status Code:</strong> ${log.statusCode || log.status || 'N/A'}</div>
+            <div><strong>Status Code:</strong> <span class="badge ${log.statusCode === 200 ? 'badge-emerald' : 'badge-rose'}">${log.statusCode || log.status || 'N/A'}</span></div>
           </div>
           ${log.comboId ? `
           <div style="background: rgba(251,191,36,0.1); border: 1px solid var(--accent-amber); padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; color: var(--accent-amber);">
@@ -545,6 +547,13 @@ class ReportsViewHelper {
           <div style="background: var(--bg-dark); padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);">
             <strong>Full Payload JSON:</strong>
             <pre style="font-size: 0.7rem; color: var(--primary-light); max-height: 180px; overflow-y: auto; margin-top: 4px;">${JSON.stringify(log, null, 2)}</pre>
+          </div>
+
+          <!-- Human-In-The-Loop Action Bar -->
+          <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px; justify-content: flex-end;">
+            ${provId ? `<button class="btn btn-secondary btn-xs" onclick="ModalDialog.closeModal(); app.navigate('providers');"><i class="fa-solid fa-server"></i> Inspect Provider</button>` : ''}
+            ${modelId ? `<button class="btn btn-secondary btn-xs" onclick="ModalDialog.closeModal(); app.navigate('model-club');"><i class="fa-solid fa-layer-group"></i> Inspect in Model Club</button>` : ''}
+            <button class="btn btn-secondary btn-xs" onclick="ModalDialog.closeModal(); app.navigate('playground');"><i class="fa-solid fa-terminal"></i> Test in Playground</button>
           </div>
         </div>
       `,

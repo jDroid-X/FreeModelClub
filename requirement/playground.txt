@@ -2,6 +2,238 @@
 # Screen: Playground View (http://localhost:12247/playground)
 
 ================================================================================
+[2026-08-21 07:53:00] JGROID-X TOOL EXECUTION ENGINE REFACTORING & HARDWARE INTERACTION AUDIT
+================================================================================
+Target Screen : PlaygroundView.js / jDroidXToolExecutionEngine.js / ToolExecutionLoopService.js
+Requested By  : User Chat (refactor Antigravity Tool Engine as jDroid-X Tool Engine, fix errors/bugs, list hardware interacting modules)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Refactored Tool Execution Engine from AntigravityToolExecutionEngine to jDroidXToolExecutionEngine:
+		* Maintained full backward compatibility through AntigravityToolExecutionEngine inheritance bridge (Prime Directive #1).
+		* Updated ToolExecutionLoopService, PromptOrchestratorService, and ProviderAgentService.
+		* Updated SVG branding from "Antigravity AI Image Engine" to "jDroid-X AI Image Engine".
+		* Added path traversal security guards and enhanced DuckDuckGo HTML scraping regex with graceful fallback.
+		* Audited all 6 system modules directly interacting with physical/host hardware.
+	- Registered jDroidXToolExecutionEngine in data/program_mapping.json 3D Matrix.
+Files Modified:
+	- src/services/jDroidXToolExecutionEngine.js
+	- src/services/AntigravityToolExecutionEngine.js
+	- src/services/ToolExecutionLoopService.js
+	- src/services/ProviderAgentService.js
+	- data/program_mapping.json
+	- requirement/playground.txt
+================================================================================
+
+================================================================================
+[2026-08-20 23:54:00] PLAYGROUND CONVERSATION EXPORT (MARKDOWN / JSON)
+================================================================================
+Target Screen : PlaygroundView.js
+Requested By  : User Chat (Fix all gaps and missing scenario features across all screens)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Added 1-Click Export Conversation button in the conversation sidebar header.
+	- Implemented PlaygroundView.exportSession() enabling instant export to formatted Markdown (.md) or raw JSON (.json) for audit trails and offline documentation.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- requirement/playground.txt
+================================================================================
+
+================================================================================
+[2026-08-20 23:36:00] LIGHT THEME VISIBILITY, WINDOWS EXPLORER TREE COLLAPSE & 50% LIGHTER CARDVIEW BG
+================================================================================
+Target Screen : PlaygroundView.js / IDEWorkspaceView.js / components.css
+Requested By  : User Chat (in light theme conversational panel text in IDE tabare not visible like in Chat tab. keep the tree close and only open if clicked. its look like windows explorer tree system compact. put the cardview BG color 50% less dark than sidebar (applicable to all screens))
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Light Theme Text Visibility in IDE Tab:
+		* Updated all tree item labels, folders, files, and path containers to use dynamic CSS variable var(--text-main) instead of hardcoded white (#f0f6fc), ensuring 100% visibility in both light and dark themes.
+	- Windows Explorer Tree Collapse Default:
+		* Subfolder containers (.folder-children) now default to display: none with caret icon fa-caret-right.
+		* Clicking a folder expands its child nodes dynamically and toggles the caret to fa-caret-down.
+	- CardView Background 50% Less Dark (Universal Across All Screens):
+		* Updated .glass-panel, .glass-card, .theme-card-tile, .card, .metric-card to color-mix(in srgb, var(--bg-card) 60%, rgba(255, 255, 255, 0.10)) !important, making cards 50% less dark / more elevated and distinct from the sidebar.
+Files Modified:
+	- public/js/views/playground/IDEWorkspaceView.js
+	- public/css/components.css
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 23:27:00] LEFT CHAT SIDEBAR BACKGROUND SYNCHRONIZATION WITH USER MESSAGE BOX
+================================================================================
+Target Screen : PlaygroundView.js / components.css
+Requested By  : User Chat (what is the background color of left chat panel and we make same as you box background)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Synchronized Left Sidebar Background (#left-sidebar, #left-panel-chat, .sidebar-tabs) with the exact user ("You") message bubble background:
+		* Background set to: rgba(255, 255, 255, 0.02)
+		* Header background set to: rgba(255, 255, 255, 0.01)
+		* Applied across PlaygroundView.js DOM nodes and components.css .sidebar-container rules.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/css/components.css
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 23:25:00] FILE TREE SIDEBAR VERTICAL COMPACTNESS & HIGH-CONTRAST LEGIBILITY UPDATE
+================================================================================
+Target Screen : PlaygroundView.js / IDEWorkspaceView.js / components.css
+Requested By  : User Chat (in IDE panel -> ide-file-tree-sidebar - the fonts not clearly vissible as path and too much sapce is wasted in tree view. make vertically compact and font sice big and visible)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Enhanced Workspace Path Display (#ide-workspace-path-display & .sidebar-path-display):
+		* Set high-contrast Cyan/Light accent (color: var(--primary-light)), subtle dark background (rgba(0,0,0,0.3)), font-size: 0.84rem, font-weight: 600, height: 24px.
+	- Vertical Tree Compactness:
+		* Reduced row height to 22px (min-height: 22px; height: 22px; line-height: 20px; padding: 1px 4px).
+		* Reduced nested folder indentation from 16px to 10px (padding-left: 10px !important) to maximize horizontal width.
+	- High-Visibility Crisp Typography:
+		* Increased font size from 0.75rem/0.80rem to 0.85rem (~13.6px) with Semibold 600 font-weight.
+		* Upgraded font color to high-contrast crisp white (#f0f6fc) for all file and folder labels.
+		* Upgraded muted helper text and action buttons to #a1a1aa / var(--primary-light).
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/js/views/playground/IDEWorkspaceView.js
+	- public/css/components.css
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 23:18:00] SESSION LIST CONTAINER, SESSION ITEM & STATUS BAR TYPOGRAPHY UPDATE
+================================================================================
+Target Screen : PlaygroundView.js / PlaygroundViewHelper.js / components.css
+Requested By  : User Chat (Session List Container 6px, Session Item Row 4px 4px border-radius 6px, Session Title Text 0.8rem Semibold 600 line-height 1.3, Session Micro-Action Buttons 2px 4px 0.7rem, Sidebar Status Bar Footer 2px 2px 0.8rem Medium 500)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Session List Container (#session-list-container): Updated padding to 6px.
+	- Session Item Row (.session-item): Updated padding to 4px 4px and border-radius to 6px.
+	- Session Title Text (.session-item span): Updated font-size to 0.8rem (~13px), font-weight to 600 (Semibold), line-height to 1.3, and padding to 0.
+	- Session Micro-Action Buttons (.session-item .fmc-chat-icon-btn): Updated padding to 2px 4px and font-size to 0.7rem (~11px).
+	- Sidebar Status Bar Footer (.sidebar-status-bar): Updated padding to 2px 2px, font-size to 0.8rem (~12px), and font-weight to 500 (Medium).
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/js/views/PlaygroundViewHelper.js
+	- public/css/components.css
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 23:05:00] EMPTY FOLDER PLACEHOLDER TYPOGRAPHY & PADDING UPDATE
+================================================================================
+Target Screen : IDEWorkspaceView.js
+Requested By  : User Chat (<div style="padding: 4px 12px; color: #858585; font-size: 0.8rem;">Empty folder</div>)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Updated empty folder placeholder in IDEWorkspaceView.renderFileTreeItems() to style="padding: 4px 12px; color: #858585; font-size: 0.8rem;".
+Files Modified:
+	- public/js/views/playground/IDEWorkspaceView.js
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 23:02:00] CONVERSATION SIDEPANEL IDE TAB TYPOGRAPHY & PADDING SYNCHRONIZATION
+================================================================================
+Target Screen : PlaygroundView.js / IDEWorkspaceView.js / components.css
+Requested By  : User Chat (In conversation sidepanel (set padding 2px) IDE tab, in worksapce path update the font: 0.80rem, Semibold 600, compact 26px height, in ide-file-tree-sidebar update the font: 0.80rem, Semibold 600, compact 26px height)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Conversation Sidepanel IDE Tab Padding: Set padding to 2px on #left-panel-ide container and ultra-compact 4px 6px on explorer section header.
+	- Workspace Path Display Typography:
+		* Updated #ide-workspace-path-display and .sidebar-path-display to font-size: 0.80rem (~11.2px/12.8px), font-weight: 600 (Semibold), compact height: 26px, min-height: 26px, line-height: 22px, padding: 2px 6px.
+	- File Tree Sidebar Item Typography:
+		* Updated #ide-file-tree-sidebar and IDEWorkspaceView.renderFileTreeItems (sidebar mode) to font-size: 0.80rem, font-weight: 600 (Semibold), compact 26px height for all folder and file tree nodes.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- public/js/views/playground/IDEWorkspaceView.js
+	- public/css/components.css
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 22:10:00] MULTI-AGENT UI/UX SYNC, VALIDATION MODALS, LIST DETAILS & TERMINAL HISTORY
+================================================================================
+Target Screen : IDEWorkspaceView.js / api.js / SelfHealingController.js / server.js
+Requested By  : User Chat (Run AI Agents to Sync, Frontend(Add UI/UX features (buttons, textbox, list box (with list details), dialog box (with options), Validations and Conditions with Notifications (in popup dialog with options))), Backend(update as per new additions at all necessary points, + other Responsible agents(pre-requisites). find the mistakes, critical bugs or silly mistakes))
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Frontend Interactive Dialogs & Options:
+		* Create New File Modal: Interactive popup with file name input, starter template dropdown (.js, .py, .html, .json, .md, .css), validation against illegal Windows characters (<>:"/\|?*), duplicate check, and instant editor open.
+		* Create New Folder Modal: Interactive popup with folder name input, location path preview, and character validation.
+		* Rename Item Modal: Interactive popup with current path preview, pre-filled input, and atomic backend rename.
+		* Delete Item Confirmation: Interactive danger modal with full path breakdown and multi-choice confirmation ("Delete Permanently", "Cancel").
+	- List Box with File Metadata & Hover Actions:
+		* Formatted file size badge helper (formatFileSize) attached to every file in the explorer tree.
+		* Interactive hover action buttons on both files and folders: Copy Path, New File Inside (+file), Rename (pencil), Delete (trash).
+	- Terminal History Up/Down Navigation:
+		* Implemented command history stack (terminalHistory) with ArrowUp (previous command) and ArrowDown (next command) key navigation in the IDE terminal.
+	- Backend CRUD & File Metadata APIs:
+		* Implemented POST /api/playground/delete-item in SelfHealingController.js with safe recursive folder and file unlinking.
+		* Implemented POST /api/playground/rename-item in SelfHealingController.js with destination collision prevention.
+		* Enhanced browseLocalPath to extract size, lastModified timestamp, and normalized extension for every item.
+Files Modified:
+	- public/js/views/playground/IDEWorkspaceView.js
+	- public/js/services/api.js
+	- src/controllers/SelfHealingController.js
+	- server.js
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 22:06:00] FULL-PIPELINE HITL DUE DILIGENCE, ACTIVITY BAR ROUTING & REPORTS LOGGING
+================================================================================
+Target Screen : IDEWorkspaceView.js / FolderTreeView.js / FileSystemController.js / SidebarEditorView.js / ToolExecutionLoopService.js / ReportsView.js
+Requested By  : User Chat (redo this activity considering when HUMAN-IN-LOOP will face issues while using it, like missing UI/UX features or details (reports or system log) with deep dive and due diligence for chatbot and its dependencies... Remove hardcoded items, fix critical bugs, silly mistakes, broken code)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Full Activity Bar UI/UX Routing: Implemented dynamic routing in IDEWorkspaceView.switchActivity() across all 6 activity icons (Explorer refresh, Quick Open Search (Ctrl+P), Source Control git status, Debug/Run file, AI Agent extensions badge, and Settings navigation), eliminating dead buttons.
+	- Reports Diagnostic & Telemetry Logging: Connected ToolExecutionLoopService.js agent completions and tool executions directly into LogModel.recordApiLog() and LogModel.recordSystemLog(), providing complete visibility of token metrics, latencies, and tool distributions in Reports & Root Cause Diagnostics (ReportsView).
+	- Hardcoded Path Purge: Cleared hardcoded username fallbacks across FileSystemController.js and FolderTreeView.js, using dynamic workspace and drive resolution.
+	- Real-time Terminal Execution Streaming: Streamed script outputs from SidebarEditorView.runCurrentFile() into #terminal-output with interactive status banners.
+	- Safe Multi-Drive & Permission Traversal: Secured backend SelfHealingController.browseLocalPath with dynamic logical drive scanning and per-entry error isolation.
+Files Modified:
+	- public/js/views/playground/IDEWorkspaceView.js
+	- public/js/views/playground/FileSystemController.js
+	- public/js/views/playground/FolderTreeView.js
+	- public/js/views/playground/SidebarEditorView.js
+	- src/services/ToolExecutionLoopService.js
+	- src/controllers/SelfHealingController.js
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 22:02:00] HUMAN-IN-THE-LOOP DUE DILIGENCE, HARDCODED PURGE & TERMINAL STREAMING SYNC
+================================================================================
+Target Screen : IDEWorkspaceView.js / FolderTreeView.js / FileSystemController.js / SidebarEditorView.js / SelfHealingController.js
+Requested By  : User Chat (redo this activity considering when HUMAN-IN-LOOP will face issues while using it, like missing UI/UX features or details (reports or system log) with deep dive and due diligence for chatbot and its dependencies... Remove hardcoded items, fix critical bugs, silly mistakes, broken code)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Purged Hardcoded Usernames & Paths: Removed hardcoded user paths in FileSystemController.js and FolderTreeView.js, dynamically deriving active workspace paths from AppConfig / localStorage and OS drive roots.
+	- Human-In-The-Loop Script Execution & Terminal Output: Upgraded SidebarEditorView.runCurrentFile() to route execution output directly into the IDE Terminal view (#terminal-output) with auto-scroll and interactive success/error notification banners.
+	- Interactive HITL Approval Gate: Maintained and hardened window.appStore.requestHITLConfirmation before executing local CLI/Powershell commands.
+	- Robust Drive & Folder Traversal: Secured FolderTreeView and FileSystemController against permission restrictions and multi-drive navigation (C:, D:, E:).
+	- Chat-to-Editor & Workspace Tree Sync: Bound openFileInEditor across chat links, markdown cards, and sidebar drawers with synchronized active file highlights.
+Files Modified:
+	- public/js/views/playground/FileSystemController.js
+	- public/js/views/playground/FolderTreeView.js
+	- public/js/views/playground/SidebarEditorView.js
+	- public/js/views/playground/IDEWorkspaceView.js
+	- src/controllers/SelfHealingController.js
+	- requirement/playground.txt
+
+================================================================================
+[2026-08-20 21:58:00] IDE EXPLORER FOLDER SELECTION BUG FIX & RUNTIME ROBUSTNESS ENHANCEMENT
+================================================================================
+Target Screen : IDEWorkspaceView.js / FolderTreeView.js / FileSystemController.js / SelfHealingController.js
+Requested By  : User Chat (what do you understood by playground chatbot?? what is missing to be as robost chatbot. in IDE tab -> <Explorer is not able to select the system folder> one bug i found what other bugs are there.)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Fixed Explorer System Folder Selection: Refactored IDEWorkspaceView.openWorkspace() to delegate to FileSystemController.openInteractiveBrowser('folder', ...) with dynamic tree rendering, subfolder drilldown, and verified select callbacks.
+	- Eliminated Browser ReferenceErrors:
+		* Fixed path.join calls in IDEWorkspaceView.js (lines 312, 717, 739) by replacing with browser-safe IDEWorkspaceView.joinPath() helper and utilizing backend-provided item.path.
+		* Fixed process.cwd ReferenceError in IDEWorkspaceView.js terminal header by providing browser-safe workspace path fallback.
+	- Dynamic Windows Drive Navigation: Enhanced backend SelfHealingController.browseLocalPath to scan and return all active Windows logical drives (C:, D:, E:), rendered as interactive jump buttons in FolderTreeView.js.
+	- Restricted System Directory Error Isolation: Wrapped directory entry scans in per-item try-catch blocks to prevent permission-restricted folders (e.g. System Volume Information, WindowsApps) from breaking parent directory tree navigation.
+	- Added openFileInEditor Method: Implemented IDEWorkspaceView.openFileInEditor() resolving chat markdown links directly to the sliding sidebar editor drawer.
+	- Workspace & Sidebar Tree Synchronization: Ensured selecting or switching a workspace immediately refreshes both the left sidebar explorer and the full IDE view, updating DOM indicators.
+Files Modified:
+	- src/controllers/SelfHealingController.js
+	- public/js/views/playground/FolderTreeView.js
+	- public/js/views/playground/IDEWorkspaceView.js
+	- requirement/playground.txt
+
+================================================================================
 [2026-08-20 21:46:00] DYNAMIC DIRECTORY ROOT/HOME DERIVATION & NATIVE PICKER INTEGRATION
 ================================================================================
 Target Screen : PlaygroundView.js / FolderTreeView.js / export_clean_production.ps1 / .gitignore

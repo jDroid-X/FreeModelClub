@@ -172,6 +172,8 @@ app.post('/api/playground/read-file', SelfHealingController.readFileContent);
 app.post('/api/playground/run-powershell', SelfHealingController.runPowerShell);
 app.post('/api/playground/extract-image-text', SelfHealingController.extractImageText);
 app.post('/api/playground/browse-local', SelfHealingController.browseLocalPath);
+app.post('/api/playground/delete-item', SelfHealingController.deleteItem);
+app.post('/api/playground/rename-item', SelfHealingController.renameItem);
 
 // Explicit Model Status Audit API Routes
 const LogController = require('./src/controllers/LogController');

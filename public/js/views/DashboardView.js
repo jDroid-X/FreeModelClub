@@ -5,31 +5,54 @@
  *          Renders exact Operational Metrics & Provider Health layout matching attached mockup:
  *          Top Row: 4 Metric Panel Cards (AVAILABLE, CONSUMED, BALANCE, PERCENT CONSUMED TOKEN).
  *          Bottom Row: 3 Panel Cards (TOKEN POOL GAUGE ring, TOP PROVIDERS, MODEL USAGE BREAKDOWN).
- * Dependencies: ApiService, ModalDialog, DashboardViewHelper
-/**
- * DashboardView.js
- * Purpose: Dashboard Metrics & Model Specs drawer view rendering 2-column layout matching User Manual structure:
- *          20% Left TOC Quick Telemetry Rail + 80% Operational Workspace Pane (< 250 lines).
- *          Renders exact Operational Metrics & Provider Health layout matching attached mockup:
- *          Top Row: 4 Metric Panel Cards (AVAILABLE, CONSUMED, BALANCE, PERCENT CONSUMED TOKEN).
- *          Bottom Row: 3 Panel Cards (TOKEN POOL GAUGE ring, TOP PROVIDERS, MODEL USAGE BREAKDOWN).
- * Dependencies: ApiService, ModalDialog, DashboardViewHelper
+ * Dependencies: ApiService, ModalDialog, DashboardViewHelper, AppStore
  */
 
 class DashboardView {
+  static getCurrentUserEmail() {
+    try {
+      const appUser = (window.AppStore && window.AppStore.getState && window.AppStore.getState('currentUser')) ||
+                      (window.app && window.app.currentUser) ||
+                      JSON.parse(localStorage.getItem('fmc_user') || sessionStorage.getItem('fmc_user') || 'null');
+      if (appUser && appUser.email) return appUser.email;
+    } catch (e) {}
+    return 'Active Session Operator';
+  }
+
   static modelAnalytics = [];
   static pollingInterval = null;
   static cachedTelemetry = null;
   static cachedModels = null;
   static cachedProviders = null;
   static cachedLogs = null;
+  static _hasRegisteredStoreListeners = false;
 
   static async render(container, isSilentRefresh = false) {
+    // Reactive EventBus Cache Invalidation
+    if (window.AppStore && !DashboardView._hasRegisteredStoreListeners) {
+      DashboardView._hasRegisteredStoreListeners = true;
+      window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+        DashboardView.cachedProviders = null;
+        DashboardView.cachedModels = null;
+        if (window.app && window.app.currentView === 'dashboard') {
+          const c = document.getElementById('view-container');
+          if (c) DashboardView.render(c, true);
+        }
+      });
+      window.AppStore.on('MODELS_MUTATED', () => {
+        DashboardView.cachedModels = null;
+        if (window.app && window.app.currentView === 'dashboard') {
+          const c = document.getElementById('view-container');
+          if (c) DashboardView.render(c, true);
+        }
+      });
+    }
+
     let telemetryData = DashboardView.cachedTelemetry || null;
     let modelsList = DashboardView.cachedModels || [];
     let providersList = DashboardView.cachedProviders || [];
     let apiLogs = DashboardView.cachedLogs || [];
-    const userEmail = (window.app && window.app.currentUser && window.app.currentUser.email) || 'FreeModelsClub@jdroidxy.com';
+    const userEmail = DashboardView.getCurrentUserEmail();
 
     // 1. Instantly render DOM layout shell on initial call (0ms Instant Load)
     if (!isSilentRefresh) {
@@ -69,11 +92,11 @@ class DashboardView {
       // Update dynamic containers in place
       const metricsEl = document.getElementById('dash-operational-metrics-container');
       if (metricsEl && typeof DashboardViewHelper !== 'undefined') {
-        metricsEl.innerHTML = DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail);
+        metricsEl.innerHTML = DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail, apiLogs);
       }
       const visualEl = document.getElementById('dash-visual-analytics-container');
       if (visualEl && typeof DashboardViewHelper !== 'undefined') {
-        visualEl.innerHTML = DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs);
+        visualEl.innerHTML = DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs, telemetryData);
       }
       const streamEl = document.getElementById('dash-realtime-stream-tbody');
       if (streamEl && typeof DashboardViewHelper !== 'undefined') {
@@ -82,13 +105,13 @@ class DashboardView {
       const modelsTbody = document.querySelector('#dashboard-models-table tbody');
       if (modelsTbody && modelsList.length > 0) {
         modelsTbody.innerHTML = modelsList.slice(0, 25).map(m => `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-            <td style="padding: 3px;"><strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.modelId)}</strong></td>
-            <td style="padding: 3px;"><span style="color: var(--accent-cyan);">${m.family || 'General'}</span></td>
-            <td style="padding: 3px;">${m.coreSkill || 'General'}</td>
-            <td style="padding: 3px;">${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'}</td>
-            <td style="padding: 3px; text-align: center;"><span class="badge badge-emerald">Free</span></td>
-            <td style="padding: 3px; text-align: right;">
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 3px 4px;"><strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.modelId)}</strong></td>
+            <td style="padding: 3px 4px;"><span style="color: var(--accent-cyan);">${m.family || 'General'}</span></td>
+            <td style="padding: 3px 4px;">${m.coreSkill || 'General'}</td>
+            <td style="padding: 3px 4px;">${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'}</td>
+            <td style="padding: 3px 4px; text-align: center;"><span class="badge badge-emerald">Free</span></td>
+            <td style="padding: 3px 4px; text-align: right;">
               <button class="btn btn-secondary btn-xs" onclick="DashboardView.openModelSpecsDrawer('${m.id}')"><i class="fa-solid fa-info-circle"></i> Specs</button>
             </td>
           </tr>
@@ -111,9 +134,17 @@ class DashboardView {
           items: agentSpecs.map(a => ({ 
             id: a.id, 
             title: a.name, 
+            subtitle: a.role,
             description: a.role, 
             icon: 'fa-robot', 
-            badge: { text: 'Standby', color: 'var(--accent-cyan)' } 
+            badge: 'Active',
+            badgeClass: 'badge-cyan',
+            details: {
+              'Agent Role': a.role,
+              'Primary Goal': a.goal,
+              'Execution Task': a.task,
+              'Assigned Model': a.model || 'Dynamic LLM'
+            }
           })),
           selectedId: null,
           height: '100%',
@@ -146,30 +177,31 @@ class DashboardView {
           </div>
         </div>
 
-        <div style="display: flex; gap: 3px; align-items: flex-start; margin-top: 3px;">
-          <!-- Left 20% Width TOC Quick Telemetry Rail -->
-          <div class="glass-panel" style="width: 20%; min-width: 170px; flex-shrink: 0; padding: 3px; margin: 0; display: flex; flex-direction: column; gap: 3px;">
+        <div class="dash-columns-container">
+          <!-- Left 20% Width TOC Quick Telemetry Rail (Responsive Smart-Fit) -->
+          <div class="glass-panel dash-toc-rail">
             <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-light); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 3px; margin-bottom: 3px;">
               <i class="fa-solid fa-gauge-high"></i> Telemetry Rail
             </div>
             
-            <div style="display: flex; gap: 3px; background: rgba(255,255,255,0.04); padding: 3px; border-radius: 4px; margin-bottom: 3px;">
+            <div style="display: flex; gap: 3px; background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; margin-bottom: 3px; border: 1px solid var(--border-color);">
               <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="DashboardView.exportDashboardPdf()" title="Export PDF Report"><i class="fa-solid fa-file-pdf" style="color: var(--accent-rose);"></i></button>
-              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="app.navigate('reports')" title="View Logs"><i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i></button>
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="app.navigate('reports')" title="View API Logs"><i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i></button>
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="app.navigate('reports'); setTimeout(() => { if (typeof ReportsView !== 'undefined') ReportsView.switchTab('system'); }, 150);" title="View System Event Logs"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-amber);"></i></button>
               <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="window.location.reload(true)" title="Hard Refresh"><i class="fa-solid fa-rotate" style="color: var(--accent-emerald);"></i></button>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem;">
-              <div style="background: rgba(0,0,0,0.2); padding: 3px; border-radius: 4px;">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem;">System Account</span>
+              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
+                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">System Account</span>
                 <strong style="color: var(--accent-cyan); word-break: break-all; font-size: 0.72rem;">${userEmail}</strong>
               </div>
-              <div style="background: rgba(0,0,0,0.2); padding: 3px; border-radius: 4px;">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem;">Total Token Consumed</span>
+              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
+                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">Total Token Consumed</span>
                 <strong style="color: var(--accent-emerald); font-size: 0.88rem;">${typeof FormatHelper !== 'undefined' ? FormatHelper.formatNumberAutoUnit(totalTokens) : totalTokens}</strong>
               </div>
-              <div style="background: rgba(0,0,0,0.2); padding: 3px; border-radius: 4px;">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem;">Registered Providers</span>
+              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
+                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">Registered Providers</span>
                 <strong style="color: var(--accent-amber); font-size: 0.88rem;">${providersList.length} <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">(${providersList.filter(p => p.isActive).length} Active)</span></strong>
               </div>
             </div>
@@ -189,39 +221,42 @@ class DashboardView {
             </div>
           </div>
 
-          <!-- Right 80% Operational Workspace Pane -->
-          <div style="width: 80%; display: flex; flex-direction: column; gap: 3px;">
-            <!-- EXACT 4-CARD TOP + 3-CARD BOTTOM OPERATIONAL METRICS & PROVIDER HEALTH GRID -->
+          <!-- Right 80% Operational Workspace Pane (Responsive Smart-Fit) -->
+          <div class="dash-workspace-pane">
+            <!-- EXACT 4-CARD TOP + 3-CARD MIDDLE OPERATIONAL METRICS & CHARTS GRID -->
             <div id="dash-operational-metrics-container">
-              ${DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail)}
+              ${DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail, apiLogs)}
             </div>
 
-            <!-- VISUAL ANALYTICS 3 TILES (MARKET SHARE, TOKEN COST, MODEL USAGE) -->
+            <!-- BREAKDOWN LISTS & COST RATES 3 TILES -->
             <div id="dash-visual-analytics-container">
-              ${DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs)}
+              ${DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs, telemetryData)}
             </div>
 
             <!-- REALTIME REQUEST STREAM -->
-            <div id="sec-logs" class="glass-panel" style="padding: 3px; margin: 0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding: 3px;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            <div id="sec-logs" class="glass-panel" style="padding: 4px; margin: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding: 2px; flex-wrap: wrap; gap: 4px;">
+                <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
                   <i class="fa-solid fa-clock-rotate-left"></i> Realtime Request & Telemetry Stream
                 </div>
-                <button id="dash-btn-pause-polling" class="btn btn-secondary btn-xs" onclick="DashboardView.togglePollingPause()" title="Freeze stream for HIL inspection">
-                  <i class="fa-solid fa-pause"></i> Pause Stream
-                </button>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <input type="text" id="dash-stream-search" class="form-control" style="font-size: 0.70rem; padding: 2px 6px; width: 150px;" placeholder="Filter stream logs..." onkeyup="DashboardView.filterStream(this.value)" />
+                  <button id="dash-btn-pause-polling" class="btn btn-secondary btn-xs" onclick="DashboardView.togglePollingPause()" title="Freeze stream for HIL inspection">
+                    <i class="fa-solid fa-pause"></i> Pause Stream
+                  </button>
+                </div>
               </div>
-              <div style="max-height: 220px; overflow-y: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.76rem;">
+              <div style="max-height: clamp(220px, 35vh, 450px); overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.74rem;">
                   <thead>
                     <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
-                      <th style="padding: 3px;">Timestamp</th>
-                      <th style="padding: 3px;">Model</th>
-                      <th style="padding: 3px;">Family</th>
-                      <th style="padding: 3px;">Tools</th>
-                      <th style="padding: 3px;">Tokens</th>
-                      <th style="padding: 3px;">Balance</th>
-                      <th style="padding: 3px; text-align: center;">Status</th>
+                      <th style="padding: 3px 4px;">Timestamp</th>
+                      <th style="padding: 3px 4px;">Model</th>
+                      <th style="padding: 3px 4px;">Family</th>
+                      <th style="padding: 3px 4px;">Tools</th>
+                      <th style="padding: 3px 4px;">Tokens</th>
+                      <th style="padding: 3px 4px;">Balance</th>
+                      <th style="padding: 3px 4px; text-align: center;">Status</th>
                     </tr>
                   </thead>
                   <tbody id="dash-realtime-stream-tbody">
@@ -232,33 +267,33 @@ class DashboardView {
             </div>
 
             <!-- REGISTERED AI MODELS & SPECS TABLE -->
-            <div class="glass-panel" style="padding: 3px; margin: 0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding: 3px;">
-                <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-light);"><i class="fa-solid fa-list-check"></i> Registered AI Models & Specs</div>
-                <input type="text" id="dashboard-model-search" class="form-control" style="font-size: 0.72rem; padding: 2px 6px; width: 180px;" placeholder="Filter models..." onkeyup="DashboardView.filterModels(this.value)" />
+            <div class="glass-panel" style="padding: 4px; margin: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding: 2px;">
+                <div style="font-size: 0.76rem; font-weight: 700; color: var(--primary-light);"><i class="fa-solid fa-list-check"></i> Registered AI Models & Specs</div>
+                <input type="text" id="dashboard-model-search" class="form-control" style="font-size: 0.70rem; padding: 2px 6px; width: 170px;" placeholder="Filter models..." onkeyup="DashboardView.filterModels(this.value)" />
               </div>
               
-              <div style="max-height: 220px; overflow-y: auto;">
-                <table id="dashboard-models-table" style="width: 100%; border-collapse: collapse; font-size: 0.76rem;">
+              <div style="max-height: clamp(220px, 35vh, 450px); overflow-y: auto;">
+                <table id="dashboard-models-table" style="width: 100%; border-collapse: collapse; font-size: 0.74rem;">
                   <thead>
                     <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
-                      <th style="padding: 3px;">Model Name / ID</th>
-                      <th style="padding: 3px;">Family</th>
-                      <th style="padding: 3px;">Core Skill</th>
-                      <th style="padding: 3px;">Context</th>
-                      <th style="padding: 3px; text-align: center;">Status</th>
-                      <th style="padding: 3px; text-align: right;">Action</th>
+                      <th style="padding: 3px 4px;">Model Name / ID</th>
+                      <th style="padding: 3px 4px;">Family</th>
+                      <th style="padding: 3px 4px;">Core Skill</th>
+                      <th style="padding: 3px 4px;">Context</th>
+                      <th style="padding: 3px 4px; text-align: center;">Status</th>
+                      <th style="padding: 3px 4px; text-align: right;">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${modelsList.slice(0, 25).map(m => `
-                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                        <td style="padding: 3px;"><strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.modelId)}</strong></td>
-                        <td style="padding: 3px;"><span style="color: var(--accent-cyan);">${m.family || 'General'}</span></td>
-                        <td style="padding: 3px;">${m.coreSkill || 'General'}</td>
-                        <td style="padding: 3px;">${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'}</td>
-                        <td style="padding: 3px; text-align: center;"><span class="badge badge-emerald">Free</span></td>
-                        <td style="padding: 3px; text-align: right;">
+                      <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 3px 4px;"><strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.modelId)}</strong></td>
+                        <td style="padding: 3px 4px;"><span style="color: var(--accent-cyan);">${m.family || 'General'}</span></td>
+                        <td style="padding: 3px 4px;">${m.coreSkill || 'General'}</td>
+                        <td style="padding: 3px 4px;">${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'}</td>
+                        <td style="padding: 3px 4px; text-align: center;"><span class="badge badge-emerald">Free</span></td>
+                        <td style="padding: 3px 4px; text-align: right;">
                           <button class="btn btn-secondary btn-xs" onclick="DashboardView.openModelSpecsDrawer('${m.id}')"><i class="fa-solid fa-info-circle"></i> Specs</button>
                         </td>
                       </tr>
@@ -267,7 +302,7 @@ class DashboardView {
                 </table>
               </div>
               ${modelsList.length > 25 ? `
-                <div style="text-align: center; padding-top: 3px; font-size: 0.72rem; color: var(--text-muted);">
+                <div style="text-align: center; padding-top: 3px; font-size: 0.70rem; color: var(--text-muted);">
                   Showing 25 of ${modelsList.length} models. Use filter box to search full catalog.
                 </div>
               ` : ''}
@@ -292,9 +327,22 @@ class DashboardView {
     });
   }
 
-  static openModelSpecsDrawer(modelId) {
-    window.app.openCodeDrawer('Model Specs Detail', modelId);
+  static filterStream(q) {
+    const query = (q || '').toLowerCase();
+    const rows = document.querySelectorAll('#dash-realtime-stream-tbody tr');
+    rows.forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
   }
+
+  static openModelSpecsDrawer(modelId) {
+    const model = (DashboardView.cachedModels || []).find(m => m.id === modelId || m.modelId === modelId);
+    const providerName = model ? (model.providerName || model.providerId || 'Registered Provider') : 'Registered Provider';
+    if (window.app && window.app.openCodeDrawer) {
+      window.app.openCodeDrawer(providerName, modelId);
+    }
+  }
+
 
   static exportDashboardPdf() {
     ModalDialog.showOptionModal({
@@ -429,7 +477,7 @@ class DashboardView {
         rows.forEach(tr => {
           const originalOnClick = tr.getAttribute('onclick');
           if (originalOnClick) {
-            const match = originalOnClick.match(/ReportsView\\.applyGroupFilter\\('([^']+)'\\)/);
+            const match = originalOnClick.match(/ReportsView\.applyGroupFilter\('([^']+)'\)/);
             if (match && match[1]) {
                const filterName = match[1];
                const navAction = `app.navigate('reports'); setTimeout(() => { ReportsView.applyGroupBy('${groupKey}'); ReportsView.applyGroupFilter('${filterName}'); const sel = document.getElementById('log-groupby-select'); if(sel) sel.value='${groupKey}'; ModalDialog.closeModal(); }, 300);`;
@@ -466,13 +514,12 @@ class DashboardView {
   static startLivePolling(container) {
     DashboardView.stopLivePolling();
     DashboardView.pollingInterval = setInterval(async () => {
-      if (DashboardView.isPollingPaused) return; // Skip update if paused by HIL
+      if (DashboardView.isPollingPaused) return;
       if (window.app && window.app.currentView === 'dashboard' && document.body.contains(container)) {
         try {
-          // Fetch only live telemetry data, not static models/providers
           const [tRes, lRes] = await Promise.all([
-            ApiService.getDashboardTelemetry(),
-            ApiService.getApiLogs()
+            ApiService.getDashboardTelemetry().catch(() => null),
+            ApiService.getApiLogs().catch(() => ({ logs: [] }))
           ]);
           
           let telemetryData = null;
@@ -482,13 +529,12 @@ class DashboardView {
           else if (tRes && tRes.telemetry) telemetryData = tRes.telemetry;
           if (lRes && lRes.logs) apiLogs = lRes.logs;
           
-          const userEmail = (window.app && window.app.currentUser && window.app.currentUser.email) || 'jeet26@yahoo.com';
+          const userEmail = (window.app && window.app.currentUser && window.app.currentUser.email) || DashboardView.DEFAULT_USER_ACCOUNT;
           
-          // In-place targeted DOM updates with localized error boundaries
           try {
             const metricsPanel = document.getElementById('dash-operational-metrics-container');
             if (metricsPanel && typeof DashboardViewHelper !== 'undefined') {
-              metricsPanel.innerHTML = DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail);
+              metricsPanel.innerHTML = DashboardViewHelper.renderOperationalMetricsPanel(telemetryData, userEmail, apiLogs);
             }
           } catch (err) {
             console.warn('[DashboardView] Failed to render operational metrics:', err);
@@ -497,7 +543,7 @@ class DashboardView {
           try {
             const visualTiles = document.getElementById('dash-visual-analytics-container');
             if (visualTiles && typeof DashboardViewHelper !== 'undefined') {
-              visualTiles.innerHTML = DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs);
+              visualTiles.innerHTML = DashboardViewHelper.renderVisualAnalyticsTiles(apiLogs, telemetryData);
             }
           } catch (err) {
             console.warn('[DashboardView] Failed to render visual analytics:', err);
@@ -518,7 +564,7 @@ class DashboardView {
       } else {
         DashboardView.stopLivePolling();
       }
-    }, 15000);
+    }, 4000);
   }
 
   static stopLivePolling() {
@@ -530,3 +576,4 @@ class DashboardView {
 }
 
 window.DashboardView = DashboardView;
+

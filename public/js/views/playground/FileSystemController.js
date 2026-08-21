@@ -6,7 +6,7 @@
 class FileSystemController {
   static openInteractiveBrowser(mode, callback) {
     ModalDialog.closeModal();
-    let currentPath = localStorage.getItem('fmc_project_workspace_path') || 'c:\\Users\\jiten\\jAnitGravity\\FreeModelsClub';
+    let currentPath = localStorage.getItem('fmc_project_workspace_path') || localStorage.getItem('fmc_ide_workspace') || '';
     
     const renderBrowserContent = async (browsePath) => {
       browsePath = browsePath || currentPath;

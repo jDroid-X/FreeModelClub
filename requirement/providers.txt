@@ -4,6 +4,20 @@
 ================================================================================
 
 --------------------------------------------------------------------------------
+[2026-08-21 08:38:00] | Providers Event Bus Sync, Zero-Trust Masking & Dynamic Quotas
+--------------------------------------------------------------------------------
+Change Request   : Redo activity considering HUMAN-IN-LOOP, fix missing UI/UX details, remove hardcoded items, reactive store sync.
+Target Screen    : Providers View, ProvidersView.js
+Modified Files   : 
+  - public/js/views/ProvidersView.js
+  - requirement/providers.txt
+Description      :
+  1. Reactive Event Bus Synchronization: Dispatches AppStore.emit('PROVIDER_STATE_CHANGED') on status toggles, API key updates, and sleep mode wake-ups.
+  2. Zero-Trust Key Protection: Masks API keys in UI while preserving raw unmasked database keys during outbound calls and saving.
+  3. Interactive Quota Configuration: Configures RPM, RPD, TPM, TPD, ASH, and ASD rate limits with auto-sync from system agents.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
 [2026-08-20 18:55:00] | Gemini First Preference Default & Interactive HTTP 401 Key Update Modal
 --------------------------------------------------------------------------------
 Change Request   : Put Gemini Provider is the first preference in fresh installation. In place of giving 401 http error (if API key do not match) give option to add or update the API key when provider page is open or checked. At the time of registering Playground chatbot - selectbox is not receives updated providers and models by default. Always show latest and highest model on top in selectbox for the selected providers.

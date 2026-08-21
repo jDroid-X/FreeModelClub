@@ -123,39 +123,84 @@ class SelfHealingController {
     const path = require('path');
     let rawTarget = req.body.targetPath || process.cwd();
     
+    // Normalize Windows drive strings like "C:" -> "C:\"
+    if (/^[a-zA-Z]:$/.test(rawTarget.trim())) {
+      rawTarget = rawTarget.trim() + '\\';
+    }
+
+    // Detect available system drives on Windows
+    const availableDrives = [];
+    if (process.platform === 'win32') {
+      const driveLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      for (const letter of driveLetters) {
+        const driveRoot = `${letter}:\\`;
+        try {
+          if (fs.existsSync(driveRoot)) {
+            availableDrives.push(`${letter}:`);
+          }
+        } catch (e) {}
+      }
+    }
+    
     let target;
     try {
       target = path.resolve(rawTarget);
     } catch (e) {
-      return res.json({ success: false, error: 'Invalid path format.' });
+      return res.json({ success: false, error: 'Invalid path format.', drives: availableDrives });
     }
 
     try {
       if (!fs.existsSync(target)) {
-        return res.json({ success: false, error: 'Path does not exist: ' + target });
+        return res.json({ success: false, error: 'Path does not exist: ' + target, drives: availableDrives });
       }
       
       const stat = fs.statSync(target);
       if (!stat.isDirectory()) {
-        return res.json({ success: false, error: 'Target is not a directory: ' + target });
+        return res.json({ success: false, error: 'Target is not a directory: ' + target, drives: availableDrives });
       }
       
-      const items = fs.readdirSync(target, { withFileTypes: true });
+      let items = [];
+      try {
+        items = fs.readdirSync(target, { withFileTypes: true });
+      } catch (readErr) {
+        // If directory itself cannot be read due to permissions
+        const parent = path.dirname(target);
+        return res.json({
+          success: true,
+          currentPath: target,
+          parentPath: parent !== target ? parent : null,
+          drives: availableDrives,
+          items: [],
+          warning: 'Access restricted or directory empty.'
+        });
+      }
+
       const parent = path.dirname(target);
-      
       const result = [];
+      
       for (const item of items) {
         let isDir = false;
         try {
           isDir = item.isDirectory();
         } catch (e) {}
         
-        // Skip hidden/system files to keep it clean unless requested
-        if (item.name.startsWith('$') || item.name.startsWith('.')) continue;
+        // Skip hidden/system files ($RECYCLE.BIN, .git, etc.) unless requested
+        if (item.name.startsWith('$') || (item.name.startsWith('.') && item.name !== '.env')) continue;
         
+        let size = 0;
+        let mtime = null;
+        try {
+          const itemStat = fs.statSync(path.join(target, item.name));
+          size = itemStat.size || 0;
+          mtime = itemStat.mtime ? itemStat.mtime.toISOString() : null;
+        } catch (e) {}
+
         result.push({
           name: item.name,
           isDir: isDir,
+          size: size,
+          lastModified: mtime,
+          extension: isDir ? '' : (item.name.match(/\.[^.]+$/) || [''])[0].toLowerCase(),
           path: path.join(target, item.name)
         });
       }
@@ -164,21 +209,30 @@ class SelfHealingController {
       result.sort((a, b) => {
         if (a.isDir && !b.isDir) return -1;
         if (!a.isDir && b.isDir) return 1;
-        return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
       });
       
       return res.json({
         success: true,
         currentPath: target,
         parentPath: parent !== target ? parent : null,
+        drives: availableDrives,
         items: result
       });
     } catch (err) {
       // Gracefully handle EPERM or EACCES (Permission Denied)
       if (err.code === 'EPERM' || err.code === 'EACCES') {
-        return res.json({ success: false, error: 'Permission denied accessing directory: ' + target });
+        const parent = path.dirname(target);
+        return res.json({
+          success: true,
+          currentPath: target,
+          parentPath: parent !== target ? parent : null,
+          drives: availableDrives,
+          items: [],
+          warning: 'Permission denied accessing directory: ' + target
+        });
       }
-      return res.json({ success: false, error: err.message });
+      return res.json({ success: false, error: err.message, drives: availableDrives });
     }
   }
 
@@ -253,6 +307,44 @@ class SelfHealingController {
       enableLogDeduplication: config.enableLogDeduplication !== false,
       maxFailoverAttempts: config.max_failover_attempts || 3
     });
+  }
+
+  static deleteItem(req, res) {
+    try {
+      const fs = require('fs');
+      const targetPath = req.body.targetPath;
+      if (!targetPath) return res.json({ success: false, error: 'Target path is required.' });
+      if (!fs.existsSync(targetPath)) return res.json({ success: false, error: 'Item does not exist: ' + targetPath });
+      
+      const stat = fs.statSync(targetPath);
+      if (stat.isDirectory()) {
+        fs.rmSync(targetPath, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(targetPath);
+      }
+      return res.json({ success: true, message: 'Item deleted successfully.' });
+    } catch (err) {
+      return res.json({ success: false, error: err.message });
+    }
+  }
+
+  static renameItem(req, res) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const { oldPath, newName } = req.body;
+      if (!oldPath || !newName) return res.json({ success: false, error: 'Old path and new name are required.' });
+      if (!fs.existsSync(oldPath)) return res.json({ success: false, error: 'Source item does not exist: ' + oldPath });
+      
+      const parentDir = path.dirname(oldPath);
+      const newPath = path.join(parentDir, newName);
+      if (fs.existsSync(newPath)) return res.json({ success: false, error: 'An item with this name already exists.' });
+
+      fs.renameSync(oldPath, newPath);
+      return res.json({ success: true, newPath, message: 'Item renamed successfully.' });
+    } catch (err) {
+      return res.json({ success: false, error: err.message });
+    }
   }
 }
 

@@ -9,7 +9,8 @@
 const AIModel = require('../models/AIModel');
 const ProviderModel = require('../models/ProviderModel');
 const ProviderAgentHelper = require('./ProviderAgentHelper');
-const AntigravityEngine = require('./AntigravityToolExecutionEngine');
+const jDroidXEngine = require('./jDroidXToolExecutionEngine');
+const AntigravityEngine = jDroidXEngine; // Deprecated alias preserved
 const https = require('https');
 const http = require('http');
 // New imports for model selection, logging, and round‑robin state
@@ -59,9 +60,6 @@ class ProviderAgentService {
     try {
       const activeModels = AIModel.getActiveModels();
       if (activeModels && activeModels.length > 0) {
-        // Prefer explicit GPT-4o models
-        const gpt4oModel = activeModels.find(m => m.modelId && (m.modelId.includes('gpt-4o') || m.modelId.includes('gpt-4')));
-        if (gpt4oModel && ProviderModel.getById(gpt4oModel.providerId, false)?.isActive) return gpt4oModel;
         // Filter out local Ollama models and inactive providers
         const suitable = activeModels.filter(m => {
           const provider = ProviderModel.getById(m.providerId, false);
@@ -69,10 +67,19 @@ class ProviderAgentService {
           const isLocal = m.modelId && (m.modelId.includes('ollama') || m.modelId.includes('local'));
           return isProviderActive && !isLocal;
         });
-        // Find model with Coding/Reasoning coreSkill
+
+        // 1. Prefer live high-speed Groq LPU models (Qwen 3.6, GPT-OSS 120B, Compound)
+        const groqModel = suitable.find(m => m.providerId === 'groq' && (m.modelId.includes('qwen') || m.modelId.includes('gpt-oss') || m.modelId.includes('compound')));
+        if (groqModel) return groqModel;
+
+        // 2. Next prefer live Google Gemini 3.6 Flash
+        const geminiModel = suitable.find(m => m.providerId === 'gemini' && (m.modelId.includes('3.6') || m.modelId.includes('flash')));
+        if (geminiModel) return geminiModel;
+
+        // 3. Next find model with Coding/Reasoning coreSkill
         const codingModel = suitable.find(m =>
           (m.coreSkill && (m.coreSkill.includes('Coding') || m.coreSkill.includes('Reasoning'))) ||
-          (m.modelId && (m.modelId.includes('coder') || m.modelId.includes('gemini') || m.modelId.includes('llama-3.3') || m.modelId.includes('qwen')))
+          (m.modelId && (m.modelId.includes('coder') || m.modelId.includes('gemini') || m.modelId.includes('qwen')))
         );
         return codingModel || suitable[0];
       }
@@ -146,22 +153,24 @@ class ProviderAgentService {
     let model = this.getActiveCodingModel();
     if (!model) return null;
 
-    // Load‑balancing selection (round‑robin / fallback / weighted)
-    const candidateModels = ModelCatalog.models || [];
+    // Load‑balancing selection across live active models
+    const activePool = AIModel.getActiveModels().filter(m => {
+      const p = ProviderModel.getById(m.providerId, false);
+      return p && p.isActive && m.modelId && !m.modelId.includes('ollama');
+    });
+    const candidateModels = activePool.length > 0 ? activePool : (ModelCatalog.models || []);
     const loadConfig = require('../config/LoadBalancingConfig.json');
     const strategy = loadConfig.strategy || 'fallback';
     // Get a sorted list of candidates (skill & token aware)
     const sortedCandidates = ModelSelectionService.getSortedCandidates(candidateModels, ['Coding', 'Reasoning'], model.maxTokens || 8192);
     const selectedModel = ModelLoadBalancer.select(sortedCandidates, strategy);
-    ComboAgentLogger.log(`LoadBalancer (${strategy}) selected model: ${selectedModel ? selectedModel.modelId : 'none'}`);
-
-    // Choose effective model: prefer selectedModel if its provider is active, otherwise fallback
     if (selectedModel) {
       const selProvider = ProviderModel.getById(selectedModel.providerId, false);
       if (selProvider && selProvider.isActive) {
         model = selectedModel;
       }
     }
+    ComboAgentLogger.log(`LoadBalancer (${strategy}) selected model: ${model ? model.modelId : 'none'}`);
 
     // Update provider based on the effective model
     const provider = ProviderModel.getById(model.providerId, false);
@@ -170,13 +179,11 @@ class ProviderAgentService {
     return new Promise(async (resolve) => {
       const apiKey = ProviderModel.resolveRealApiKey(provider.id, provider.apiKey);
       let targetBaseUrl = provider.baseUrl.replace(/\/+$/, '');
-      let endpointUrl = `${targetBaseUrl}/chat/completions`;
-
-      if (provider.protocol === 'Gemini API' && !endpointUrl.includes('/openai/')) {
-        if (targetBaseUrl.includes('googleapis.com')) {
-          endpointUrl = `${targetBaseUrl}/openai/chat/completions`;
-        }
-      }
+      const isGeminiNative = (provider.protocol === 'Gemini API' || targetBaseUrl.includes('googleapis.com')) && !targetBaseUrl.includes('/openai');
+      
+      let endpointUrl = isGeminiNative
+        ? `${targetBaseUrl}/models/${model.modelId}:generateContent?key=${apiKey}`
+        : `${targetBaseUrl}/chat/completions`;
 
       // Execute Real-Time Background Web Search
       let webContext = '';
@@ -187,7 +194,7 @@ class ProviderAgentService {
           webContext = searchResult.results.map(r => r.snippet).join('\n');
         }
       } catch (e) {
-        console.warn('Provider Agent Web Search Failed:', e.message);
+        console.warn('Provider Agent Web Search Notice:', e.message);
       }
 
       // Retrieve Verified System Catalog for Ground Truth Injection
@@ -230,45 +237,77 @@ Output Format:
   ]
 }`;
 
-      const payload = {
-        model: model.modelId,
-        messages: [{ role: 'system', content: prompt }],
-        temperature: 0.1
-      };
+      let postData = '';
+      const headers = { 'Content-Type': 'application/json' };
 
-      const postData = JSON.stringify(payload);
-      const parsedUrl = new URL(endpointUrl);
-      const transport = parsedUrl.protocol === 'https:' ? https : http;
-
-      const headers = {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      };
-
-      if (apiKey && apiKey !== 'ollama-local') {
-        const isAnthropic = (provider.protocol && provider.protocol.toLowerCase().includes('anthropic')) || targetBaseUrl.includes('anthropic.com');
-        if (isAnthropic) {
-          headers['x-api-key'] = apiKey;
-        } else {
-          headers['Authorization'] = `Bearer ${apiKey}`;
+      if (isGeminiNative) {
+        postData = JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+        });
+        headers['x-goog-api-key'] = apiKey;
+      } else {
+        postData = JSON.stringify({
+          model: model.modelId,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          max_tokens: 2048
+        });
+        if (apiKey && apiKey !== 'ollama-local') {
+          const isAnthropic = (provider.protocol && provider.protocol.toLowerCase().includes('anthropic')) || targetBaseUrl.includes('anthropic.com');
+          if (isAnthropic) headers['x-api-key'] = apiKey;
+          else headers['Authorization'] = `Bearer ${apiKey}`;
         }
       }
 
-      // HC-15: Per-provider timeout — fast LPU providers need less, slow routers need more
-      const providerTimeouts = { groq: 8000, cerebras: 8000, ollama: 5000, openrouter: 20000, together: 20000 };
+      headers['Content-Length'] = Buffer.byteLength(postData);
+
+      const parsedUrl = new URL(endpointUrl);
+      const transport = parsedUrl.protocol === 'https:' ? https : http;
+
+      // Per-provider timeout
+      const providerTimeouts = { groq: 12000, gemini: 12000, ollama: 5000, openrouter: 20000, together: 20000 };
       const providerKey = (cleanQuery || '').toLowerCase();
       const requestTimeout = providerTimeouts[providerKey] || 15000;
+      
       const req = transport.request(endpointUrl, { method: 'POST', headers, timeout: requestTimeout }, (res) => {
         let body = '';
         res.on('data', chunk => body += chunk);
         res.on('end', () => {
           try {
             const data = JSON.parse(body);
-            let content = data?.choices?.[0]?.message?.content || data?.message?.content || '';
+            let content = '';
+            if (isGeminiNative) {
+              content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            } else {
+              content = data?.choices?.[0]?.message?.content || data?.message?.content || '';
+            }
+            // 1. Remove reasoning thinking tags
+            content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+            // 2. Remove markdown code fences
             content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+            // 3. Balanced brace JSON extraction
+            let openCount = 0;
+            let startIndex = -1;
+            let endIndex = -1;
+            for (let i = 0; i < content.length; i++) {
+              if (content[i] === '{') {
+                if (openCount === 0) startIndex = i;
+                openCount++;
+              } else if (content[i] === '}') {
+                openCount--;
+                if (openCount === 0 && startIndex !== -1) {
+                  endIndex = i;
+                  break;
+                }
+              }
+            }
+            if (startIndex !== -1 && endIndex !== -1) {
+              content = content.substring(startIndex, endIndex + 1);
+            }
+
             const p = JSON.parse(content);
             const cleanId = query.replace(/[^a-zA-Z0-9_-]/gi, '').toLowerCase();
-            ComboAgentLogger.log(`Received provider spec from model ${model.modelId}: ${JSON.stringify(p)}`);
 
             resolve({
               found: true,
@@ -287,13 +326,21 @@ Output Format:
               }
             });
           } catch (e) {
+            console.warn('Provider Agent Parse Notice:', e.message, 'rawBody:', body ? body.substring(0, 300) : 'empty');
             resolve(null);
           }
         });
       });
 
-      req.on('error', () => resolve(null));
-      req.on('timeout', () => { req.destroy(); resolve(null); });
+      req.on('error', (e) => {
+        console.warn('Provider Agent Network Notice:', e.message);
+        resolve(null);
+      });
+      req.on('timeout', () => {
+        console.warn('Provider Agent Timeout on', endpointUrl);
+        req.destroy();
+        resolve(null);
+      });
       req.write(postData);
       req.end();
     });

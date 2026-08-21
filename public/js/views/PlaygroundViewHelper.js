@@ -271,13 +271,13 @@ class PlaygroundViewHelper {
 
   static renderSessionItemHtml(session, isActive) {
     return `
-      <div class="session-item ${isActive ? 'active' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 6px; background: ${isActive ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.02)'}; cursor: pointer; border: 1px solid ${isActive ? 'var(--accent-cyan)' : 'transparent'};" onclick="PlaygroundView.switchSession('${session.id}')">
-        <span style="font-size: 0.75rem; font-weight: 600; color: ${isActive ? 'var(--accent-cyan)' : 'var(--text-main)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95px;" title="${session.title}">${session.title}</span>
+      <div class="session-item ${isActive ? 'active' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 4px; border-radius: 6px; background: ${isActive ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.02)'}; cursor: pointer; border: 1px solid ${isActive ? 'var(--accent-cyan)' : 'transparent'};" onclick="PlaygroundView.switchSession('${session.id}')">
+        <span style="font-size: 0.8rem; font-weight: 600; line-height: 1.3; color: ${isActive ? 'var(--accent-cyan)' : 'var(--text-main)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95px; padding: 0;" title="${session.title}">${session.title}</span>
         <div style="display: flex; gap: 2px; align-items: center;">
-          <button type="button" class="fmc-chat-icon-btn" onclick="event.stopPropagation(); PlaygroundView.renameSession('${session.id}')" title="Rename Session">
+          <button type="button" class="fmc-chat-icon-btn" style="padding: 2px 4px; font-size: 0.7rem;" onclick="event.stopPropagation(); PlaygroundView.renameSession('${session.id}')" title="Rename Session">
             <i class="fa-solid fa-pen"></i>
           </button>
-          <button type="button" class="fmc-chat-icon-btn" onclick="event.stopPropagation(); PlaygroundView.deleteSession('${session.id}')" title="Delete Session">
+          <button type="button" class="fmc-chat-icon-btn" style="padding: 2px 4px; font-size: 0.7rem;" onclick="event.stopPropagation(); PlaygroundView.deleteSession('${session.id}')" title="Delete Session">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>

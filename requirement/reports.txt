@@ -1,5 +1,41 @@
 # REPORTS SCREEN CHANGE LOG & REQUIREMENTS (<screen name>.txt format)
-# Screen: Reports View (http://localhost:3000/reports)
+# Screen: Reports View (http://localhost:12247/reports)
+
+================================================================================
+[2026-08-21 08:03:00] REPORTS HUMAN-IN-THE-LOOP (HITL) QUICK ACTION JUMP BUTTONS & LOG INSPECTOR
+================================================================================
+Target Screen : ReportsView.js / ReportsViewHelper.js
+Requested By  : User Chat (redo activity considering HUMAN-IN-LOOP, fix missing UI/UX details, remove hardcoded items)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Added Human-In-The-Loop (HITL) quick-action buttons directly inside the Log Diagnostic Inspector modal:
+		* 1-Click "Inspect Provider" button jumping to ProvidersView.
+		* 1-Click "Inspect in Model Club" button jumping to ModelClubView.
+		* 1-Click "Test in Playground" button jumping to PlaygroundView.
+	- Status code badges now dynamically render emerald (200) vs rose (errors) for rapid visual scanning.
+Files Modified:
+	- public/js/views/ReportsViewHelper.js
+	- requirement/reports.txt
+================================================================================
+
+================================================================================
+[2026-08-20 22:30:00] LOG RETENTION RULES MODAL, REFRESH LOOP FIX & AGENT LOOP TELEMETRY INTEGRATION
+================================================================================
+Target Screen : ReportsView.js / ToolExecutionLoopService.js / LogModel.js / LogController.js
+Requested By  : User Chat (Run AI Agents to Sync, Frontend(Add UI/UX features (buttons, textbox, list box (with list details), dialog box (with options), Validations and Conditions with Notifications (in popup dialog with options))), Backend(update as per new additions at all necessary points))
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Added Log Rules & Retention Configuration Dialog:
+		* Interactive popup dialog (showLogConfigDialog) with number input boxes and validation for Circuit Breaker Threshold (1-20 failures), Blacklist Sleep Minutes (1-1440m), Max Failover Attempts (1-10), and Log Deduplication Checkbox.
+		* Connected with backend POST /api/providers/blacklist-config with error banner validation.
+	- Fixed Log Clear & Render Refresh Loop:
+		* Resolved cache desync in clearLogs() by clearing in-memory array and invoking await ReportsView.switchTab(currentTab, true) to fetch fresh state.
+	- Agent Loop Telemetry & Diagnostic Logging:
+		* Linked ToolExecutionLoopService.js completions and tool runs directly into LogModel.recordApiLog() and LogModel.recordSystemLog() for real-time visibility in ReportsView (API Diagnostics, System Event Log, Tool Distribution).
+Files Modified:
+	- public/js/views/ReportsView.js
+	- src/services/ToolExecutionLoopService.js
+	- requirement/reports.txt
 
 ================================================================================
 [2026-07-31 00:39:38] FIX MISSING LOG DETAILS IN REPORTS VIEW

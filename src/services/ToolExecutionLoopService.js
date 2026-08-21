@@ -7,7 +7,8 @@
  * Architecture: Dimension 2 (Services & Agents) — Multi-Thread Execution Engine
  */
 
-const AntigravityToolExecutionEngine = require('./AntigravityToolExecutionEngine');
+const jDroidXToolExecutionEngine = require('./jDroidXToolExecutionEngine');
+const AntigravityToolExecutionEngine = jDroidXToolExecutionEngine; // Deprecated alias preserved
 const PromptOrchestratorService = require('./PromptOrchestratorService');
 const ProxyExecutionHelper = require('./ProxyExecutionHelper');
 const ProviderModel = require('../models/ProviderModel');
@@ -271,6 +272,34 @@ class ToolExecutionLoopService {
         isFailover,
         failoverFrom
       });
+
+      // ── Record to Diagnostic & System Logs for Reports Visibility ──
+      try {
+        LogModel.recordApiLog({
+          providerId: currentProvider.id,
+          providerName: currentProvider.displayName,
+          modelId: currentModel.modelId || currentModel.id,
+          endpoint: '/v1/chat/completions/agent',
+          promptTokens: modelResponse?.usage?.prompt_tokens || 0,
+          completionTokens: modelResponse?.usage?.completion_tokens || 0,
+          latencyMs: totalMs,
+          statusCode: 200,
+          status: 'SUCCESS',
+          toolName: executedTools.length > 0 ? executedTools.map(t => t.tool).join(', ') : 'Agent Inference',
+          toolIcon: 'fa-solid fa-wand-magic-sparkles',
+          toolColor: '#38bdf8',
+          strategyUsed: isFailover ? 'Agent Dynamic Failover' : 'Agent Loop Direct',
+          selfHealed: isFailover,
+          routingPath: isFailover && failoverFrom ? [failoverFrom, currentModel.modelId] : [currentModel.modelId]
+        });
+
+        LogModel.recordSystemLog('AGENT_LOOP_COMPLETE', 'INFO', `Agent completed ${iteration} iteration(s) in ${totalMs}ms with ${executedTools.length} tool calls`, {
+          model: currentModel.modelId,
+          provider: currentProvider.displayName,
+          toolCount: executedTools.length,
+          tools: executedTools.map(t => t.tool)
+        });
+      } catch (logErr) {}
 
     } catch (err) {
       this._emitSSE(res, 'error', { message: err.message || 'Agent loop encountered an error.' });

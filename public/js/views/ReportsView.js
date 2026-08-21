@@ -25,6 +25,7 @@ class ReportsView {
           <div class="panel-title"><i class="fa-solid fa-file-waveform"></i> Reports & Root Cause Diagnostics</div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" id="btn-auto-refresh" onclick="ReportsView.toggleAutoRefresh()"><i class="fa-solid fa-play"></i> Auto-Refresh: OFF</button>
+            <button class="btn btn-secondary btn-sm" onclick="ReportsView.showLogConfigDialog()"><i class="fa-solid fa-sliders"></i> Rules & Retention</button>
             <button class="btn btn-secondary btn-sm" onclick="ReportsView.exportLogsCsv()"><i class="fa-solid fa-file-csv"></i> CSV</button>
             <button class="btn btn-secondary btn-sm" onclick="ReportsView.exportLogsJson()"><i class="fa-solid fa-file-code"></i> JSON</button>
             <button class="btn btn-danger btn-sm" onclick="ReportsView.clearLogs()"><i class="fa-solid fa-trash"></i> Clear</button>
@@ -367,7 +368,8 @@ class ReportsView {
               body: JSON.stringify({ type: 'api' })
             });
             ModalDialog.showNotification('API diagnostic logs cleared.', 'info');
-            ReportsView.renderFilteredLogs();
+            ReportsView.logs = [];
+            await ReportsView.switchTab(ReportsView.currentTab, true);
             if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
           }
         },
@@ -382,7 +384,8 @@ class ReportsView {
               body: JSON.stringify({ type: 'system' })
             });
             ModalDialog.showNotification('System event logs cleared.', 'info');
-            ReportsView.renderFilteredLogs();
+            ReportsView.logs = [];
+            await ReportsView.switchTab(ReportsView.currentTab, true);
             if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
           }
         },
@@ -397,11 +400,113 @@ class ReportsView {
               body: JSON.stringify({ type: 'all' })
             });
             ModalDialog.showNotification('All diagnostic logs cleared.', 'success');
-            ReportsView.renderFilteredLogs();
+            ReportsView.logs = [];
+            await ReportsView.switchTab(ReportsView.currentTab, true);
             if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
           }
         }
       ]
+    });
+  }
+
+  static async showLogConfigDialog() {
+    let currentConfig = {};
+    try {
+      currentConfig = await ApiService.getConfig();
+    } catch (e) {}
+
+    const sleepMin = currentConfig.blacklistSleepMinutes || 30;
+    const thresh = currentConfig.circuitBreakerThreshold || 3;
+    const dedupe = currentConfig.enableLogDeduplication !== false;
+    const maxFailover = currentConfig.max_failover_attempts || 3;
+
+    const modalContent = `
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.78rem;">
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">
+            <i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i> Circuit Breaker Threshold (consecutive failures before blacklist):
+          </label>
+          <input type="number" id="cfg-circuit-breaker" class="form-control" min="1" max="20" value="${thresh}" style="width: 100%; font-size: 0.78rem;" />
+          <small style="color: var(--text-muted);">Threshold between 1 and 20 failures.</small>
+        </div>
+
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">
+            <i class="fa-solid fa-moon" style="color: var(--accent-cyan);"></i> Blacklist Sleep Duration (minutes):
+          </label>
+          <input type="number" id="cfg-sleep-minutes" class="form-control" min="1" max="1440" value="${sleepMin}" style="width: 100%; font-size: 0.78rem;" />
+          <small style="color: var(--text-muted);">How long a failed provider stays sleeping before retry (1 to 1440 min).</small>
+        </div>
+
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">
+            <i class="fa-solid fa-arrows-split-up-and-left" style="color: var(--primary-light);"></i> Max Failover Routing Attempts:
+          </label>
+          <input type="number" id="cfg-max-failover" class="form-control" min="1" max="10" value="${maxFailover}" style="width: 100%; font-size: 0.78rem;" />
+          <small style="color: var(--text-muted);">Max automatic dynamic fallback attempts (1 to 10).</small>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="checkbox" id="cfg-dedupe-logs" ${dedupe ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;" />
+          <label for="cfg-dedupe-logs" style="font-weight: 600; color: var(--text-main); cursor: pointer;">
+            Enable System Log Deduplication (aggregates identical error spikes)
+          </label>
+        </div>
+
+        <div id="cfg-error-msg" style="display: none; color: var(--accent-rose); font-size: 0.72rem;"></div>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-sliders" style="color: var(--accent-cyan); margin-right: 6px;"></i> Log Rules & Health Policy',
+      content: modalContent,
+      confirmText: 'Save Configuration',
+      onConfirm: async () => {
+        const breakerInput = document.getElementById('cfg-circuit-breaker');
+        const sleepInput = document.getElementById('cfg-sleep-minutes');
+        const failoverInput = document.getElementById('cfg-max-failover');
+        const dedupeCheckbox = document.getElementById('cfg-dedupe-logs');
+        const errorDiv = document.getElementById('cfg-error-msg');
+
+        const breakerVal = parseInt(breakerInput?.value, 10);
+        const sleepVal = parseInt(sleepInput?.value, 10);
+        const failoverVal = parseInt(failoverInput?.value, 10);
+        const dedupeVal = dedupeCheckbox ? dedupeCheckbox.checked : true;
+
+        if (isNaN(breakerVal) || breakerVal < 1 || breakerVal > 20) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Circuit breaker threshold must be between 1 and 20.'; }
+          return false;
+        }
+
+        if (isNaN(sleepVal) || sleepVal < 1 || sleepVal > 1440) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Sleep duration must be between 1 and 1440 minutes.'; }
+          return false;
+        }
+
+        if (isNaN(failoverVal) || failoverVal < 1 || failoverVal > 10) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Max failover attempts must be between 1 and 10.'; }
+          return false;
+        }
+
+        try {
+          await ApiService.request('/api/providers/blacklist-config', {
+            method: 'POST',
+            body: JSON.stringify({
+              circuitBreakerThreshold: breakerVal,
+              sleepMinutes: sleepVal,
+              maxFailoverAttempts: failoverVal,
+              enableLogDeduplication: dedupeVal
+            })
+          });
+
+          ModalDialog.closeModal();
+          ModalDialog.showNotification('Log rules and health policies updated successfully.', 'success');
+          if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
+        } catch (err) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = err.message; }
+        }
+        return false;
+      }
     });
   }
 

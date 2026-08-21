@@ -22,23 +22,23 @@ class DashboardViewHelper {
     const valD = isPercent ? (dataObj?.day || '0.0') + '%' : fmt(dataObj?.day || 0);
 
     return `
-      <div class="glass-panel dashboard-tile" style="margin: 0; padding: 3px; cursor: pointer;"
+      <div class="glass-panel dashboard-tile" style="margin: 0; padding: 4px; cursor: pointer;"
         onclick="DashboardView.handleTileClick('${contextKey}')"
         title="Click to view detailed report for ${title}">
-        <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; padding: 2px;">
+        <div style="font-size: 0.70rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; padding: 0 2px;">
           ${title}
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 3px; padding: 2px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 4px; padding: 1px 2px;">
           <div>
-            <div style="font-size: 0.58rem; color: var(--text-dim); margin-bottom: 1px;">Month (M)</div>
+            <div style="font-size: 0.64rem; color: var(--text-dim); margin-bottom: 1px; font-weight: 600;">Month (M)</div>
             <div style="font-size: 0.92rem; font-weight: 700; color: ${colorM};">${valM}</div>
           </div>
           <div>
-            <div style="font-size: 0.58rem; color: var(--text-dim); margin-bottom: 1px;">Week (W)</div>
+            <div style="font-size: 0.64rem; color: var(--text-dim); margin-bottom: 1px; font-weight: 600;">Week (W)</div>
             <div style="font-size: 0.92rem; font-weight: 700; color: ${colorW};">${valW}</div>
           </div>
           <div>
-            <div style="font-size: 0.58rem; color: var(--text-dim); margin-bottom: 1px;">Day (D)</div>
+            <div style="font-size: 0.64rem; color: var(--text-dim); margin-bottom: 1px; font-weight: 600;">Day (D)</div>
             <div style="font-size: 0.92rem; font-weight: 700; color: ${colorD};">${valD}</div>
           </div>
         </div>
@@ -62,7 +62,7 @@ class DashboardViewHelper {
           <div style="position: relative; width: 80px; height: 80px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--accent-cyan) ${used}%, rgba(255,255,255,0.06) 0); border-radius: 50%;">
             <div style="width: 60px; height: 60px; background: var(--bg-card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
               <strong style="font-size: 0.85rem; color: var(--text-main);">${used}%</strong>
-              <span style="font-size: 0.58rem; color: var(--text-dim);">Used</span>
+              <span style="font-size: 0.65rem; color: var(--text-dim);">Used</span>
             </div>
           </div>
           <!-- Gauge Details -->
@@ -224,16 +224,16 @@ class DashboardViewHelper {
       const dashD = (pD / 100) * circInner;
 
       return `
-        <div class="dashboard-tile" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1.5px solid ${m.borderColor}; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+        <div class="dashboard-tile" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; background: var(--bg-hover-overlay, rgba(255,255,255,0.02)); border-radius: 6px; border: 1.5px solid ${m.borderColor}; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;"
           onclick="DashboardView.handleTileClick('token:${m.id}')"
           title="${m.tooltip}">
           <!-- Donut Rings (M/W/D Concentric) -->
           <div style="position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
             <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
-              <!-- Background Tracks -->
-              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
-              <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
-              <circle cx="50" cy="50" r="20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
+              <!-- Adaptive Background Tracks (Visible in all light and dark themes) -->
+              <circle cx="50" cy="50" r="40" fill="none" stroke="var(--border-color)" stroke-opacity="0.35" stroke-width="5"/>
+              <circle cx="50" cy="50" r="30" fill="none" stroke="var(--border-color)" stroke-opacity="0.35" stroke-width="5"/>
+              <circle cx="50" cy="50" r="20" fill="none" stroke="var(--border-color)" stroke-opacity="0.35" stroke-width="5"/>
               
               <!-- Month Ring (Outer) -->
               <circle cx="50" cy="50" r="40" fill="none" stroke="${m.segments[0].color}" stroke-width="5"
@@ -250,34 +250,34 @@ class DashboardViewHelper {
                 stroke-dasharray="${dashD} ${circInner}" stroke-linecap="round"
                 style="transition: stroke-dasharray 0.8s ease; filter: drop-shadow(0 0 3px ${m.segments[2].color}60);"/>
             </svg>
-            <div style="position: absolute; font-size: 0.75rem; color: ${m.borderColor}; opacity: 0.85;">
+            <div style="position: absolute; font-size: 0.80rem; color: ${m.borderColor}; opacity: 0.95;">
               <i class="fa-solid ${m.icon}"></i>
             </div>
           </div>
 
           <!-- Category Label -->
-          <div style="font-size: 0.58rem; font-weight: 700; color: ${m.borderColor}; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-top: 1px;">
+          <div style="font-size: 0.68rem; font-weight: 700; color: ${m.borderColor}; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-top: 1px;">
             ${m.title}
           </div>
 
-          <!-- M / W / D Values with RAG Color Badges -->
-          <div style="display: flex; justify-content: space-around; width: 100%; font-size: 0.60rem; margin-top: 2px; padding: 2px 3px; background: rgba(0,0,0,0.3); border-radius: 4px; border: 1px solid rgba(255,255,255,0.04); gap: 2px;">
-            <span style="color: ${m.ragColors.M}; font-weight: 600;" title="Month: ${m.values.M}"><strong>M:</strong> ${m.values.M}</span>
-            <span style="color: ${m.ragColors.W}; font-weight: 600;" title="Week: ${m.values.W}"><strong>W:</strong> ${m.values.W}</span>
-            <span style="color: ${m.ragColors.D}; font-weight: 600;" title="Day: ${m.values.D}"><strong>D:</strong> ${m.values.D}</span>
+          <!-- M / W / D Values with Adaptive Contrast RAG Badges -->
+          <div style="display: flex; justify-content: space-around; width: 100%; font-size: 0.68rem; margin-top: 2px; padding: 2px 3px; background: var(--bg-hover-overlay, rgba(255,255,255,0.05)); border-radius: 4px; border: 1px solid var(--border-color); gap: 2px;">
+            <span style="color: ${m.ragColors.M}; font-weight: 700;" title="Month: ${m.values.M}"><strong>M:</strong> ${m.values.M}</span>
+            <span style="color: ${m.ragColors.W}; font-weight: 700;" title="Week: ${m.values.W}"><strong>W:</strong> ${m.values.W}</span>
+            <span style="color: ${m.ragColors.D}; font-weight: 700;" title="Day: ${m.values.D}"><strong>D:</strong> ${m.values.D}</span>
           </div>
         </div>
       `;
     };
 
     return `
-      <div class="glass-panel dashboard-tile" style="margin: 0; padding: 3px;">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 2px; display: flex; align-items: center; justify-content: space-between;">
+      <div class="glass-panel dashboard-tile" style="margin: 0; padding: 4px; min-height: 250px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; padding: 0 2px; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 4px;">
             <i class="fa-solid fa-circle-nodes" style="color: var(--accent-cyan);"></i>
             <span>TOKEN POOL GAUGE</span>
           </div>
-          <div style="display: flex; gap: 4px; font-size: 0.58rem; color: var(--text-muted); text-transform: none;">
+          <div style="display: flex; gap: 4px; font-size: 0.60rem; color: var(--text-muted); text-transform: none; font-weight: 600;">
             <span><strong style="color: #10b981;">●</strong> Month</span>
             <span><strong style="color: #06b6d4;">●</strong> Week</span>
             <span><strong style="color: #8b5cf6;">●</strong> Day</span>
@@ -285,7 +285,7 @@ class DashboardViewHelper {
         </div>
 
         <!-- 2x2 Quadrant Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3px; margin-bottom: 3px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; margin-bottom: 2px; flex: 1;">
           ${renderQuadrant(metrics[0])}
           ${renderQuadrant(metrics[1])}
           ${renderQuadrant(metrics[2])}
@@ -293,17 +293,17 @@ class DashboardViewHelper {
         </div>
 
         <!-- Legend -->
-        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 2px;">
-          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted);">
+        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 1px;">
+          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-emerald); box-shadow: 0 0 3px var(--accent-emerald);"></span> Available
           </div>
-          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted);">
+          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-amber); box-shadow: 0 0 3px var(--accent-amber);"></span> Consumed
           </div>
-          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted);">
+          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 3px var(--accent-cyan);"></span> Balance
           </div>
-          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted);">
+          <div style="display: flex; align-items: center; gap: 3px; font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6; box-shadow: 0 0 3px #8b5cf6);"></span> Utilization
           </div>
         </div>
@@ -314,19 +314,19 @@ class DashboardViewHelper {
   static renderProviderRows(topProviders) {
     const fmt = this.formatTokens;
     return (topProviders || []).map(p => `
-      <div class="dashboard-tile" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 3px; cursor: pointer; border-radius: 4px; transition: background 0.2s ease;"
+      <div class="dashboard-tile" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 3px; cursor: pointer; border-radius: 4px; transition: background 0.2s ease;"
         onclick="DashboardView.handleTileClick('provider:${p.name}')"
         title="Click to view report for ${p.name}">
         <div style="display: flex; align-items: center; gap: 4px;">
           <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: var(--accent-cyan); vertical-align: middle;"></i>
           <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan);">${p.name}</div>
-            <div style="font-size: 0.65rem; color: var(--text-dim);">Reqs: ${p.requests || 0} ${p.avgLatency || 0}ms</div>
+            <div style="font-size: 0.80rem; font-weight: 700; color: var(--accent-cyan);">${p.name}</div>
+            <div style="font-size: 0.68rem; color: var(--text-dim);">Reqs: ${p.requests || 0} ${p.avgLatency || 0}ms</div>
           </div>
         </div>
         <div style="text-align: right;">
           <div style="font-size: 0.88rem; font-weight: 700; color: var(--accent-emerald);">${fmt(p.tokens || 0)}</div>
-          <div style="font-size: 0.6rem; color: var(--text-dim);">Tokens</div>
+          <div style="font-size: 0.62rem; color: var(--text-dim); font-weight: 600;">Tokens</div>
         </div>
       </div>
     `).join('');
@@ -335,72 +335,57 @@ class DashboardViewHelper {
   static renderModelRows(topModels) {
     const fmt = this.formatTokens;
     return (topModels || []).map(m => `
-      <div class="dashboard-tile" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 3px; cursor: pointer; border-radius: 4px; transition: background 0.2s ease;"
+      <div class="dashboard-tile" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 3px; cursor: pointer; border-radius: 4px; transition: background 0.2s ease;"
         onclick="DashboardView.handleTileClick('model:${m.name}')"
         title="Click to view report for ${m.name}">
         <div style="display: flex; align-items: center; gap: 4px;">
           <i class="fa-solid fa-circle" style="font-size: 0.4rem; color: #6366f1; vertical-align: middle;"></i>
           <div>
-            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); word-break: break-all;">${m.name}</div>
-            <div style="font-size: 0.65rem; color: var(--text-dim);">Reqs: ${m.requests || 0} ${m.avgLatency || 0}ms</div>
+            <div style="font-size: 0.80rem; font-weight: 700; color: var(--text-main); word-break: break-all;">${m.name}</div>
+            <div style="font-size: 0.68rem; color: var(--text-dim);">Reqs: ${m.requests || 0} ${m.avgLatency || 0}ms</div>
           </div>
         </div>
         <div style="text-align: right;">
           <div style="font-size: 0.88rem; font-weight: 700; color: var(--accent-emerald);">${fmt(m.tokens || 0)}</div>
-          <div style="font-size: 0.6rem; color: var(--text-dim);">Tokens</div>
+          <div style="font-size: 0.62rem; color: var(--text-dim); font-weight: 600;">Tokens</div>
         </div>
       </div>
     `).join('');
   }
 
-  static renderOperationalMetricsPanel(telemetryData, userEmail) {
+  static renderOperationalMetricsPanel(telemetryData, userEmail, apiLogs) {
     const data = telemetryData || {};
     const available = data.available ?? { month: 0, week: 0, day: 0 };
     const consumed = data.consumed ?? { month: 0, week: 0, day: 0 };
     const balance = data.balance ?? { month: 0, week: 0, day: 0 };
     const percent = data.percent ?? { month: '0.0', week: '0.0', day: '0.0' };
-    const gauge = data.gauge ?? { activeGroup: userEmail || 'No Active Requests', activeKeysCount: 0, monthlyCapacity: 0, usedPercent: '0.0' };
-    const topProviders = data.topProviders ?? [];
-    const topModels = data.topModels ?? [];
+    const stats = (typeof ReportsViewHelper !== 'undefined' && ReportsViewHelper.generateStats)
+      ? ReportsViewHelper.generateStats(apiLogs || [])
+      : { market: {}, tokenCost: {}, usage: {} };
 
     return `
-      <!-- TOP METRIC CARDS ROW (4 Columns) -->
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-bottom: 3px;">
-        ${this.renderTopMetricCard('AVAILABLE TOKEN', available, '#3b82f6', '#10b981', '#10b981', 'token:available')}
-        ${this.renderTopMetricCard('CONSUMED TOKEN', consumed, '#3b82f6', '#10b981', '#10b981', 'token:consumed')}
-        ${this.renderTopMetricCard('BALANCE TOKEN', balance, '#3b82f6', '#10b981', '#10b981', 'token:balance')}
-        ${this.renderTopMetricCard('PERCENT CONSUMED TOKEN', percent, '#10b981', '#10b981', '#10b981', 'token:percent', true)}
+      <!-- TOP METRIC CARDS ROW (Responsive Smart-Fit Grid) -->
+      <div class="dash-top-metrics-grid">
+        ${this.renderTopMetricCard('AVAILABLE TOKEN', available, 'var(--accent-cyan)', 'var(--accent-emerald)', 'var(--accent-emerald)', 'token:available')}
+        ${this.renderTopMetricCard('CONSUMED TOKEN', consumed, 'var(--accent-amber)', 'var(--accent-amber)', 'var(--accent-amber)', 'token:consumed')}
+        ${this.renderTopMetricCard('BALANCE TOKEN', balance, 'var(--accent-cyan)', 'var(--accent-emerald)', 'var(--accent-emerald)', 'token:balance')}
+        ${this.renderTopMetricCard('PERCENT CONSUMED TOKEN', percent, 'var(--accent-emerald)', 'var(--accent-amber)', 'var(--accent-rose)', 'token:percent', true)}
       </div>
 
-      <!-- BOTTOM PANELS ROW (3 Columns with 2x2 Gauge) -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; margin-bottom: 3px;">
+      <!-- MIDDLE ROW 1: VISUAL GAUGES & CHARTS ROW (Token Pool Gauge + Market Share 7D + Model Usage 7D) -->
+      <div class="dash-middle-panels-grid">
         <!-- Card 1: Token Pool Gauge (2x2 Layout) -->
         ${this.renderTokenPoolGauge2x2(data, userEmail)}
         
-        <!-- Card 2: Top Providers -->
-        <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0;">
-          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 2px; display: flex; justify-content: space-between; align-items: center;">
-            <span>TOP PROVIDERS (THIS MONTH)</span>
-            <i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto;">
-            ${this.renderProviderRows(topProviders)}
-          </div>
-        </div>
+        <!-- Card 2: Market Share (7D) -->
+        ${this.renderMarketShareTile(stats)}
 
-        <!-- Card 3: Model Usage Breakdown -->
-        <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0;">
-          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 2px; display: flex; justify-content: space-between; align-items: center;">
-            <span>MODEL USAGE BREAKDOWN</span>
-            <i class="fa-solid fa-cubes" style="color: #6366f1;"></i>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto;">
-            ${this.renderModelRows(topModels)}
-          </div>
-        </div>
+        <!-- Card 3: Model Usage (7D) -->
+        ${this.renderModelUsage7dTile(stats)}
       </div>
     `;
   }
+
 
   static async handleContextualTileClick(contextKey) {
     const fmt = this.formatTokens;
@@ -457,7 +442,7 @@ class DashboardViewHelper {
                 </thead>
                 <tbody>
                   ${providers.map(p => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <tr style="border-bottom:1px solid var(--border-color);">
                       <td style="padding:6px 8px; font-weight:600; color:var(--text-main);">${p.displayName || p.name || p.id}</td>
                       <td style="padding:6px 8px; color:var(--text-muted); font-size:0.7rem;">${p.protocol || 'OpenAI API'}</td>
                       <td style="padding:6px 8px; text-align:center;">
@@ -503,7 +488,7 @@ class DashboardViewHelper {
                 </thead>
                 <tbody>
                   ${combos.map(c => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <tr style="border-bottom:1px solid var(--border-color);">
                       <td style="padding:6px 8px; font-weight:600; color:var(--text-main);">${c.name || c.id}</td>
                       <td style="padding:6px 8px; color:var(--accent-amber);">${c.strategy || 'round-robin'}</td>
                       <td style="padding:6px 8px; text-align:center; color:var(--accent-cyan); font-weight:700;">${(c.modelsList || c.models || []).length}</td>
@@ -549,7 +534,7 @@ class DashboardViewHelper {
                 </thead>
                 <tbody>
                   ${models.slice(0, 30).map(m => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <tr style="border-bottom:1px solid var(--border-color);">
                       <td style="padding:6px 8px; font-weight:600; color:var(--primary-light);">${m.modelId}</td>
                       <td style="padding:6px 8px; color:var(--text-muted);">${m.providerName || m.providerId}</td>
                       <td style="padding:6px 8px;"><span class="badge badge-cyan" style="font-size:0.65rem;">${m.coreSkill || 'General'}</span></td>
@@ -751,7 +736,7 @@ class DashboardViewHelper {
       const title = log.error || (log.status >= 400 ? `Error ${log.status}` : 'Success');
 
       return `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+        <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.8rem;">
           <td style="padding: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="${dateStr}">${dateStr}</td>
           <td style="padding: 6px; font-weight: 700; color: var(--primary-light);">${modelName}</td>
           <td style="padding: 6px; color: var(--text-dim);">${family}</td>
@@ -765,34 +750,30 @@ class DashboardViewHelper {
       `;
     }).join('');
   }
-  static renderVisualAnalyticsTiles(apiLogs) {
-    if (typeof ReportsViewHelper === 'undefined' || !ReportsViewHelper.generateStats) {
-      return `<div style="text-align:center; padding: 20px;">Stats Engine Loading...</div>`;
-    }
 
-    const stats = ReportsViewHelper.generateStats(apiLogs || []);
+  static renderMarketShareTile(stats) {
     const tf = "1W"; // Last 7 days
     const colors = ["#d946ef", "#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#ef4444", "#14b8a6", "#f97316"];
-    
-    // 1. Market Share
-    const mktData = stats.market[tf] || [];
+    const mktData = (stats && stats.market && stats.market[tf]) || [];
     const latestShare = mktData[mktData.length - 1] || {};
     const authors = latestShare.authors || [];
-    let shareBars = '';
     let conicGradientParts = [];
     let currentDeg = 0;
+    let shareSlideBars = '';
+
     authors.slice(0, 5).forEach((auth, idx) => {
       const color = colors[idx % colors.length];
-      shareBars += `
-        <div style="margin-bottom: 8px;">
-          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-bottom: 3px;">
-            <span style="font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:6px;">
-              <span style="width:8px; height:8px; border-radius:50%; background:${color};"></span>${auth.author}
+      shareSlideBars += `
+        <div style="margin-bottom: 3px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 1px;">
+            <span style="font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;" title="${auth.author}">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: ${color}; flex-shrink: 0; box-shadow: 0 0 3px ${color}88;"></span>
+              ${auth.author}
             </span>
-            <span>${auth.share}%</span>
+            <span style="font-weight: 700; color: var(--accent-cyan);">${auth.share}%</span>
           </div>
-          <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow:hidden;">
-            <div style="height: 100%; width: ${auth.share}%; background: ${color}; border-radius: 3px;"></div>
+          <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
+            <div style="height: 100%; width: ${auth.share}%; background: ${color}; border-radius: 2px; transition: width 0.3s ease;"></div>
           </div>
         </div>
       `;
@@ -800,75 +781,54 @@ class DashboardViewHelper {
       conicGradientParts.push(`${color} ${currentDeg}deg ${currentDeg + degrees}deg`);
       currentDeg += degrees;
     });
-    if (currentDeg < 360) conicGradientParts.push(`rgba(255,255,255,0.05) ${currentDeg}deg 360deg`);
+    if (currentDeg < 360) conicGradientParts.push(`rgba(255,255,255,0.06) ${currentDeg}deg 360deg`);
 
-    const marketTile = `
-      <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
-        <h5 style="color: var(--text-main); margin-bottom: 3px; font-size: 0.75rem; padding: 2px;"><i class="fa-solid fa-pie-chart" style="color:var(--accent-cyan); margin-right:4px;"></i> Market Share (7D)</h5>
-        <div style="display: flex; gap: 3px; align-items: center; padding: 2px;">
-          <div style="flex: 1; display: flex; justify-content: center;">
-            <div style="width: 70px; height: 70px; border-radius: 50%; background: conic-gradient(${conicGradientParts.join(', ')}); position: relative; box-shadow: 0 0 6px rgba(0,0,0,0.5);">
-              <div style="position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">${authors[0] ? authors[0].share + '%' : '0%'}</div>
-              </div>
+    return `
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; min-height: 250px;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 0 2px;">
+          <h5 style="color: var(--text-main); margin: 0; font-size: 0.74rem; display: flex; align-items: center; gap: 4px; font-weight: 700;">
+            <i class="fa-solid fa-pie-chart" style="color:var(--accent-cyan);"></i> Market Share (7D)
+          </h5>
+          <span class="badge badge-cyan" style="font-size: 0.58rem; padding: 1px 5px; font-weight: 700;">
+            Leader: ${authors[0] ? authors[0].author : 'All'}
+          </span>
+        </div>
+
+        <!-- TOP (UP): Bigger Centered Donut Graph (116px Diameter) -->
+        <div style="display: flex; justify-content: center; align-items: center; padding: 2px 0; margin-bottom: 2px; flex: 1;">
+          <div style="width: 116px; height: 116px; border-radius: 50%; background: conic-gradient(${conicGradientParts.join(', ')}); position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5); flex-shrink: 0;">
+            <div style="position: absolute; top: 16%; left: 16%; width: 68%; height: 68%; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 0 6px rgba(0,0,0,0.4);">
+              <div style="font-size: 0.94rem; font-weight: 800; color: var(--text-main); line-height: 1.1;">${authors[0] ? authors[0].share + '%' : '0%'}</div>
+              <div style="font-size: 0.54rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase;">${authors[0] ? authors[0].author : 'Leader'}</div>
             </div>
           </div>
-          <div style="flex: 1.5; max-height: 120px; overflow-y: auto; padding-right: 2px;">
-            ${shareBars}
-          </div>
+        </div>
+
+        <!-- BOTTOM (DOWN): Text Breakdown with Progress Slide Lines -->
+        <div style="display: flex; flex-direction: column; gap: 1px; max-height: 90px; overflow-y: auto; padding: 0 2px;">
+          ${shareSlideBars || '<div style="font-size:0.68rem; color:var(--text-dim); text-align:center; padding:8px;">No share data recorded</div>'}
         </div>
       </div>
     `;
+  }
 
-    // 2. Token Cost
-    const costData = stats.tokenCost[tf] || [];
-    const maxCost = Math.max(...costData.map(d => d.inputPrice + d.outputPrice), 0.1);
-    const tokenCostTile = `
-      <div class="glass-panel dashboard-tile" style="padding: 3px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); overflow-y: auto; max-height: 180px;">
-        <h5 style="color: var(--text-main); margin-bottom: 3px; font-size: 0.75rem; padding: 2px;"><i class="fa-solid fa-tags" style="color:var(--accent-amber); margin-right:4px;"></i> Token Cost Rates</h5>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.7rem;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
-              <th style="padding: 3px;">Model ID</th>
-              <th style="padding: 3px; width: 40%;">In/Out Rel</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${costData.slice(0, 5).map(item => {
-              const inPct = (item.inputPrice / maxCost) * 100;
-              const outPct = (item.outputPrice / maxCost) * 100;
-              return `
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                <td style="padding: 3px; font-weight:700; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;" title="${item.model}">${item.model}</td>
-                <td style="padding: 3px;">
-                  <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; display: flex; overflow: hidden;">
-                    <div style="width: ${inPct}%; background: var(--accent-emerald);" title="In: $${item.inputPrice}"></div>
-                    <div style="width: ${outPct}%; background: var(--accent-cyan);" title="Out: $${item.outputPrice}"></div>
-                  </div>
-                </td>
-              </tr>
-            `}).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    // 3. Model Usage (7D) with Complete X-Axis, Y-Axis, and Bar Metadata Values
-    const usageData = stats.usage["All Users"]?.[tf] || [];
+  static renderModelUsage7dTile(stats) {
+    const tf = "1W"; // Last 7 days
+    const usageData = (stats && stats.usage && stats.usage["All Users"]?.[tf]) || [];
     const fmt = this.formatTokens;
     const modelColors = { "deepseek": "#d946ef", "qwen": "#6366f1", "gemini": "#06b6d4", "mimo": "#06b6d4", "llama": "#f59e0b", "glm": "#f59e0b", "mistral": "#ec4899", "Other": "#10b981" };
     
-    // Calculate total 7D tokens and max day tokens for proportional Y-scale
     const total7dTokens = usageData.reduce((sum, d) => sum + (d.segments || []).reduce((s, x) => s + (x.value || 0), 0), 0);
     const maxDayTokens = Math.max(...usageData.map(d => (d.segments || []).reduce((s, x) => s + (x.value || 0), 0)), 1000);
-    const maxChartPx = 54; // bar height container
+    const maxChartPx = 135; // Increased graph height to 135px as best smart fit in card height
 
     let usageBarsHtml = '';
     usageData.forEach(day => {
       let segments = day.segments || [];
       let totalDayTokens = segments.reduce((sum, s) => sum + (s.value || 0), 0);
       let dayBarHeight = maxDayTokens > 0 ? Math.round((totalDayTokens / maxDayTokens) * maxChartPx) : 0;
-      if (totalDayTokens > 0 && dayBarHeight < 4) dayBarHeight = 4; // minimum visible bar
+      if (totalDayTokens > 0 && dayBarHeight < 6) dayBarHeight = 6;
       
       let segmentsHtml = '';
       segments.forEach((seg) => {
@@ -877,48 +837,47 @@ class DashboardViewHelper {
         const mLower = (seg.model || '').toLowerCase();
         Object.keys(modelColors).forEach(k => { if (mLower.includes(k)) cKey = k; });
         const color = modelColors[cKey];
-        const segHeight = Math.max(Math.round(pct * dayBarHeight), 1);
+        const segHeight = Math.max(Math.round(pct * dayBarHeight), 2);
         if (seg.value > 0) {
-          segmentsHtml = `<div style="height: ${segHeight}px; background: ${color}; width: 100%; border-radius: 1px;" title="${seg.model}: ${fmt(seg.value)} tokens"></div>` + segmentsHtml;
+          segmentsHtml = `<div style="height: ${segHeight}px; background: ${color}; width: 100%; border-radius: 1px; transition: height 0.3s ease;" title="${seg.model}: ${fmt(seg.value)} tokens"></div>` + segmentsHtml;
         }
       });
 
-      // If no segments recorded for day, show a tiny 2px placeholder bar
       if (!segmentsHtml) {
-        segmentsHtml = `<div style="height: 2px; background: rgba(255,255,255,0.08); width: 100%; border-radius: 1px;"></div>`;
+        segmentsHtml = `<div style="height: 3px; background: var(--bg-hover-overlay, rgba(255,255,255,0.08)); width: 100%; border-radius: 1px;"></div>`;
       }
 
       usageBarsHtml += `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: ${100 / (usageData.length || 7)}%; height: 100%;">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: ${100 / (usageData.length || 7)}%; height: 100%; padding: 0 1px;">
           <!-- Bar Metadata Value (Tokens) -->
-          <div style="font-size: 0.52rem; font-weight: 700; color: ${totalDayTokens > 0 ? 'var(--accent-cyan)' : 'var(--text-dim)'}; margin-bottom: 2px; white-space: nowrap;">
+          <div style="font-size: 0.56rem; font-weight: 700; color: ${totalDayTokens > 0 ? 'var(--accent-cyan)' : 'var(--text-dim)'}; margin-bottom: 1px; white-space: nowrap;">
             ${totalDayTokens > 0 ? fmt(totalDayTokens) : '0'}
           </div>
-          <!-- Stacked Bar Column -->
-          <div style="width: 75%; max-width: 24px; min-width: 10px; display: flex; flex-direction: column; gap: 1px; justify-content: flex-end; height: ${maxChartPx}px;">
+          <!-- Stacked Bar Column with Enlarged Height -->
+          <div style="width: 80%; max-width: 32px; min-width: 14px; display: flex; flex-direction: column; gap: 1px; justify-content: flex-end; height: ${maxChartPx}px;">
             ${segmentsHtml}
           </div>
           <!-- X-Axis Day/Date Label -->
-          <div style="font-size: 0.52rem; color: var(--text-dim); text-align: center; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" title="${day.date}">
+          <div style="font-size: 0.56rem; color: var(--text-dim); text-align: center; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; font-weight: 600;" title="${day.date}">
             ${day.date}
           </div>
         </div>
       `;
     });
     
-    const usageTile = `
-      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 1px 2px;">
-          <h5 style="color: var(--text-main); margin: 0; font-size: 0.74rem; display: flex; align-items: center; gap: 4px;">
+    return `
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; min-height: 250px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 0 2px;">
+          <h5 style="color: var(--text-main); margin: 0; font-size: 0.74rem; display: flex; align-items: center; gap: 4px; font-weight: 700;">
             <i class="fa-solid fa-chart-column" style="color:var(--accent-cyan);"></i> Model Usage (7D)
           </h5>
-          <span class="badge badge-cyan" style="font-size: 0.58rem; padding: 1px 5px; font-weight: 600;">
+          <span class="badge badge-cyan" style="font-size: 0.58rem; padding: 1px 5px; font-weight: 700;">
             7D Vol: ${fmt(total7dTokens)}
           </span>
         </div>
 
-        <!-- Legend -->
-        <div style="display: flex; gap: 6px; font-size: 0.54rem; color: var(--text-muted); margin-bottom: 3px; flex-wrap: wrap; padding-left: 2px;">
+        <!-- Legend Badges -->
+        <div style="display: flex; gap: 6px; font-size: 0.58rem; color: var(--text-muted); margin-bottom: 2px; flex-wrap: wrap; padding-left: 2px; font-weight: 600;">
           <span><strong style="color: #d946ef;">●</strong> DeepSeek</span>
           <span><strong style="color: #6366f1;">●</strong> Qwen</span>
           <span><strong style="color: #06b6d4;">●</strong> Gemini</span>
@@ -926,20 +885,22 @@ class DashboardViewHelper {
           <span><strong style="color: #10b981;">●</strong> Other</span>
         </div>
 
-        <!-- Chart Grid with Y-Axis and Bars -->
-        <div style="display: flex; gap: 4px; align-items: flex-end; position: relative; padding-bottom: 2px;">
+        <!-- Enlarged Chart Canvas with Y-Axis and Dotted Gridlines -->
+        <div style="display: flex; gap: 4px; align-items: flex-end; position: relative; padding-bottom: 1px; flex: 1; min-height: ${maxChartPx + 18}px;">
           <!-- Y-Axis Scale Markers -->
-          <div style="display: flex; flex-direction: column; justify-content: space-between; height: ${maxChartPx + 14}px; font-size: 0.50rem; color: var(--text-dim); text-align: right; padding-right: 2px; border-right: 1px solid rgba(255,255,255,0.08); width: 28px; flex-shrink: 0; padding-bottom: 12px;">
+          <div style="display: flex; flex-direction: column; justify-content: space-between; height: ${maxChartPx + 14}px; font-size: 0.54rem; color: var(--text-muted); text-align: right; padding-right: 3px; border-right: 1px solid var(--border-color); width: 30px; flex-shrink: 0; padding-bottom: 12px; font-weight: 700;">
             <span>${fmt(maxDayTokens)}</span>
-            <span>${fmt(Math.round(maxDayTokens / 2))}</span>
+            <span>${fmt(Math.round(maxDayTokens * 0.66))}</span>
+            <span>${fmt(Math.round(maxDayTokens * 0.33))}</span>
             <span>0</span>
           </div>
 
           <!-- Horizontal Dotted Gridlines & Bars Area -->
           <div style="flex: 1; position: relative; display: flex; align-items: flex-end; height: ${maxChartPx + 14}px;">
-            <div style="position: absolute; top: 14px; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.06); pointer-events: none;"></div>
-            <div style="position: absolute; top: ${14 + maxChartPx / 2}px; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.06); pointer-events: none;"></div>
-            <div style="position: absolute; bottom: 12px; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,0.12); pointer-events: none;"></div>
+            <div style="position: absolute; top: 10px; left: 0; right: 0; border-top: 1px dashed var(--border-color); opacity: 0.35; pointer-events: none;"></div>
+            <div style="position: absolute; top: ${10 + Math.round(maxChartPx * 0.33)}px; left: 0; right: 0; border-top: 1px dashed var(--border-color); opacity: 0.35; pointer-events: none;"></div>
+            <div style="position: absolute; top: ${10 + Math.round(maxChartPx * 0.66)}px; left: 0; right: 0; border-top: 1px dashed var(--border-color); opacity: 0.35; pointer-events: none;"></div>
+            <div style="position: absolute; bottom: 12px; left: 0; right: 0; border-top: 1px solid var(--border-color); opacity: 0.7; pointer-events: none;"></div>
             
             <div style="display: flex; width: 100%; height: 100%; align-items: flex-end;">
               ${usageBarsHtml}
@@ -948,15 +909,99 @@ class DashboardViewHelper {
         </div>
       </div>
     `;
+  }
 
+  static renderTokenCostRatesTile(stats) {
+    const tf = "1W";
+    const costData = (stats && stats.tokenCost && stats.tokenCost[tf]) || [];
+    const maxCost = Math.max(...costData.map(d => d.inputPrice + d.outputPrice), 0.1);
     return `
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 3px;">
-        ${marketTile}
-        ${tokenCostTile}
-        ${usageTile}
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); min-height: 220px; display: flex; flex-direction: column;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 0 2px; display: flex; justify-content: space-between; align-items: center;">
+          <span>TOKEN COST RATES</span>
+          <i class="fa-solid fa-tags" style="color:var(--accent-amber);"></i>
+        </div>
+        <div style="max-height: 180px; overflow-y: auto; flex: 1;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.7rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
+                <th style="padding: 3px 2px;">Model ID</th>
+                <th style="padding: 3px 2px; width: 45%;">In/Out Rel</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${costData.slice(0, 7).map(item => {
+                const inPct = (item.inputPrice / maxCost) * 100;
+                const outPct = (item.outputPrice / maxCost) * 100;
+                return `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 3px 2px; font-weight:700; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px;" title="${item.model}">${item.model}</td>
+                  <td style="padding: 3px 2px;">
+                    <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.05); border-radius: 2px; display: flex; overflow: hidden;">
+                      <div style="width: ${inPct}%; background: var(--accent-emerald);" title="In: $${item.inputPrice}"></div>
+                      <div style="width: ${outPct}%; background: var(--accent-cyan);" title="Out: $${item.outputPrice}"></div>
+                    </div>
+                  </td>
+                </tr>
+              `}).join('') || '<tr><td colspan="2" style="text-align:center; padding:10px; color:var(--text-dim);">No cost data</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
   }
+
+  static renderTopProvidersTile(topProviders) {
+    return `
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); min-height: 220px; display: flex; flex-direction: column;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 0 2px; display: flex; justify-content: space-between; align-items: center;">
+          <span>TOP PROVIDERS (THIS MONTH)</span>
+          <i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow-y: auto; flex: 1;">
+          ${this.renderProviderRows(topProviders)}
+        </div>
+      </div>
+    `;
+  }
+
+  static renderModelUsageBreakdownTile(topModels) {
+    return `
+      <div class="glass-panel dashboard-tile" style="padding: 4px; margin: 0; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color); min-height: 220px; display: flex; flex-direction: column;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; padding: 0 2px; display: flex; justify-content: space-between; align-items: center;">
+          <span>MODEL USAGE BREAKDOWN</span>
+          <i class="fa-solid fa-cubes" style="color: #6366f1;"></i>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; max-height: 180px; overflow-y: auto; flex: 1;">
+          ${this.renderModelRows(topModels)}
+        </div>
+      </div>
+    `;
+  }
+
+  static renderVisualAnalyticsTiles(apiLogs, telemetryData) {
+    const stats = (typeof ReportsViewHelper !== 'undefined' && ReportsViewHelper.generateStats)
+      ? ReportsViewHelper.generateStats(apiLogs || [])
+      : { market: {}, tokenCost: {}, usage: {} };
+    const data = telemetryData || {};
+    const topProviders = data.topProviders ?? [];
+    const topModels = data.topModels ?? [];
+
+    return `
+      <!-- MIDDLE ROW 2: BREAKDOWN LISTS & COST RATES ROW (Token Cost Rates + Top Providers + Model Usage Breakdown) -->
+      <div class="dash-visual-analytics-grid">
+        <!-- Card 1: Token Cost Rates -->
+        ${this.renderTokenCostRatesTile(stats)}
+
+        <!-- Card 2: Top Providers (This Month) -->
+        ${this.renderTopProvidersTile(topProviders)}
+
+        <!-- Card 3: Model Usage Breakdown -->
+        ${this.renderModelUsageBreakdownTile(topModels)}
+      </div>
+    `;
+  }
+
 }
 
 window.DashboardViewHelper = DashboardViewHelper;

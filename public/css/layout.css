@@ -761,3 +761,87 @@
     color: var(--accent-cyan);
     font-weight: 700;
 }
+
+/* ==========================================================================
+   DASHBOARD RESPONSIVE SMART-FIT GRID & THEME ADAPTATION
+   ========================================================================== */
+.dash-columns-container {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.dash-toc-rail {
+  width: 20%;
+  min-width: 170px;
+  flex-shrink: 0;
+  padding: 4px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-workspace-pane {
+  width: 80%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-top-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.dash-middle-panels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.dash-visual-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 1200px) {
+  .dash-top-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .dash-middle-panels-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dash-visual-analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .dash-columns-container {
+    flex-direction: column !important;
+  }
+  .dash-toc-rail {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  .dash-workspace-pane {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .dash-top-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

@@ -173,6 +173,7 @@ class ModelClubComboStudioHelper {
 
       if (res.success || res.combo) {
         ModalDialog.showNotification(`Combo Agent "${name}" saved successfully!`, 'success');
+        if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
         if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
       } else {
         ModalDialog.showNotification(`Save Failed: ${res.error}`, 'error');

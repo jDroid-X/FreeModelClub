@@ -56,7 +56,7 @@ class ListBoxComponent {
         <div class="listbox-item ${isSelected ? 'active' : ''}" onclick="ListBoxComponent.selectItem('${item.id}')" style="padding: 8px 10px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; border: 1px solid ${isSelected ? 'var(--accent-cyan)' : 'transparent'}; background: ${isSelected ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255,255,255,0.02)'}; transition: all 0.2s ease;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <strong style="font-size: 0.82rem; color: ${isSelected ? 'var(--accent-cyan)' : 'var(--text-main)'};"><i class="fa-solid ${item.icon || 'fa-cube'}" style="margin-right: 6px;"></i>${item.title || item.name || item.id}</strong>
-            ${item.badge ? `<span class="badge ${item.badgeClass || 'badge-emerald'}" style="font-size: 0.68rem;">${item.badge}</span>` : ''}
+            ${item.badge ? `<span class="badge ${item.badgeClass || (typeof item.badge === 'object' && item.badge.color ? '' : 'badge-emerald')}" style="font-size: 0.68rem; ${typeof item.badge === 'object' && item.badge.color ? 'background: ' + item.badge.color + '; color: #fff;' : ''}">${typeof item.badge === 'object' ? (item.badge.text || item.badge.label || 'Active') : item.badge}</span>` : ''}
           </div>
           ${item.subtitle ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${item.subtitle}</div>` : ''}
         </div>

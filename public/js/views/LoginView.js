@@ -6,6 +6,12 @@
 
 class LoginView {
   static render() {
+    let defaultEmail = 'FreeModelsClub@jdroidxy.com';
+    try {
+      const stored = localStorage.getItem('fmc_remembered_email') || (JSON.parse(localStorage.getItem('fmc_user') || 'null')?.email);
+      if (stored) defaultEmail = stored;
+    } catch (_) {}
+
     const appEl = document.getElementById('app');
     appEl.innerHTML = `
       <div class="login-wrapper">
@@ -19,8 +25,8 @@ class LoginView {
           <form id="login-form" onsubmit="LoginView.handleLogin(event)">
             <div class="form-group" style="text-align: left;">
               <label class="form-label">Email Address</label>
-              <input type="email" id="login-email" class="form-control" value="FreeModelsClub@jdroidxy.com" required />
-              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Pre-filled default login email</div>
+              <input type="email" id="login-email" class="form-control" value="${defaultEmail}" required />
+              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Pre-filled session login email</div>
             </div>
 
             <div class="form-group" style="text-align: left;">
@@ -140,6 +146,9 @@ class LoginView {
   }
 
   static finalizeLogin(user, isAutoLogin) {
+    if (user && user.email) {
+      localStorage.setItem('fmc_remembered_email', user.email);
+    }
     if (isAutoLogin) {
       localStorage.setItem('fmc_auto_login', 'true');
       localStorage.setItem('fmc_user', JSON.stringify(user));
@@ -149,7 +158,9 @@ class LoginView {
       sessionStorage.setItem('fmc_user', JSON.stringify(user));
     }
 
-    if (window.appStore) {
+    if (window.AppStore && window.AppStore.setState) {
+      window.AppStore.setState({ currentUser: user });
+    } else if (window.appStore && window.appStore.setState) {
       window.appStore.setState({ currentUser: user });
     }
 

@@ -188,6 +188,47 @@
         "PlaygroundResponseHelper",
         "PlaygroundTrayDrawerHelper"
       ]
+    },
+    {
+      "module": "jDroidXToolExecutionEngine",
+      "file": "src/services/jDroidXToolExecutionEngine.js",
+      "type": "BackendService",
+      "dependencies": [
+        "SemanticRAGAgent",
+        "ASTAnalyzerAgent"
+      ]
+    },
+    {
+      "module": "AntigravityToolExecutionEngine",
+      "file": "src/services/AntigravityToolExecutionEngine.js",
+      "type": "BackendService",
+      "dependencies": [
+        "jDroidXToolExecutionEngine"
+      ]
+    },
+    {
+      "module": "ToolExecutionLoopService",
+      "file": "src/services/ToolExecutionLoopService.js",
+      "type": "BackendService",
+      "dependencies": [
+        "jDroidXToolExecutionEngine",
+        "PromptOrchestratorService",
+        "ProxyExecutionHelper"
+      ]
+    },
+    {
+      "module": "PromptOrchestratorService",
+      "file": "src/services/PromptOrchestratorService.js",
+      "type": "BackendService",
+      "dependencies": [
+        "jDroidXToolExecutionEngine"
+      ]
+    },
+    {
+      "module": "ActiveModelAgent",
+      "file": "src/services/ActiveModelAgent.js",
+      "type": "BackendService",
+      "dependencies": []
     }
   ]
 }

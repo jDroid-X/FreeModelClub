@@ -454,6 +454,9 @@ class ProvidersView {
       const res = await ApiService.updateProviderStatus(providerId, newStatus);
       if (res && res.success) {
         ModalDialog.showNotification(`Provider status updated to ${newStatus ? 'Active' : 'Inactive'}!`, 'info');
+        if (window.AppStore && window.AppStore.emit) {
+          window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId, isActive: newStatus });
+        }
         // Background sync for other components without a hard reload
         if (window.app && window.app.triggerSilentDataSync) {
           window.app.triggerSilentDataSync();
@@ -607,6 +610,9 @@ class ProvidersView {
           if (updateRes && (updateRes.success || updateRes.provider)) {
             ModalDialog.showNotification(`API key updated and '${displayName}' activated!`, 'success');
             window.dispatchEvent(new CustomEvent('fmc-providers-updated'));
+            if (window.AppStore && window.AppStore.emit) {
+              window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId });
+            }
             if (typeof ProvidersView !== 'undefined' && ProvidersView.render) {
               ProvidersView.render(document.getElementById('app'));
             }

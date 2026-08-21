@@ -15,6 +15,17 @@ class IDEWorkspaceView {
   static terminalHistory = [];
   static currentTerminalLine = 0;
 
+  // ── Helper: Browser-Safe Path Join ──
+  static joinPath(base, child) {
+    if (!base) return child || '';
+    if (!child) return base || '';
+    const isWindows = base.includes('\\') || /^[a-zA-Z]:/.test(base);
+    const sep = isWindows ? '\\' : '/';
+    const cleanBase = base.endsWith('\\') || base.endsWith('/') ? base.slice(0, -1) : base;
+    const cleanChild = child.startsWith('\\') || child.startsWith('/') ? child.slice(1) : child;
+    return `${cleanBase}${sep}${cleanChild}`;
+  }
+
   // ── Constants ──
   static FILE_ICONS = {
     '.js': 'fa-brands fa-js',
@@ -120,7 +131,7 @@ class IDEWorkspaceView {
               <div id="terminal-output"></div>
               <div style="display: flex; align-items: center; margin-top: 4px;">
                 <span style="color: #6b9bff; margin-right: 4px;">➜</span>
-                <span id="terminal-cwd" style="color: #569cd6; margin-right: 4px;">${workspacePath || process.cwd()}</span>
+                <span id="terminal-cwd" style="color: #569cd6; margin-right: 4px;">${workspacePath || 'C:\\Workspace'}</span>
                 <span style="color: #ce9178; margin-right: 4px;">~</span>
                 <input type="text" id="terminal-input" style="flex: 1; background: transparent; border: none; color: #d4d4d4; font-family: inherit; font-size: inherit; outline: none;" placeholder="Enter command..." onkeydown="IDEWorkspaceView.handleTerminalInput(event)">
               </div>
@@ -213,101 +224,41 @@ class IDEWorkspaceView {
   }
 
   // ── Workspace Management ──
-  static async openWorkspace() {
-    const defaultPath = localStorage.getItem('fmc_project_workspace_path') || 'c:\\Users\\jiten\\jAnitGravity\\FreeModelsClub';
-    
-    try {
-      const res = await ApiService.browseLocalPath(defaultPath);
-      if (res.success) {
-        // Show folder selection modal
-        this.showWorkspaceSelector(res.currentPath, res.items);
+  static openWorkspace() {
+    FileSystemController.openInteractiveBrowser('folder', (selectedPath) => {
+      if (selectedPath) {
+        IDEWorkspaceView.selectWorkspace(selectedPath);
       }
-    } catch (err) {
-      console.error('Failed to browse:', err);
-      ModalDialog.showNotification('Failed to browse directory: ' + err.message, 'error');
-    }
-  }
-
-  static showWorkspaceSelector(currentPath, items) {
-    const itemsHtml = items.filter(item => item.isDir).map(item => `
-      <div class="ws-folder-item" data-path="${item.path}" 
-        style="padding: 8px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 8px;"
-        onmouseover="this.style.background='rgba(0,122,204,0.1)'" 
-        onmouseout="this.style.background='transparent'">
-        <i class="fa-solid fa-folder" style="color: #fbbf24;"></i>
-        <span style="font-size: 0.8rem; color: #cccccc;">${item.name}</span>
-      </div>
-    `).join('');
-
-    const content = `
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <!-- Search Box -->
-        <div style="position: relative;">
-          <i class="fa-solid fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #858585; font-size: 0.75rem;"></i>
-          <input type="text" id="ws-folder-search" placeholder="Filter folders..." 
-            style="width: 100%; padding: 8px 10px 8px 30px; background: rgba(0,0,0,0.3); border: 1px solid #3e3e42; color: #cccccc; border-radius: 4px; font-size: 0.8rem; outline: none;"
-            onkeyup="IDEWorkspaceView.filterFolders(this.value)">
-        </div>
-        <!-- Current Path Display -->
-        <div style="font-size: 0.68rem; color: #858585; padding: 4px 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
-          <i class="fa-solid fa-location-dot" style="margin-right: 4px;"></i>${currentPath}
-        </div>
-        <!-- Folder List -->
-        <div id="ws-folder-list" style="max-height: 400px; overflow-y: auto;">
-          <div style="padding: 8px; font-size: 0.7rem; color: #858585;">Select a folder to open as workspace:</div>
-          ${itemsHtml}
-        </div>
-      </div>
-    `;
-
-    ModalDialog.showCustomModal({
-      title: '<i class="fa-solid fa-folder-open" style="color: #fbbf24; margin-right: 8px;"></i>Open Workspace Folder',
-      content: content,
-      confirmText: 'Open',
-      onCancel: () => ModalDialog.closeModal()
     });
-  }
-
-  static filterFolders(query) {
-    const q = query.toLowerCase().trim();
-    const items = document.querySelectorAll('.ws-folder-item');
-    let visibleCount = 0;
-    
-    items.forEach(item => {
-      const name = item.textContent.toLowerCase();
-      const matches = !q || name.includes(q);
-      item.style.display = matches ? 'flex' : 'none';
-      if (matches) visibleCount++;
-    });
-    
-    // Show/hide empty message
-    const list = document.getElementById('ws-folder-list');
-    let emptyMsg = list.querySelector('.ws-empty-msg');
-    if (visibleCount === 0) {
-      if (!emptyMsg) {
-        emptyMsg = document.createElement('div');
-        emptyMsg.className = 'ws-empty-msg';
-        emptyMsg.style.cssText = 'padding: 16px; text-align: center; color: #858585; font-size: 0.75rem;';
-        list.appendChild(emptyMsg);
-      }
-      emptyMsg.textContent = 'No folders match your search';
-    } else if (emptyMsg) {
-      emptyMsg.remove();
-    }
   }
 
   static selectWorkspace(folderPath) {
-    ModalDialog.closeModal();
-    ModalDialog.showNotification('Opening workspace: ' + folderPath, 'info');
+    if (!folderPath) return;
+    IDEWorkspaceView.workspacePath = folderPath;
+    localStorage.setItem('fmc_ide_workspace', folderPath);
+    localStorage.setItem('fmc_project_workspace_path', folderPath);
     
-    setTimeout(() => {
-      IDEWorkspaceView.render(folderPath);
-    }, 500);
+    // Update path display in workspace header
+    const pathText = document.getElementById('workspace-path-text');
+    if (pathText) pathText.textContent = folderPath;
+
+    const sidebarPathText = document.getElementById('ide-workspace-path-display');
+    if (sidebarPathText) sidebarPathText.textContent = folderPath;
+
+    if (typeof PlaygroundView !== 'undefined' && typeof PlaygroundView.updateWorkspaceIndicator === 'function') {
+      PlaygroundView.updateWorkspaceIndicator();
+    }
+
+    IDEWorkspaceView.loadFileTree(folderPath);
+    IDEWorkspaceView.loadFileTreeForSidebar();
+    ModalDialog.showNotification('Workspace opened: ' + folderPath, 'success');
   }
 
   static refreshExplorer() {
-    if (IDEWorkspaceView.workspacePath) {
-      IDEWorkspaceView.loadFileTree(IDEWorkspaceView.workspacePath);
+    const currentWs = IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+    if (currentWs) {
+      IDEWorkspaceView.loadFileTree(currentWs);
+      IDEWorkspaceView.loadFileTreeForSidebar();
     }
   }
 
@@ -347,40 +298,65 @@ class IDEWorkspaceView {
     }
   }
 
+  static formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  static copyPathToClipboard(filePath) {
+    if (!filePath) return;
+    navigator.clipboard.writeText(filePath).then(() => {
+      ModalDialog.showNotification(`Copied path: ${filePath}`, 'success');
+    }).catch(() => {
+      ModalDialog.showNotification('Failed to copy path to clipboard', 'warning');
+    });
+  }
+
   static renderFileTreeItems(items, parentPath, depth, isSidebar = false) {
     const targetId = isSidebar ? 'ide-file-tree-sidebar' : 'ide-file-tree';
     if (items.length === 0) {
-      return `<div style="padding: 8px 12px; color: #858585; font-size: 0.7rem;">Empty folder</div>`;
+      return `<div style="padding: 4px 12px; color: #858585; font-size: 0.8rem;">Empty folder</div>`;
     }
 
     // Sort: folders first, then files
     const sorted = [...items].sort((a, b) => {
       if (a.isDir && !b.isDir) return -1;
       if (!a.isDir && b.isDir) return 1;
-      return a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
     });
 
     return sorted.map(item => {
-      const itemPath = path.join(parentPath, item.name);
+      const itemPath = item.path || IDEWorkspaceView.joinPath(parentPath, item.name);
       const escapedPath = itemPath.replace(/\\/g, '\\\\');
+      const sizeStr = item.size ? IDEWorkspaceView.formatFileSize(item.size) : '';
       
       if (item.isDir) {
         const colorIndex = item.name.charCodeAt(0) % IDEWorkspaceView.FOLDER_COLORS.length;
         const folderColor = IDEWorkspaceView.FOLDER_COLORS[colorIndex];
         const isSidebarFlag = isSidebar ? 'true' : 'false';
         return `
-          <div class="tree-item folder" data-is-sidebar="${isSidebarFlag}" style="user-select: none;">
+          <div class="tree-item folder" data-is-sidebar="${isSidebarFlag}" style="user-select: none; position: relative; margin: 0; padding: 0;">
             <div onclick="IDEWorkspaceView.toggleFolder(this, '${escapedPath}', ${isSidebarFlag})" 
-              style="display: flex; align-items: center; padding: 3px 8px; cursor: pointer; font-size: 0.75rem; color: #cccccc;"
-              onmouseover="this.style.background='rgba(255,255,255,0.05)'" 
-              onmouseout="this.style.background='transparent'">
-              <i class="fa-solid fa-caret-down folder-arrow" style="width: 12px; margin-right: 4px; font-size: 0.6rem; color: #858585;"></i>
-              <i class="fa-solid fa-folder" style="color: ${folderColor}; margin-right: 6px; font-size: 0.8rem;"></i>
-              <span style="font-weight: 500;">${item.name}</span>
+              style="display: flex; align-items: center; justify-content: space-between; padding: 1px 4px; cursor: pointer; font-size: ${isSidebar ? '0.85rem' : '0.78rem'}; font-weight: 600; min-height: 22px; height: 22px; line-height: 20px; box-sizing: border-box; color: var(--text-main);"
+              onmouseover="this.style.background='rgba(255,255,255,0.08)'; const acts = this.querySelector('.tree-actions'); if(acts) acts.style.opacity='1';" 
+              onmouseout="this.style.background='transparent'; const acts = this.querySelector('.tree-actions'); if(acts) acts.style.opacity='0';">
+              <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                <i class="fa-solid fa-caret-right folder-arrow" style="width: 11px; margin-right: 3px; font-size: 0.65rem; color: var(--text-dim);"></i>
+                <i class="fa-solid fa-folder" style="color: ${folderColor}; margin-right: 5px; font-size: 0.82rem;"></i>
+                <span style="font-weight: 600; font-size: ${isSidebar ? '0.85rem' : '0.78rem'}; color: var(--text-main); overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
+              </div>
+              <div class="tree-actions" style="opacity: 0; display: flex; gap: 2px; align-items: center; transition: opacity 0.15s ease; flex-shrink: 0;">
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.createNewFile('${escapedPath}')" title="New File Inside" style="background: transparent; border: none; color: var(--primary-light); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-file-circle-plus"></i></button>
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.showRenameDialog('${escapedPath}', '${item.name.replace(/'/g, "\\'")}')" title="Rename Folder" style="background: transparent; border: none; color: var(--accent-amber); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-pencil"></i></button>
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.showDeleteDialog('${escapedPath}', '${item.name.replace(/'/g, "\\'")}', true)" title="Delete Folder" style="background: transparent; border: none; color: var(--accent-rose); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
             </div>
-            <div class="folder-children" style="display: block;">
-              <div style="padding-left: 16px;">
-                <div class="folder-loader" style="display: none; padding: 4px 8px; color: #858585; font-size: 0.7rem;">
+            <div class="folder-children" style="display: none;">
+              <div style="padding-left: 10px;">
+                <div class="folder-loader" style="display: none; padding: 2px 6px; color: var(--text-muted); font-size: 0.72rem;">
                   <i class="fa-solid fa-circle-notch fa-spin"></i> Loading...
                 </div>
                 <div class="folder-content"></div>
@@ -393,16 +369,24 @@ class IDEWorkspaceView {
         const iconClass = IDEWorkspaceView.FILE_ICONS[ext] || IDEWorkspaceView.FILE_ICONS['default'];
         const iconColor = ext === '.js' || ext === '.ts' ? '#fbbf24' : 
                          ext === '.py' ? '#60a5fa' : 
-                         ext === '.json' ? '#34d399' : '#858585';
+                         ext === '.json' ? '#34d399' : '#a1a1aa';
         
         return `
-          <div class="tree-item file" style="cursor: pointer;" 
+          <div class="tree-item file" style="cursor: pointer; position: relative; margin: 0; padding: 0;" 
             onclick="IDEWorkspaceView.handleFileClick('${escapedPath}', '${item.name}', ${isSidebar})"
-            onmouseover="this.style.background='rgba(255,255,255,0.05)'" 
-            onmouseout="this.style.background='transparent'">
-            <div style="display: flex; align-items: center; padding: 3px 8px; font-size: ${isSidebar ? '0.7rem' : '0.75rem'}; color: #cccccc;">
-              <i class="${iconClass}" style="width: 14px; margin-right: 6px; font-size: 0.7rem; color: ${iconColor};"></i>
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</span>
+            onmouseover="this.style.background='rgba(255,255,255,0.08)'; const acts = this.querySelector('.tree-actions'); if(acts) acts.style.opacity='1';" 
+            onmouseout="this.style.background='transparent'; const acts = this.querySelector('.tree-actions'); if(acts) acts.style.opacity='0';">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1px 4px; font-size: ${isSidebar ? '0.85rem' : '0.78rem'}; font-weight: 600; min-height: 22px; height: 22px; line-height: 20px; box-sizing: border-box; color: var(--text-main);">
+              <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                <i class="${iconClass}" style="width: 14px; margin-right: 5px; font-size: 0.75rem; color: ${iconColor};"></i>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: ${isSidebar ? '0.85rem' : '0.78rem'}; font-weight: 600; color: var(--text-main);">${item.name}</span>
+                ${sizeStr ? `<span style="margin-left: 6px; font-size: 0.65rem; color: var(--text-muted); opacity: 0.85;">${sizeStr}</span>` : ''}
+              </div>
+              <div class="tree-actions" style="opacity: 0; display: flex; gap: 2px; align-items: center; transition: opacity 0.15s ease; flex-shrink: 0;">
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.copyPathToClipboard('${escapedPath}')" title="Copy Path" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-link"></i></button>
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.showRenameDialog('${escapedPath}', '${item.name.replace(/'/g, "\\'")}')" title="Rename File" style="background: transparent; border: none; color: var(--accent-amber); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-pencil"></i></button>
+                <button type="button" onclick="event.stopPropagation(); IDEWorkspaceView.showDeleteDialog('${escapedPath}', '${item.name.replace(/'/g, "\\'")}', false)" title="Delete File" style="background: transparent; border: none; color: var(--accent-rose); cursor: pointer; font-size: 0.68rem; padding: 1px 3px;"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
             </div>
           </div>
         `;
@@ -414,6 +398,7 @@ class IDEWorkspaceView {
     // isSidebar passed explicitly from onclick handler
     const arrow = element.querySelector('.folder-arrow');
     const childrenContainer = element.parentElement;
+    const folderChildren = childrenContainer.querySelector('.folder-children');
     const contentDiv = childrenContainer.querySelector('.folder-content');
     const loaderDiv = childrenContainer.querySelector('.folder-loader');
 
@@ -421,11 +406,13 @@ class IDEWorkspaceView {
       // Collapse
       arrow.classList.remove('fa-caret-down');
       arrow.classList.add('fa-caret-right');
-      contentDiv.style.display = 'none';
+      if (folderChildren) folderChildren.style.display = 'none';
+      if (contentDiv) contentDiv.style.display = 'none';
     } else {
       // Expand
       arrow.classList.remove('fa-caret-right');
       arrow.classList.add('fa-caret-down');
+      if (folderChildren) folderChildren.style.display = 'block';
       
       if (contentDiv.innerHTML === '') {
         // Load folder contents
@@ -439,7 +426,7 @@ class IDEWorkspaceView {
             contentDiv.innerHTML = this.renderFileTreeItems(res.items, folderPath, 0, isSidebar);
           }
         } catch (err) {
-          contentDiv.innerHTML = `<div style="color: #f44336; font-size: 0.7rem; padding: 4px;">Error loading folder</div>`;
+          contentDiv.innerHTML = `<div style="color: var(--accent-rose); font-size: 0.7rem; padding: 4px;">Error loading folder</div>`;
         } finally {
           loaderDiv.style.display = 'none';
           contentDiv.style.display = 'block';
@@ -451,7 +438,20 @@ class IDEWorkspaceView {
   }
 
   // ── File Operations ──
+  static openFileInEditor(filePath, fileName) {
+    if (!filePath) return;
+    const name = fileName || filePath.split('\\').pop().split('/').pop() || 'file';
+    if (typeof SidebarEditorView !== 'undefined' && document.getElementById('ide-editor-drawer')) {
+      SidebarEditorView.open(filePath, name);
+    } else {
+      IDEWorkspaceView.openFile(filePath, name);
+    }
+  }
+
   static async openFile(filePath, fileName) {
+    if (!fileName && filePath) {
+      fileName = filePath.split('\\').pop().split('/').pop() || 'file';
+    }
     // Add to open files if not already open
     if (!IDEWorkspaceView.openFiles.find(f => f.path === filePath)) {
       IDEWorkspaceView.openFiles.push({ path: filePath, name: fileName });
@@ -668,12 +668,33 @@ class IDEWorkspaceView {
 
   // ── Terminal ──
   static handleTerminalInput(event) {
+    const input = event.target;
     if (event.key === 'Enter') {
-      const input = event.target;
       const command = input.value.trim();
       if (command) {
+        IDEWorkspaceView.terminalHistory.push(command);
+        IDEWorkspaceView.currentTerminalLine = IDEWorkspaceView.terminalHistory.length;
         this.executeCommand(command);
         input.value = '';
+      }
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (IDEWorkspaceView.terminalHistory.length > 0) {
+        if (IDEWorkspaceView.currentTerminalLine > 0) {
+          IDEWorkspaceView.currentTerminalLine--;
+        }
+        input.value = IDEWorkspaceView.terminalHistory[IDEWorkspaceView.currentTerminalLine] || '';
+      }
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (IDEWorkspaceView.terminalHistory.length > 0) {
+        if (IDEWorkspaceView.currentTerminalLine < IDEWorkspaceView.terminalHistory.length - 1) {
+          IDEWorkspaceView.currentTerminalLine++;
+          input.value = IDEWorkspaceView.terminalHistory[IDEWorkspaceView.currentTerminalLine] || '';
+        } else {
+          IDEWorkspaceView.currentTerminalLine = IDEWorkspaceView.terminalHistory.length;
+          input.value = '';
+        }
       }
     }
   }
@@ -735,7 +756,6 @@ class IDEWorkspaceView {
   }
 
   static switchTerminalTab(tab) {
-    // Simple implementation - could expand to actual tabs
     document.querySelectorAll('.terminal-tab').forEach(t => {
       t.style.color = '#858585';
       t.style.borderBottom = 'none';
@@ -744,53 +764,287 @@ class IDEWorkspaceView {
     event.target.style.borderBottom = '1px solid #007acc';
   }
 
-  // ── New File/Folder ──
-  static createNewFile() {
-    if (!IDEWorkspaceView.workspacePath) {
-      ModalDialog.showNotification('Please open a workspace first', 'warning');
+  // ── Interactive File & Folder CRUD Modals with Validations ──
+  static createNewFile(targetFolder = null) {
+    const baseDir = targetFolder || IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+    if (!baseDir) {
+      ModalDialog.showNotification('Please open a workspace folder first', 'warning');
       return;
     }
-    
-    const fileName = prompt('Enter file name (e.g., script.js):');
-    if (!fileName) return;
-    
-    const filePath = path.join(IDEWorkspaceView.workspacePath, fileName);
-    
-    // Create empty file
-    fetch('/api/playground/save-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetPath: filePath, codeContent: '' })
-    })
-    .then(() => {
-      ModalDialog.showNotification(`Created: ${fileName}`, 'success');
-      IDEWorkspaceView.loadFileTree(IDEWorkspaceView.workspacePath);
-      IDEWorkspaceView.openFile(filePath, fileName);
-    })
-    .catch(err => ModalDialog.showNotification('Error creating file: ' + err.message, 'error'));
+
+    const modalContent = `
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.78rem;">
+        <div style="color: var(--text-muted); font-size: 0.72rem;">
+          <i class="fa-solid fa-folder-open" style="color: var(--accent-amber); margin-right: 4px;"></i> Location: <code style="color: var(--primary-light);">${baseDir}</code>
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">File Name:</label>
+          <input type="text" id="new-file-name-input" class="form-control" placeholder="e.g. app.js, index.html, test.py" style="width: 100%; font-family: monospace; font-size: 0.78rem;" autofocus />
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-muted);">Starter Template (Optional):</label>
+          <select id="new-file-template-select" class="form-control" style="width: 100%; font-size: 0.75rem;">
+            <option value="empty">Empty File</option>
+            <option value="js">JavaScript Module (.js)</option>
+            <option value="py">Python Script (.py)</option>
+            <option value="html">HTML5 Page (.html)</option>
+            <option value="json">JSON Data Structure (.json)</option>
+            <option value="md">Markdown Document (.md)</option>
+            <option value="css">CSS Stylesheet (.css)</option>
+          </select>
+        </div>
+        <div id="new-file-error-msg" style="display: none; color: var(--accent-rose); font-size: 0.72rem;"></div>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-file-circle-plus" style="color: var(--primary-light); margin-right: 6px;"></i> Create New File',
+      content: modalContent,
+      confirmText: 'Create File',
+      onConfirm: () => {
+        const input = document.getElementById('new-file-name-input');
+        const templateSelect = document.getElementById('new-file-template-select');
+        const errorDiv = document.getElementById('new-file-error-msg');
+        const rawName = input ? input.value.trim() : '';
+
+        if (!rawName) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Please enter a valid file name.'; }
+          return false;
+        }
+
+        // Validate illegal Windows file characters
+        if (/[<>:"/\\|?*]/.test(rawName)) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'File name cannot contain < > : " / \\ | ? *'; }
+          return false;
+        }
+
+        let initialContent = '';
+        const selectedTemplate = templateSelect ? templateSelect.value : 'empty';
+        if (selectedTemplate === 'js') initialContent = "/**\n * " + rawName + "\n */\n'use strict';\n\nconsole.log('Hello from " + rawName + "');\n";
+        else if (selectedTemplate === 'py') initialContent = "#!/usr/bin/env python3\n# " + rawName + "\n\nprint('Hello from " + rawName + "')\n";
+        else if (selectedTemplate === 'html') initialContent = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>" + rawName + "</title>\n</head>\n<body>\n  <h1>" + rawName + "</h1>\n</body>\n</html>\n";
+        else if (selectedTemplate === 'json') initialContent = "{\n  \"name\": \"" + rawName + "\",\n  \"version\": \"1.0.0\"\n}\n";
+        else if (selectedTemplate === 'md') initialContent = "# " + rawName + "\n\nDescription for " + rawName + ".\n";
+        else if (selectedTemplate === 'css') initialContent = "/* Styles for " + rawName + " */\n";
+
+        const targetFilePath = IDEWorkspaceView.joinPath(baseDir, rawName);
+
+        fetch('/api/playground/save-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetPath: targetFilePath, codeContent: initialContent })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            ModalDialog.closeModal();
+            ModalDialog.showNotification(`File created: ${rawName}`, 'success');
+            const ws = IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+            if (ws) {
+              IDEWorkspaceView.loadFileTree(ws);
+              IDEWorkspaceView.loadFileTreeForSidebar();
+            }
+            IDEWorkspaceView.openFile(targetFilePath, rawName);
+          } else {
+            if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = res.error || 'Failed to create file.'; }
+          }
+        })
+        .catch(err => {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = err.message; }
+        });
+
+        return false; // Keep modal open until async finish
+      }
+    });
+
+    setTimeout(() => {
+      const input = document.getElementById('new-file-name-input');
+      if (input) input.focus();
+    }, 100);
   }
 
-  static createNewFolder() {
-    if (!IDEWorkspaceView.workspacePath) {
-      ModalDialog.showNotification('Please open a workspace first', 'warning');
+  static createNewFolder(targetFolder = null) {
+    const baseDir = targetFolder || IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+    if (!baseDir) {
+      ModalDialog.showNotification('Please open a workspace folder first', 'warning');
       return;
     }
-    
-    const folderName = prompt('Enter folder name:');
-    if (!folderName) return;
-    
-    const folderPath = path.join(IDEWorkspaceView.workspacePath, folderName);
-    
-    fetch('/api/playground/create-folder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetPath: folderPath })
-    })
-    .then(() => {
-      ModalDialog.showNotification(`Created folder: ${folderName}`, 'success');
-      IDEWorkspaceView.loadFileTree(IDEWorkspaceView.workspacePath);
-    })
-    .catch(err => ModalDialog.showNotification('Error creating folder: ' + err.message, 'error'));
+
+    const modalContent = `
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.78rem;">
+        <div style="color: var(--text-muted); font-size: 0.72rem;">
+          <i class="fa-solid fa-folder-open" style="color: var(--accent-amber); margin-right: 4px;"></i> Location: <code style="color: var(--primary-light);">${baseDir}</code>
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">Folder Name:</label>
+          <input type="text" id="new-folder-name-input" class="form-control" placeholder="e.g. src, components, utils" style="width: 100%; font-family: monospace; font-size: 0.78rem;" autofocus />
+        </div>
+        <div id="new-folder-error-msg" style="display: none; color: var(--accent-rose); font-size: 0.72rem;"></div>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-folder-plus" style="color: var(--accent-amber); margin-right: 6px;"></i> Create New Folder',
+      content: modalContent,
+      confirmText: 'Create Folder',
+      onConfirm: () => {
+        const input = document.getElementById('new-folder-name-input');
+        const errorDiv = document.getElementById('new-folder-error-msg');
+        const rawName = input ? input.value.trim() : '';
+
+        if (!rawName) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Please enter a folder name.'; }
+          return false;
+        }
+
+        if (/[<>:"/\\|?*]/.test(rawName)) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Folder name cannot contain < > : " / \\ | ? *'; }
+          return false;
+        }
+
+        const targetFolderPath = IDEWorkspaceView.joinPath(baseDir, rawName);
+
+        fetch('/api/playground/create-folder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetPath: targetFolderPath })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            ModalDialog.closeModal();
+            ModalDialog.showNotification(`Folder created: ${rawName}`, 'success');
+            const ws = IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+            if (ws) {
+              IDEWorkspaceView.loadFileTree(ws);
+              IDEWorkspaceView.loadFileTreeForSidebar();
+            }
+          } else {
+            if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = res.error || 'Failed to create folder.'; }
+          }
+        })
+        .catch(err => {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = err.message; }
+        });
+
+        return false;
+      }
+    });
+
+    setTimeout(() => {
+      const input = document.getElementById('new-folder-name-input');
+      if (input) input.focus();
+    }, 100);
+  }
+
+  static showRenameDialog(oldPath, oldName) {
+    const modalContent = `
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.78rem;">
+        <div style="color: var(--text-muted); font-size: 0.72rem;">Current Path: <code style="color: var(--primary-light);">${oldPath}</code></div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: var(--text-main);">New Name:</label>
+          <input type="text" id="rename-item-input" class="form-control" value="${oldName}" style="width: 100%; font-family: monospace; font-size: 0.78rem;" autofocus />
+        </div>
+        <div id="rename-error-msg" style="display: none; color: var(--accent-rose); font-size: 0.72rem;"></div>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-pencil" style="color: var(--accent-amber); margin-right: 6px;"></i> Rename Item',
+      content: modalContent,
+      confirmText: 'Rename',
+      onConfirm: () => {
+        const input = document.getElementById('rename-item-input');
+        const errorDiv = document.getElementById('rename-error-msg');
+        const newName = input ? input.value.trim() : '';
+
+        if (!newName || newName === oldName) {
+          ModalDialog.closeModal();
+          return;
+        }
+
+        if (/[<>:"/\\|?*]/.test(newName)) {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Name cannot contain < > : " / \\ | ? *'; }
+          return false;
+        }
+
+        fetch('/api/playground/rename-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPath, newName })
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            ModalDialog.closeModal();
+            ModalDialog.showNotification(`Renamed to "${newName}"`, 'success');
+            const ws = IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+            if (ws) {
+              IDEWorkspaceView.loadFileTree(ws);
+              IDEWorkspaceView.loadFileTreeForSidebar();
+            }
+          } else {
+            if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = res.error || 'Failed to rename item.'; }
+          }
+        })
+        .catch(err => {
+          if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = err.message; }
+        });
+
+        return false;
+      }
+    });
+
+    setTimeout(() => {
+      const input = document.getElementById('rename-item-input');
+      if (input) { input.focus(); input.select(); }
+    }, 100);
+  }
+
+  static showDeleteDialog(targetPath, itemName, isDir) {
+    const modalContent = `
+      <div style="font-size: 0.78rem; color: var(--text-main); line-height: 1.5;">
+        <p>Are you sure you want to permanently delete this ${isDir ? 'folder and all its contents' : 'file'}?</p>
+        <div style="padding: 8px; background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.3); border-radius: 4px; color: var(--accent-rose); font-family: monospace; font-size: 0.72rem; word-break: break-all;">
+          ${targetPath}
+        </div>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose); margin-right: 6px;"></i> Confirm Permanent Delete',
+      content: modalContent,
+      confirmText: 'Delete Permanently',
+      onConfirm: () => {
+        fetch('/api/playground/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetPath })
+        })
+        .then(r => r.json())
+        .then(res => {
+          ModalDialog.closeModal();
+          if (res.success) {
+            ModalDialog.showNotification(`Deleted: ${itemName}`, 'success');
+            // Close tab if deleted file was open
+            if (IDEWorkspaceView.activeFile === targetPath) {
+              IDEWorkspaceView.closeTab(targetPath);
+            }
+            const ws = IDEWorkspaceView.workspacePath || localStorage.getItem('fmc_ide_workspace');
+            if (ws) {
+              IDEWorkspaceView.loadFileTree(ws);
+              IDEWorkspaceView.loadFileTreeForSidebar();
+            }
+          } else {
+            ModalDialog.showNotification(`Delete failed: ${res.error}`, 'error');
+          }
+        })
+        .catch(err => {
+          ModalDialog.closeModal();
+          ModalDialog.showNotification(`Error: ${err.message}`, 'error');
+        });
+      }
+    });
   }
 
   // ── AI Integration ──
@@ -828,8 +1082,36 @@ class IDEWorkspaceView {
 
   // ── Activity Panel Switching ──
   static switchActivity(panel) {
-    // For now, just log - could expand to different sidebar views
-    console.log('Switched to activity:', panel);
+    switch (panel) {
+      case 'explorer':
+        IDEWorkspaceView.refreshExplorer();
+        ModalDialog.showNotification('File Explorer Active', 'info');
+        break;
+      case 'search':
+        if (typeof PlaygroundViewHelper !== 'undefined' && PlaygroundViewHelper.showQuickOpenModal) {
+          PlaygroundViewHelper.showQuickOpenModal();
+        } else {
+          ModalDialog.showNotification('Press Ctrl+P to quick-search workspace files', 'info');
+        }
+        break;
+      case 'git':
+        IDEWorkspaceView.executeCommand('git status');
+        ModalDialog.showNotification('Executed: git status in terminal', 'info');
+        break;
+      case 'debug':
+        IDEWorkspaceView.runCurrentFile();
+        break;
+      case 'extensions':
+        ModalDialog.showNotification('AI Agent Tools Active: Web Search, Image Gen, YouTube, PowerShell, Code Auto-Patch', 'info');
+        break;
+      case 'settings':
+        if (typeof app !== 'undefined' && app.navigate) {
+          app.navigate('settings');
+        }
+        break;
+      default:
+        console.log('Switched to activity:', panel);
+    }
   }
 
   static toggleEditorPanel() {

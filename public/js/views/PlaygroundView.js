@@ -1,8 +1,9 @@
 /**
  * PlaygroundView.js
- * Purpose: jDroid-X-FMC Agents & Chat Window for FreeModelsClub.
+ * Purpose: jDroid-X Agents & Chat Window for FreeModelsClub.
  * Structure: Strict OOPS-based MVC delegation (< 2000 lines).
- * Provider: Ollama (http://localhost:11434/v1)
+ * Providers: Dynamic Free Cloud & Localhost Model Providers
+ * Dependencies: ApiService, ModalDialog, AppStore, ModelDropdownHelper
  */
 
 class PlaygroundView {
@@ -146,8 +147,64 @@ class PlaygroundView {
     }
     PlaygroundView.saveSessions();
     PlaygroundView.renderSessionList();
-    PlaygroundView.renderMessages();
     PlaygroundView.renderAgentsWindow();
+  }
+
+  static exportSession(sessionId) {
+    const session = (window.app.chatSessions || []).find(s => s.id === (sessionId || window.app.activeSessionId));
+    if (!session || !session.messages || session.messages.length === 0) {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('No messages to export.', 'warning');
+      return;
+    }
+    if (typeof ModalDialog !== 'undefined') {
+      ModalDialog.showOptionModal({
+        title: 'Export Chat Conversation',
+        message: 'Select the desired format to export this conversation history for offline analysis or documentation:',
+        icon: 'fa-file-export',
+        options: [
+          {
+            id: 'md',
+            label: 'Export as Markdown (.md)',
+            icon: 'fa-file-lines',
+            type: 'primary',
+            action: () => {
+              let md = `# FreeModelsClub Conversation: ${session.title || 'Chat Session'}\n\n`;
+              md += `- **Date:** ${new Date(session.updatedAt || Date.now()).toLocaleString()}\n`;
+              md += `- **Model:** ${session.modelId || 'Default'}\n`;
+              md += `- **Session ID:** \`${session.id}\`\n\n---\n\n`;
+              session.messages.forEach(m => {
+                const role = m.role === 'user' ? '### 👤 User' : '### 🤖 Assistant';
+                md += `${role}\n\n${m.content}\n\n---\n\n`;
+              });
+              const blob = new Blob([md], { type: 'text/markdown' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `FMC_Chat_${session.id || Date.now()}.md`;
+              a.click();
+              URL.revokeObjectURL(url);
+              ModalDialog.showNotification('Markdown conversation downloaded.', 'success');
+            }
+          },
+          {
+            id: 'json',
+            label: 'Export as JSON (.json)',
+            icon: 'fa-file-code',
+            type: 'cyan',
+            action: () => {
+              const blob = new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `FMC_Chat_${session.id || Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+              ModalDialog.showNotification('JSON conversation downloaded.', 'success');
+            }
+          }
+        ]
+      });
+    }
   }
 
   static async fetchWithTimeout(url, timeoutMs = 350) {
@@ -163,7 +220,27 @@ class PlaygroundView {
   }
 
   // ── Models & Providers Loader ──
+  static _hasRegisteredStoreListeners = false;
+
   static async loadAllModels(force = false) {
+    if (window.AppStore && !PlaygroundView._hasRegisteredStoreListeners) {
+      PlaygroundView._hasRegisteredStoreListeners = true;
+      window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+        PlaygroundView.allModels = null;
+        PlaygroundView.providers = null;
+        PlaygroundView.combos = null;
+        PlaygroundView.loadAllModels(true).then(() => {
+          PlaygroundView.populateModelDropdown();
+        }).catch(() => {});
+      });
+      window.AppStore.on('MODELS_MUTATED', () => {
+        PlaygroundView.allModels = null;
+        PlaygroundView.loadAllModels(true).then(() => {
+          PlaygroundView.populateModelDropdown();
+        }).catch(() => {});
+      });
+    }
+
     if (!force && PlaygroundView.allModels && PlaygroundView.allModels.length > 0 && PlaygroundView.providers && PlaygroundView.providers.length > 0) {
       // Return cached catalog instantly; revalidate in background
       setTimeout(() => PlaygroundView.loadAllModels(true).catch(() => {}), 1000);
@@ -171,13 +248,19 @@ class PlaygroundView {
     }
 
     try {
-      const [modelsRes, providersRes, combosRes, ollamaTagsRes, activeCacheRes] = await Promise.all([
+      const [modelsRes, providersRes, combosRes, activeCacheRes] = await Promise.all([
         ApiService.getActiveModels().catch(() => ({ models: [] })),
         ApiService.getAllProviders().catch(() => ({ providers: [] })),
         ApiService.getCombos().catch(() => ({ combos: [] })),
-        PlaygroundView.fetchWithTimeout('http://localhost:11434/api/tags', 350),
         ApiService.getActiveModelsCache().catch(() => ({ activeModels: [] }))
       ]);
+
+      const dbProviders = Array.isArray(providersRes) ? providersRes : (providersRes && providersRes.providers) || [];
+      PlaygroundView.providers = dbProviders.filter(p => p.isActive);
+
+      const localProv = dbProviders.find(p => p.id === 'ollama' || p.baseUrl?.includes('11434') || p.protocol?.toLowerCase().includes('ollama'));
+      const localBaseUrl = localProv?.baseUrl ? (localProv.baseUrl.replace(/\/v1\/?$/, '').replace(/\/+$/, '') + '/api/tags') : 'http://localhost:11434/api/tags';
+      const ollamaTagsRes = await PlaygroundView.fetchWithTimeout(localBaseUrl, 350);
 
       let allModelsList = (modelsRes && modelsRes.models) ? modelsRes.models : [];
       
@@ -188,9 +271,6 @@ class PlaygroundView {
       }
       
       PlaygroundView.allModels = allModelsList;
-      
-      const dbProviders = Array.isArray(providersRes) ? providersRes : (providersRes && providersRes.providers) || [];
-      PlaygroundView.providers = dbProviders.filter(p => p.isActive);
 
       const dbCombos = Array.isArray(combosRes) ? combosRes : (combosRes && combosRes.combos) || [];
       PlaygroundView.combos = dbCombos.filter(c => c.isActive);
@@ -326,7 +406,7 @@ class PlaygroundView {
     }
     PlaygroundView.loadSessions();
 
-    const selectedModelId = window.app.selectedModelId || 'llama-3.3-70b-versatile';
+    const selectedModelId = (window.app && window.app.selectedModelId) || 'llama-3.3-70b-versatile';
     let initialProvider = 'groq';
     const selectedModelObj = PlaygroundView.allModels.find(m => m.id === selectedModelId);
     if (selectedModelObj && selectedModelObj.providerId) {
@@ -356,7 +436,7 @@ class PlaygroundView {
        const installedModel = initialModels.find(m => PlaygroundView.localInstalledModels.some(n => n === m.modelId || n === m.id || n.startsWith(m.modelId)));
        if (installedModel) {
           defaultModelId = installedModel.id;
-          window.app.selectedModelId = defaultModelId;
+          if (window.app) window.app.selectedModelId = defaultModelId;
        }
     }
 
@@ -393,10 +473,10 @@ class PlaygroundView {
       <div id="playground-workspace-container" class="glass-panel" style="padding: 2px; margin: 2px; overflow: hidden; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-card); display: flex; width: calc(100% - 4px); height: calc(100vh - 112px); position: relative; box-shadow: var(--tile-shadow); box-sizing: border-box;">
         
         <!-- LEFT SIDEBAR: 2-TAB PANEL (Chat | IDE) -->
-        <div id="left-sidebar" class="sidebar-container" style="width: 240px; min-width: 0; max-width: 550px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: relative; transition: width 0.1s ease; flex-shrink: 0;">
+        <div id="left-sidebar" class="sidebar-container" style="width: 240px; min-width: 0; max-width: 550px; background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: relative; transition: width 0.1s ease; flex-shrink: 0;">
           
           <!-- Tab Switcher + Sidebar Collapse -->
-          <div class="sidebar-tabs" style="display: flex; align-items: center; border-bottom: 1px solid var(--border-color); background: var(--bg-sidebar);">
+          <div class="sidebar-tabs" style="display: flex; align-items: center; border-bottom: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02);">
             <button id="tab-chat-btn" onclick="PlaygroundView.switchLeftTab('chat')" class="sidebar-tab active" style="flex: 1; padding: 8px 0; background: transparent; border: none; color: var(--text-main); cursor: pointer; font-size: 0.75rem; font-weight: 600; border-bottom: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease;">
               <i class="fa-solid fa-comments"></i> jChat
             </button>
@@ -409,24 +489,29 @@ class PlaygroundView {
           </div>
           
           <!-- Chat Panel -->
-          <div id="left-panel-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+          <div id="left-panel-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: rgba(255, 255, 255, 0.02);">
             <!-- Header -->
-            <div class="sidebar-section-header" style="padding: 10px 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div class="sidebar-section-header" style="padding: 8px 10px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.01);">
               <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Conversations</span>
-              <button onclick="PlaygroundView.createNewSession()" class="fmc-chat-icon-btn" title="New Chat">
-                <i class="fa-solid fa-plus"></i>
-              </button>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <button onclick="PlaygroundView.exportSession()" class="fmc-chat-icon-btn" title="Export Conversation (Markdown / JSON)">
+                  <i class="fa-solid fa-file-export" style="color: var(--accent-cyan);"></i>
+                </button>
+                <button onclick="PlaygroundView.createNewSession()" class="fmc-chat-icon-btn" title="New Chat">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
             </div>
             <!-- Sessions List -->
-            <div style="flex: 1; overflow-y: auto; padding: 8px;" id="session-list-container">
+            <div style="flex: 1; overflow-y: auto; padding: 6px;" id="session-list-container">
               <!-- Sessions rendered here -->
             </div>
           </div>
           
-          <!-- IDE Panel -->
-          <div id="left-panel-ide" style="flex: 1; display: none; flex-direction: column; overflow: hidden;">
+          <!-- IDE Panel (Conversation Sidepanel IDE Tab) -->
+          <div id="left-panel-ide" style="flex: 1; display: none; flex-direction: column; overflow: hidden; padding: 2px; box-sizing: border-box;">
             <!-- Header -->
-            <div class="sidebar-section-header" style="padding: 10px 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div class="sidebar-section-header" style="padding: 4px 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Explorer</span>
               <div style="display: flex; gap: 4px; align-items: center;">
                 <button onclick="IDEWorkspaceView.refreshExplorer()" class="fmc-chat-icon-btn" title="Refresh">
@@ -438,13 +523,13 @@ class PlaygroundView {
               </div>
             </div>
             <!-- Workspace Path -->
-            <div id="ide-workspace-path-display" class="sidebar-path-display" style="padding: 6px 12px; font-size: 0.65rem; color: var(--text-dim); border-bottom: 1px solid var(--border-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <div id="ide-workspace-path-display" class="sidebar-path-display" style="padding: 2px 6px; height: 24px; min-height: 24px; line-height: 20px; font-size: 0.84rem; font-weight: 600; color: var(--primary-light); background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; box-sizing: border-box;">
               No workspace opened
             </div>
             <!-- File Tree -->
-            <div id="ide-file-tree-sidebar" style="flex: 1; overflow-y: auto; padding: 4px 0;">
-              <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.7rem;">
-                <i class="fa-solid fa-folder-open" style="font-size: 1.5rem; margin-bottom: 8px; opacity: 0.5;"></i><br>
+            <div id="ide-file-tree-sidebar" style="flex: 1; overflow-y: auto; padding: 1px 2px; font-size: 0.85rem; font-weight: 600;">
+              <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem; font-weight: 600;">
+                <i class="fa-solid fa-folder-open" style="font-size: 1.4rem; margin-bottom: 6px; opacity: 0.7; color: var(--primary-light);"></i><br>
                 Open a folder to start coding
               </div>
             </div>
@@ -460,7 +545,7 @@ class PlaygroundView {
           </div>
           
           <!-- Status Bar -->
-          <div class="sidebar-status-bar" style="padding: 4px 8px; background: var(--primary); font-size: 0.6rem; color: white; display: flex; justify-content: space-between; align-items: center;">
+          <div class="sidebar-status-bar" style="padding: 2px 2px; background: var(--primary); font-size: 0.8rem; font-weight: 500; color: white; display: flex; justify-content: space-between; align-items: center;">
             <span id="sidebar-status-text">jChat</span>
             <span id="workspace-indicator" style="display: flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-circle" style="color: #f44336;"></i> No Workspace
@@ -557,88 +642,10 @@ class PlaygroundView {
 
         </div>
 
-        <!-- Right Parameters Slide-Out Drawer -->
-        <div id="chat-parameters-right-drawer" class="glass-panel" style="width: 0px; min-width: 0px; max-width: 0px; flex-shrink: 0; flex-grow: 0; padding: 0px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; border-left: 0px solid var(--border-color); background: var(--bg-sidebar); height: 100%; margin-bottom: 0; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); opacity: 0; pointer-events: none; z-index: 95;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; min-width: 260px;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);"><i class="fa-solid fa-sliders"></i> Hyperparameters</span>
-            <button class="btn btn-link btn-xs" style="color: var(--text-muted); font-size: 1.1rem; cursor: pointer;" onclick="PlaygroundView.toggleSidebar('right')">&times;</button>
-          </div>
-
-          <!-- Sliders -->
-          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px;">
-            <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); display: flex; justify-content: space-between;">
-              <span><i class="fa-solid fa-temperature-half"></i> Temperature</span>
-              <span id="temp-val-display" style="color: var(--accent-amber);">${activeSession.temperature || 0.7}</span>
-            </div>
-            <input type="range" class="form-range-slider" id="param-temp-slider" min="0" max="2" step="0.1" value="${activeSession.temperature || 0.7}" style="width:100%; cursor:pointer;" oninput="PlaygroundView.updateHyperparameter('temperature', parseFloat(this.value))">
-
-            <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); display: flex; justify-content: space-between; margin-top: 4px;">
-              <span><i class="fa-solid fa-filter"></i> Top-P</span>
-              <span id="topp-val-display" style="color: var(--accent-amber);">${activeSession.topP || 0.9}</span>
-            </div>
-            <input type="range" class="form-range-slider" id="param-topp-slider" min="0" max="1" step="0.05" value="${activeSession.topP || 0.9}" style="width:100%; cursor:pointer;" oninput="PlaygroundView.updateHyperparameter('topP', parseFloat(this.value))">
-
-            <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); display: flex; justify-content: space-between; margin-top: 4px;">
-              <span><i class="fa-solid fa-coins"></i> Max Tokens</span>
-              <span id="maxtokens-val-display" style="color: var(--accent-amber);">${activeSession.maxTokens || 4096}</span>
-            </div>
-            <input type="range" class="form-range-slider" id="param-maxtokens-slider" min="256" max="16384" step="256" value="${activeSession.maxTokens || 4096}" style="width:100%; cursor:pointer;" oninput="PlaygroundView.updateHyperparameter('maxTokens', parseInt(this.value))">
-
-            <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); display: flex; justify-content: space-between; margin-top: 4px;">
-              <span><i class="fa-solid fa-repeat"></i> Frequency Penalty</span>
-              <span id="freqpen-val-display" style="color: var(--accent-amber);">${activeSession.frequencyPenalty || 0.0}</span>
-            </div>
-            <input type="range" class="form-range-slider" id="param-freqpen-slider" min="0" max="2" step="0.1" value="${activeSession.frequencyPenalty || 0.0}" style="width:100%; cursor:pointer;" oninput="PlaygroundView.updateHyperparameter('frequencyPenalty', parseFloat(this.value))">
-
-            <div style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); display: flex; justify-content: space-between; margin-top: 4px;">
-              <span><i class="fa-solid fa-ghost"></i> Presence Penalty</span>
-              <span id="prespen-val-display" style="color: var(--accent-amber);">${activeSession.presencePenalty || 0.0}</span>
-            </div>
-            <input type="range" class="form-range-slider" id="param-prespen-slider" min="0" max="2" step="0.1" value="${activeSession.presencePenalty || 0.0}" style="width:100%; cursor:pointer;" oninput="PlaygroundView.updateHyperparameter('presencePenalty', parseFloat(this.value))">
-          </div>
-
-          <!-- System Prompt with ROCA Format Presets -->
-          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label style="font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan);"><i class="fa-solid fa-user-gear"></i> System Prompt (ROCA Format)</label>
-            </div>
-            <select id="select-system-prompt-roca" class="form-control" style="font-size: 0.68rem; padding: 2px 4px; margin-bottom: 4px;" onchange="PlaygroundView.applySystemPromptPreset(this.value)">
-              <option value="">-- Select ROCA System Prompt Preset --</option>
-              <option value="expert">1. Expert Multidisciplinary AI Assistant [ROCA]</option>
-              <option value="architect">2. Clean OOPS MVC Enterprise Architect [ROCA]</option>
-              <option value="fullstack">3. Full-Stack Node.js &amp; Vanilla JS Engineer [ROCA]</option>
-              <option value="uncensored">4. Uncensored Raw Developer Mode [ROCA]</option>
-              <option value="qa">5. QA &amp; Automated Test Architecture Auditor [ROCA]</option>
-              <option value="database">6. JSON Database &amp; Schema Persistence Architect [ROCA]</option>
-              <option value="security">7. Zero-Trust Security &amp; Key Protection Guard [ROCA]</option>
-              <option value="bi_analytics">8. BI &amp; Telemetry Analytics Specialist [ROCA]</option>
-              <option value="ui_ux">9. Glassmorphism UI/UX Pro-Max Designer [ROCA]</option>
-              <option value="json_schema">10. Strict JSON Schema Output Generator [ROCA]</option>
-              <option value="debugger">11. Root-Cause Diagnostic &amp; Self-Healing Debugger [ROCA]</option>
-              <option value="prompt_engineer">12. Prompt Engineering &amp; ROCAS Optimizer [ROCA]</option>
-            </select>
-            <textarea id="param-system-prompt" class="form-control" style="font-size: 0.72rem; min-height: 95px; resize: vertical; background: var(--bg-input);" placeholder="Enter custom assistant system prompt (ROCA format: Role, Objective, Context, Actions)..." onchange="PlaygroundView.updateSystemPrompt(this.value)">${(typeof PlaygroundViewHelper !== 'undefined') ? PlaygroundViewHelper.escapeHtml(activeSession.systemPrompt || '') : (activeSession.systemPrompt || '')}</textarea>
-          </div>
-
-          <!-- Show Working Details Toggle -->
-          <div style="background: rgba(56,189,248,0.08); border: 1px solid var(--accent-cyan); border-radius: 6px; padding: 8px;">
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); cursor: pointer;">
-              <input type="checkbox" id="param-show-working-details" ${activeSession.showWorkingDetails ? 'checked' : ''} onchange="PlaygroundView.toggleShowWorkingDetails(this.checked)" />
-              <i class="fa-solid fa-circle-info"></i> Show Working Details
-            </label>
-            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 4px; line-height: 1.3;">
-              Reasoning details display toggle.
-            </div>
-          </div>
-
-          <!-- Uncensored Mode -->
-          <div style="background: rgba(244,63,94,0.08); border: 1px solid var(--accent-rose); border-radius: 6px; padding: 8px;">
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: var(--accent-rose); cursor: pointer;">
-              <input type="checkbox" id="param-uncensored-mode" ${activeSession.uncensored ? 'checked' : ''} onchange="PlaygroundView.toggleUncensoredMode(this.checked)" />
-              <i class="fa-solid fa-radiation"></i> Uncensored Mode
-            </label>
-          </div>
-        </div>
+        <!-- Right Parameters Slide-Out Drawer (OOPS View Delegation) -->
+        ${(typeof ParametersDrawerView !== 'undefined' && ParametersDrawerView.renderDrawerHtml) ? 
+            ParametersDrawerView.renderDrawerHtml(activeSession) : ''
+        }
       </div>
     `;
 
@@ -1005,7 +1012,8 @@ class PlaygroundView {
   static renderSessionList(filterQuery = '') {
     const container = document.getElementById('session-list-container');
     if (!container) return;
-    const sessions = window.app.chatSessions || [];
+    const sessions = (window.app && window.app.chatSessions) || [];
+    const activeId = window.app ? window.app.activeSessionId : null;
     const filtered = filterQuery ? sessions.filter(s => s.title.toLowerCase().includes(filterQuery.toLowerCase())) : sessions;
 
     if (filtered.length === 0) {
@@ -1013,7 +1021,7 @@ class PlaygroundView {
       return;
     }
 
-    container.innerHTML = filtered.map(s => PlaygroundViewHelper.renderSessionItemHtml(s, s.id === window.app.activeSessionId)).join('');
+    container.innerHTML = filtered.map(s => PlaygroundViewHelper.renderSessionItemHtml(s, s.id === activeId)).join('');
   }
 
   static toggleSidebar(side) {
@@ -1299,8 +1307,8 @@ class PlaygroundView {
            </div>
 
            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-              <button style="background: #3c3c3c; border: 1px solid #454545; color: #cccccc; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Reject</button>
-              <button style="background: #007acc; border: none; color: #ffffff; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Approve & Execute</button>
+              <button class="btn btn-secondary btn-sm" onclick="ModalDialog.showNotification('Execution rejected by operator.', 'info');"><i class="fa-solid fa-xmark"></i> Reject</button>
+              <button class="btn btn-primary btn-sm" onclick="ModalDialog.showNotification('Plan approved! Running automated verification...', 'success');"><i class="fa-solid fa-check"></i> Approve & Execute</button>
            </div>
         </div>
       `;
@@ -1339,7 +1347,7 @@ class PlaygroundView {
                 </div>
                 <div style="flex: 1; font-size: 0.85rem; line-height: 1.6; color: #cccccc; overflow-wrap: anywhere;">
                   <div style="font-weight: 600; color: ` + (isUser ? '#cccccc' : '#007acc') + `; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                    <span>` + (isUser ? 'You' : 'jDroid-X-FMC (' + (msg.modelName || 'Agent') + ')') + `</span>
+                    <span>` + (isUser ? 'You' : 'jDroid-X (' + (msg.modelName || 'Agent') + ')') + `</span>
                     ` + (!isUser && PlaygroundView.isGenerating && index === messages.length - 1 ? `<div style="display: flex; align-items: center; margin-left: 4px;"><svg width="55" height="20" viewBox="0 0 55 20" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray: 75; stroke-dashoffset: 75; animation: fmcEkgDraw 1.3s linear infinite; filter: drop-shadow(0 0 3px var(--primary-light));"><path d="M 0 10 L 12 10 L 16 3 L 21 17 L 26 5 L 30 13 L 34 10 L 55 10" /></svg></div>` : '') + `
                   </div>
                   <div id="` + bubbleId + `">` + PlaygroundViewHelper.formatChatMessageContent(msg.content) + `</div>

@@ -130,3 +130,10 @@ The application startup strictly enforces OWASP security rules in chronological 
 - The project-level agent hierarchy is defined in [`\.agents/agent-architecture.md`](file:///c:/Users/jiten/jAnitGravity/FreeModelsClub/.agents/agent-architecture.md).
 - Existing operational agents are preserved and mapped into the canonical roles instead of being replaced.
 - New work should extend the canonical roles `A00` through `A08` rather than inventing parallel authority layers.
+
+---
+
+## 13. Explicit Git Update Permission Rule (Zero Unauthorized Git Pushes)
+- **Strict Permission Directive**: The AI assistant **MUST NEVER** execute `git commit`, `git push`, or push to remote repositories automatically.
+- **On-Demand Only**: Git commits and pushes shall ONLY be executed when the user explicitly instructs or approves it in chat.
+

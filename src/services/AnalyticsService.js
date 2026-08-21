@@ -12,10 +12,10 @@ const ComboModel = require('../models/ComboModel');
 class AnalyticsService {
   static getDashboardSummary() {
     const providers = ProviderModel.getAll();
-    const activeProviders = providers.filter((p) => p.isActive);
+    const activeProviders = ProviderModel.getActiveProviders();
 
     const models = AIModel.getAll();
-    const activeModels = models.filter((m) => m.status === 'Active' && m.isFree);
+    const activeModels = AIModel.getActiveModels();
 
     const apiLogs = LogModel.getApiLogs(500);
 
@@ -191,6 +191,8 @@ class AnalyticsService {
       activeProviders: summary.overview.activeProviders,
       totalModelClubs: combos.length,
       totalModels: summary.overview.totalModels,
+      activeModels: summary.overview.activeFreeModels,
+      activeFreeModels: summary.overview.activeFreeModels,
       tokensAvl: tokensAvl,
       tokensCon: tokensCon,
       tokensBal: tokensBal,

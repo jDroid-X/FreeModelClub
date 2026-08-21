@@ -138,6 +138,10 @@ class ApiService {
     });
   }
 
+  static saveProvider(data) {
+    return this.registerProvider(data);
+  }
+
   static updateProvider(id, data) {
     return this.request('/api/providers/' + id, {
       method: 'PUT',
@@ -444,6 +448,20 @@ class ApiService {
     return this.request('/api/playground/extract-image-text', {
       method: 'POST',
       body: JSON.stringify({ base64Data })
+    });
+  }
+
+  static deleteItem(targetPath) {
+    return this.request('/api/playground/delete-item', {
+      method: 'POST',
+      body: JSON.stringify({ targetPath })
+    });
+  }
+
+  static renameItem(oldPath, newName) {
+    return this.request('/api/playground/rename-item', {
+      method: 'POST',
+      body: JSON.stringify({ oldPath, newName })
     });
   }
 

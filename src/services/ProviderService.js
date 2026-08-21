@@ -31,25 +31,26 @@ class ProviderService {
       throw new Error('Base URL is required to fetch provider models.');
     }
 
-    // Start with known catalog models if available
-    const ProviderAgentHelper = require('./ProviderAgentHelper');
-    const knownDb = ProviderAgentHelper.getKnownProvidersDatabase();
+    // 1. First attempt Live Online API discovery
     let rawModels = [];
-    if (knownDb[provider.id] && Array.isArray(knownDb[provider.id].models)) {
-      rawModels = knownDb[provider.id].models.slice();
-    }
-
     try {
       const isOllama = provider.id === 'ollama' || baseUrl.includes('11434') || baseUrl.includes('ollama') || (provider.protocol && provider.protocol.toLowerCase().includes('ollama'));
+      const isGemini = provider.id === 'gemini' || baseUrl.includes('googleapis.com') || (provider.protocol && provider.protocol.toLowerCase().includes('gemini'));
       let responseData;
+      
       if (isOllama) {
         const targetUrl = baseUrl.includes('/v1') ? `${baseUrl.replace(/\/v1\/?$/, '')}/api/tags` : `${baseUrl}/api/tags`;
         responseData = await this.makeHttpRequest(targetUrl, apiKey);
+      } else if (isGemini) {
+        const cleanBase = baseUrl.replace(/\/models\/?$/, '');
+        const targetUrl = apiKey ? `${cleanBase}/models?key=${apiKey}` : `${cleanBase}/models`;
+        responseData = await this.makeHttpRequest(targetUrl, apiKey);
       } else {
-        const targetPath = '/models';
+        const targetPath = baseUrl.endsWith('/models') ? '' : '/models';
         const fullUrl = `${baseUrl}${targetPath}`;
         responseData = await this.makeHttpRequest(fullUrl, apiKey);
       }
+
       let liveModels = [];
       if (responseData && responseData.data && Array.isArray(responseData.data)) {
         liveModels = responseData.data;
@@ -58,31 +59,42 @@ class ProviderService {
       } else if (responseData && responseData.models && Array.isArray(responseData.models)) {
         liveModels = responseData.models;
       }
+
       liveModels.forEach(lm => {
         const id = lm.id || lm.modelId || lm.name || '';
-        if (id && !rawModels.some(m => (m.id || m.modelId) === id)) {
+        if (id) {
           rawModels.push(lm);
         }
       });
     } catch (err) {
-      console.warn(`Live API fetch failed for ${provider.displayName}: ${err.message}. Using known catalog only.`);
+      console.warn(`Live API fetch notice for ${provider.displayName}: ${err.message}.`);
     }
 
-    // If still no models, fallback to AI Agent lookup or hardcoded catalog
+    // 2. If Live API returned no models, invoke ProviderAgentService (LLM Online Search)
     if (!rawModels || rawModels.length === 0) {
       try {
         const ProviderAgentService = require('./ProviderAgentService');
         const queryName = provider.displayName && provider.displayName !== provider.id ? provider.displayName : provider.id;
         const aiResult = await ProviderAgentService.lookupProvider(queryName);
-        if (aiResult && aiResult.found && aiResult.provider && Array.isArray(aiResult.provider.models)) {
+        if (aiResult && aiResult.found && aiResult.provider && Array.isArray(aiResult.provider.models) && aiResult.provider.models.length > 0) {
           rawModels = aiResult.provider.models;
-        } else {
-          throw new Error('AI Web Search yielded no models.');
         }
       } catch (aiErr) {
-        console.warn(`AI Agent Web Search failed for ${provider.displayName}: ${aiErr.message}. Falling back to default hardcoded catalog.`);
-        rawModels = this.getFallbackFreeModelsForProvider(provider);
+        console.warn(`AI Agent lookup notice for ${provider.displayName}: ${aiErr.message}.`);
       }
+    }
+
+    // 3. Fallback to Known Catalog only if live discovery was completely unavailable
+    if (!rawModels || rawModels.length === 0) {
+      const ProviderAgentHelper = require('./ProviderAgentHelper');
+      const knownDb = ProviderAgentHelper.getKnownProvidersDatabase();
+      if (knownDb[provider.id] && Array.isArray(knownDb[provider.id].models)) {
+        rawModels = knownDb[provider.id].models.slice();
+      }
+    }
+
+    if (!rawModels || rawModels.length === 0) {
+      rawModels = this.getFallbackFreeModelsForProvider(provider);
     }
 
     // Filter ONLY Free models
@@ -213,8 +225,11 @@ class ProviderService {
 
         if (apiKey) {
           const isAnthropic = urlStr.toLowerCase().includes('anthropic.com');
+          const isGemini = urlStr.toLowerCase().includes('googleapis.com');
           if (isAnthropic) {
             headers['x-api-key'] = apiKey;
+          } else if (isGemini) {
+            headers['x-goog-api-key'] = apiKey;
           } else {
             headers['Authorization'] = `Bearer ${apiKey}`;
           }

@@ -2,6 +2,20 @@
 # Screen: Model Club View (http://localhost:3000/model-club)
 
 ================================================================================
+[2026-08-21 08:37:00] MODEL CLUB REACTIVE STORE EMISSION & ZERO-HARDCODING AUDIT
+================================================================================
+Target Screen : ModelClubView.js / ModelClubComboHelper.js
+Requested By  : User Chat (redo activity considering HUMAN-IN-LOOP, fix missing UI/UX details, remove hardcoded items)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Added reactive AppStore.emit('MODELS_MUTATED') triggers across toggleActive, deleteCombo, and importCombosJson operations in ModelClubComboHelper.
+	- Ensured all other open views (Playground model dropdowns, Dashboard metrics, Settings Agent attachments) immediately sync without requiring manual page reload.
+Files Modified:
+	- public/js/views/ModelClubComboHelper.js
+	- requirement/model_club.txt
+================================================================================
+
+================================================================================
 [2026-08-20 21:44:00] COMBO STUDIO VALIDATION FIX & OPTION POPUP RESOLVER
 ================================================================================
 Target Screen : ModelClubComboStudioHelper.js / ValidationService.js

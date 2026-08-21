@@ -189,47 +189,60 @@ class SidebarEditorView {
         command = `echo "Running ${this.currentFile}"`;
     }
     
-    // Human-In-The-Loop Confirmation
-    if (window.appStore) {
-      window.appStore.requestHITLConfirmation({
-        title: 'Run Script Confirmation',
-        message: `Are you sure you want to execute this file in the local terminal?`,
-        command: command,
-        onApprove: () => {
-          fetch('/api/playground/run-powershell', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ commandLine: command })
-          })
-          .then(res => res.json())
-          .then(result => {
-            if (result.success) {
-              ModalDialog.showNotification('Command executed successfully', 'success');
-            } else {
-              ModalDialog.showNotification('Error: ' + result.error, 'error');
-            }
-          })
-          .catch(err => ModalDialog.showNotification('Connection error: ' + err.message, 'error'));
+    const executeScript = () => {
+      ModalDialog.showNotification(`Running script: ${this.currentFile.split('\\').pop()}...`, 'info');
+      fetch('/api/playground/run-powershell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commandLine: command })
+      })
+      .then(res => res.json())
+      .then(result => {
+        // Output to IDE terminal if present
+        const termOutput = document.getElementById('terminal-output');
+        const termContent = document.getElementById('terminal-content');
+        if (termOutput) {
+          termOutput.innerHTML += `<div style="color: #6b9bff; margin-top: 6px;">➜ <span style="color: #569cd6;">${this.currentFile}</span></div>`;
+          termOutput.innerHTML += `<div style="color: #ce9178;">$ ${SidebarEditorView.escapeHtml(command)}</div>`;
+          if (result.success) {
+            termOutput.innerHTML += `<pre style="color: #d4d4d4; margin: 4px 0; white-space: pre-wrap;">${SidebarEditorView.escapeHtml(result.output || 'Process exited successfully (0)')}</pre>`;
+          } else {
+            termOutput.innerHTML += `<div style="color: #f44336;">Error: ${SidebarEditorView.escapeHtml(result.error || 'Execution failed')}</div>`;
+          }
+          if (termContent) termContent.scrollTop = termContent.scrollHeight;
         }
-      });
-      return;
-    }
 
-    // Fallback if appStore is not ready
-    fetch('/api/playground/run-powershell', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commandLine: command })
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        ModalDialog.showNotification('Command executed', 'info');
-      } else {
-        ModalDialog.showNotification('Error: ' + result.error, 'error');
-      }
-    })
-    .catch(err => ModalDialog.showNotification('Connection error: ' + err.message, 'error'));
+        if (result.success) {
+          ModalDialog.showNotification('Script executed successfully!', 'success');
+        } else {
+          ModalDialog.showNotification('Execution Error: ' + (result.error || 'Failed to run script'), 'error');
+        }
+      })
+      .catch(err => ModalDialog.showNotification('Connection error: ' + err.message, 'error'));
+    };
+
+    // Human-In-The-Loop (HITL) Interactive Option Dialog
+    ModalDialog.showOptionModal({
+      title: '<i class="fa-solid fa-terminal" style="color: var(--accent-amber);"></i> Shell Script Execution Confirmation',
+      message: `The agent is requesting to execute the following command:<br/><pre style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-size: 0.76rem; color: var(--accent-cyan); margin-top: 6px; overflow-x: auto;">${command}</pre>Do you want to authorize execution?`,
+      icon: 'fa-triangle-exclamation',
+      options: [
+        {
+          id: 'approve',
+          label: 'Approve & Execute',
+          icon: 'fa-play',
+          type: 'primary',
+          action: executeScript
+        },
+        {
+          id: 'cancel',
+          label: 'Reject / Cancel',
+          icon: 'fa-xmark',
+          type: 'secondary',
+          action: () => ModalDialog.showNotification('Script execution cancelled by operator.', 'info')
+        }
+      ]
+    });
   }
 
   static close() {

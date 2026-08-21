@@ -43,6 +43,47 @@ class SettingsAgentHelper {
     };
   }
 
+  static getDefaultRocasSpecs() {
+    const specs = this.getRocasSpecs();
+    return Object.keys(specs).map(k => ({
+      id: k,
+      name: specs[k].name,
+      role: specs[k].role,
+      task: specs[k].task,
+      goal: specs[k].goal,
+      model: specs[k].systemSpecs || 'Dynamic System Model',
+      ...specs[k]
+    }));
+  }
+
+  static getDefaultAgentModels() {
+    return {
+      master_orchestrator: 'llama-3.3-70b-versatile',
+      business_analyst: 'gemini-2.0-flash',
+      enterprise_architect: 'qwen-2.5-coder-32b-instruct',
+      database_architect: 'llama-3.3-70b-versatile',
+      backend_agent: 'deepseek-r1-distill-llama-70b',
+      frontend_agent: 'gemini-2.0-flash',
+      workflow_agent: 'llama-3.3-70b-versatile',
+      prompt_engineering: 'deepseek-r1-distill-llama-70b',
+      ai_agent_manager: 'llama-3.3-70b-versatile',
+      qa_agent: 'qwen-2.5-coder-32b-instruct',
+      security_agent: 'llama-3.3-70b-versatile',
+      monitoring_agent: 'gemini-2.0-flash',
+      cost_optimization: 'llama-3.3-70b-versatile',
+      publishing_agent: 'gemini-2.0-flash',
+      analytics_agent: 'llama-3.3-70b-versatile',
+      dependency_agent: 'qwen-2.5-coder-32b-instruct',
+      audit_agent: 'qwen-2.5-coder-32b-instruct',
+      ui_ux_agent: 'gemini-2.0-flash',
+      connect_agent: 'llama-3.3-70b-versatile',
+      testing_agent: 'qwen-2.5-coder-32b-instruct',
+      optimization_agent: 'llama-3.3-70b-versatile',
+      deployment_agent: 'llama-3.3-70b-versatile',
+      active_model_agent: 'llama-3.3-70b-versatile'
+    };
+  }
+
   static renderTab(container) {
     const specs = this.getRocasSpecs();
     const agentKeys = Object.keys(specs);
@@ -75,7 +116,7 @@ class SettingsAgentHelper {
               Dynamic control panel for managing 22 specialized AI agents, 3D Matrix validation depth, and zero-hardcoding fallbacks.
             </p>
           </div>
-          <button class="btn btn-emerald btn-xs" onclick="SettingsAgentHelper.saveAntigravitySettings()">
+          <button class="btn btn-emerald btn-xs" onclick="SettingsAgentHelper.saveOrchestratorSettings()">
             <i class="fa-solid fa-floppy-disk"></i> Save Orchestrator Config
           </button>
         </div>
@@ -112,25 +153,34 @@ class SettingsAgentHelper {
       </div>
     `;
 
-    // Hydrate Antigravity form fields dynamically from config
+    // Hydrate Orchestrator form fields dynamically from config
     ApiService.getConfig().then(cfg => {
-      if (cfg && cfg.antigravitySettings) {
-        const ag = cfg.antigravitySettings;
-        if (ag.orchestratorMode && document.getElementById('ag-orchestrator-mode')) document.getElementById('ag-orchestrator-mode').value = ag.orchestratorMode;
-        if (ag.maxLineLimitPerFile && document.getElementById('ag-max-lines')) document.getElementById('ag-max-lines').value = ag.maxLineLimitPerFile;
-        if (ag.circuitBreakerThreshold && document.getElementById('ag-cb-threshold')) document.getElementById('ag-cb-threshold').value = ag.circuitBreakerThreshold;
-        if (ag.antigravityFallbackModelId && document.getElementById('ag-fallback-model')) document.getElementById('ag-fallback-model').value = ag.antigravityFallbackModelId;
-      }
+      const ag = (cfg && (cfg.orchestratorSettings || cfg.antigravitySettings)) || {};
+      if (ag.orchestratorMode && document.getElementById('ag-orchestrator-mode')) document.getElementById('ag-orchestrator-mode').value = ag.orchestratorMode;
+      if (ag.maxLineLimitPerFile && document.getElementById('ag-max-lines')) document.getElementById('ag-max-lines').value = ag.maxLineLimitPerFile;
+      if (ag.circuitBreakerThreshold && document.getElementById('ag-cb-threshold')) document.getElementById('ag-cb-threshold').value = ag.circuitBreakerThreshold;
+      if (ag.antigravityFallbackModelId && document.getElementById('ag-fallback-model')) document.getElementById('ag-fallback-model').value = ag.antigravityFallbackModelId;
     }).catch(() => {});
   }
 
   static async saveAntigravitySettings() {
+    return this.saveOrchestratorSettings();
+  }
+
+  static async saveOrchestratorSettings() {
     const orchestratorMode = document.getElementById('ag-orchestrator-mode')?.value || 'closed_loop_waterfall';
     const maxLineLimitPerFile = parseInt(document.getElementById('ag-max-lines')?.value) || 2000;
     const circuitBreakerThreshold = parseInt(document.getElementById('ag-cb-threshold')?.value) || 3;
     const antigravityFallbackModelId = document.getElementById('ag-fallback-model')?.value.trim() || 'default-fallback-model';
 
     const payload = {
+      orchestratorSettings: {
+        orchestratorMode,
+        matrixValidationEnabled: true,
+        maxLineLimitPerFile,
+        circuitBreakerThreshold,
+        antigravityFallbackModelId
+      },
       antigravitySettings: {
         orchestratorMode,
         matrixValidationEnabled: true,
@@ -144,7 +194,7 @@ class SettingsAgentHelper {
     if (res.success) {
       ModalDialog.showNotification('Master AI Agent Orchestrator settings saved dynamically!', 'success');
     } else {
-      ModalDialog.showNotification('Failed to save settings: ' + (res.error || 'Unknown error'), 'danger');
+      ModalDialog.showNotification('Failed to save settings: ' + (res.error || res.message), 'error');
     }
   }
 

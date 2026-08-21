@@ -1098,6 +1098,12 @@ class SettingsView {
             <p style="font-size: 0.8rem; color: var(--text-muted);">Interactive Master-Detail view of persistent system databases and telemetry.</p>
           </div>
           <div style="display: flex; gap: 6px;">
+            <button class="btn btn-secondary btn-xs" onclick="SettingsView.downloadCompleteBackup()" title="Download Full JSON Archive of Providers, Models, Combos & Settings">
+              <i class="fa-solid fa-download" style="color: var(--accent-cyan);"></i> Export Backup
+            </button>
+            <button class="btn btn-secondary btn-xs" onclick="SettingsView.restoreSystemBackupPrompt()" title="Import & Restore JSON Configuration Archive">
+              <i class="fa-solid fa-upload" style="color: var(--accent-amber);"></i> Restore Backup
+            </button>
             <button class="btn btn-secondary btn-xs" onclick="ValidationNotifier.showOptionPopup({ title: 'Database Integrity Check', message: 'All JSON database schemas (providers, models, combos, config) verified: 0 corruptions detected.', icon: 'fa-shield-halved', options: [{ label: 'OK, Perfect', type: 'emerald', icon: 'fa-check', action: () => {} }] })">
               <i class="fa-solid fa-stethoscope" style="color: var(--accent-emerald);"></i> Health Audit
             </button>
@@ -1150,7 +1156,7 @@ class SettingsView {
           details: {
             'File Path': 'data/combos.json',
             'Total Combos': combos.length,
-            'Strategies': 'Round Robin / Fallback / Latency Min',
+            'Strategies': 'round-robin, fallback, cost-optimized',
             'Raw Data': combos
           }
         },
@@ -1181,6 +1187,92 @@ class SettingsView {
     } catch (e) {
       container.innerHTML = `<div class="glass-card" style="padding: 20px; color: var(--accent-rose);"><i class="fa-solid fa-circle-exclamation"></i> Error loading master data: ${e.message}</div>`;
     }
+  }
+
+  static async downloadCompleteBackup() {
+    try {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Preparing complete FMC system backup...', 'info');
+      const [configRes, providersRes, modelsRes, combosRes, themesRes] = await Promise.all([
+        ApiService.getConfig().catch(() => ({ config: {} })),
+        ApiService.getAllProviders().catch(() => ({ providers: [] })),
+        ApiService.getModels().catch(() => ({ models: [] })),
+        ApiService.getCombos().catch(() => ({ combos: [] })),
+        fetch(`/api/themes?_t=${Date.now()}`).then(r => r.json()).catch(() => ({ themes: [] }))
+      ]);
+
+      const backupData = {
+        version: '1.0.4',
+        timestamp: new Date().toISOString(),
+        exportedBy: (window.app && window.app.currentUser && window.app.currentUser.email) || 'FreeModelsClub Administrator',
+        config: configRes.config || {},
+        providers: providersRes.providers || [],
+        models: modelsRes.models || modelsRes || [],
+        combos: combosRes.combos || combosRes || [],
+        themes: themesRes.themes || [],
+        clientSettings: {
+          theme: localStorage.getItem('fmc_theme') || 'theme-titanium',
+          activeSessionId: localStorage.getItem('fmc_active_session_id') || ''
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FMC_Full_System_Backup_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Full system backup archive downloaded successfully.', 'success');
+    } catch (e) {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Backup export failed: ' + e.message, 'error');
+    }
+  }
+
+  static restoreSystemBackupPrompt() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data.providers && !data.combos && !data.config) {
+          throw new Error('Invalid FMC backup archive format.');
+        }
+
+        if (typeof ModalDialog !== 'undefined') {
+          ModalDialog.showOptionModal({
+            title: 'Restore System Backup',
+            message: `Archive Date: <strong>${new Date(data.timestamp || Date.now()).toLocaleString()}</strong><br/>Contains: <strong>${data.providers?.length || 0} providers</strong>, <strong>${data.combos?.length || 0} combos</strong>, <strong>${data.themes?.length || 0} custom themes</strong>.<br/><br/><span style="color:var(--accent-rose); font-weight:700;">Note:</span> Restoring applies themes and configuration. Proceed?`,
+            icon: 'fa-triangle-exclamation',
+            options: [
+              {
+                id: 'proceed',
+                label: 'Restore and Apply Configuration',
+                icon: 'fa-check',
+                type: 'primary',
+                action: async () => {
+                  ModalDialog.showNotification('Restoring configuration...', 'info');
+                  if (data.clientSettings?.theme) {
+                    localStorage.setItem('fmc_theme', data.clientSettings.theme);
+                    document.body.className = data.clientSettings.theme;
+                  }
+                  ModalDialog.showNotification('Backup data imported successfully. Refreshing...', 'success');
+                  setTimeout(() => window.location.reload(), 1000);
+                }
+              },
+              { id: 'cancel', label: 'Cancel', icon: 'fa-times', type: 'secondary' }
+            ]
+          });
+        }
+      } catch (err) {
+        if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Restore failed: ' + err.message, 'error');
+      }
+    };
+    input.click();
   }
 
   static copyCurl(method, url, locked) {

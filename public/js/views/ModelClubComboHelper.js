@@ -22,6 +22,7 @@ class ModelClubComboHelper {
       const res = await ApiService.toggleComboStatus(id);
       if (res.success) {
         ModalDialog.showNotification(`Combo active status toggled!`, 'success');
+        if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
         if (typeof onRefresh === 'function') onRefresh();
       }
     } catch (e) {
@@ -42,6 +43,7 @@ class ModelClubComboHelper {
             const res = await ApiService.deleteCombo(id);
             if (res.success) {
               ModalDialog.showNotification('Combo Agent deleted!', 'success');
+              if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
               if (typeof onRefresh === 'function') onRefresh();
               else if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
             }
@@ -56,6 +58,7 @@ class ModelClubComboHelper {
           const res = await ApiService.deleteCombo(id);
           if (res.success) {
             ModalDialog.showNotification('Combo Agent deleted!', 'success');
+            if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
             if (typeof onRefresh === 'function') onRefresh();
             else if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
           }
@@ -106,6 +109,7 @@ class ModelClubComboHelper {
               }
             }
             ModalDialog.showNotification(`Imported ${count} Combo Agents successfully! ${skipped > 0 ? '(' + skipped + ' skipped duplicates)' : ''}`, 'success');
+            if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
             if (typeof onRefresh === 'function') onRefresh();
           }
         } catch (err) {

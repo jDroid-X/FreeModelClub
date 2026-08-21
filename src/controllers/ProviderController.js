@@ -278,6 +278,11 @@ class ProviderController {
         AIModel.saveBatch(modelsToSave);
       }
 
+      try {
+        const ActiveModelAgent = require('../services/ActiveModelAgent');
+        ActiveModelAgent.runClassification();
+      } catch (e) {}
+
       const responsePayload = {
         success: true,
         message: `Provider '${displayName}' registered successfully with ${modelsToSave.length} models.`,
@@ -360,12 +365,21 @@ class ProviderController {
       db.write(db.files.models, nonProviderModels.concat(mergedModelsToSave));
     }
 
+    try {
+      const ActiveModelAgent = require('../services/ActiveModelAgent');
+      ActiveModelAgent.runClassification();
+    } catch (e) {}
+
     return res.json({ success: true, provider: ProviderModel.getById(id, true) });
   }
 
   static delete(req, res) {
     const { id } = req.params;
     ProviderModel.archive(id);
+    try {
+      const ActiveModelAgent = require('../services/ActiveModelAgent');
+      ActiveModelAgent.runClassification();
+    } catch (e) {}
     return res.json({ success: true, message: 'Provider moved to Archive Folder in System page' });
   }
 
@@ -380,12 +394,20 @@ class ProviderController {
     if (!restored) {
       return res.status(404).json({ success: false, message: 'Provider not found in archive' });
     }
+    try {
+      const ActiveModelAgent = require('../services/ActiveModelAgent');
+      ActiveModelAgent.runClassification();
+    } catch (e) {}
     return res.json({ success: true, message: 'Provider restored from Archive Folder' });
   }
 
   static permanentDelete(req, res) {
     const { id } = req.params;
     ProviderModel.permanentDelete(id);
+    try {
+      const ActiveModelAgent = require('../services/ActiveModelAgent');
+      ActiveModelAgent.runClassification();
+    } catch (e) {}
     return res.json({ success: true, message: 'Provider permanently purged' });
   }
 

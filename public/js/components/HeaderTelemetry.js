@@ -158,12 +158,12 @@ class HeaderTelemetry {
         <!-- Tile 3: Models -->
         <div class="metric-badge dashboard-tile header-telemetry-tile" style="${tileStyle}"
           onclick="DashboardView.handleTileClick('header:models')"
-          title="Click to view registered models catalog">
+          title="Models: ${stats.activeModels ?? stats.activeFreeModels ?? 0} Active Free / ${stats.totalModels || 0} Total in catalog. Click to view models.">
           <div class="metric-label" style="display: flex; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.6rem; font-weight: 500;">
             <i class="fa-solid fa-microchip" style="color: var(--accent-amber);"></i>
             <span>Models:</span>
           </div>
-          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.totalModels || 0}</span>
+          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.activeModels ?? stats.activeFreeModels ?? 0} <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: 400;">/ ${stats.totalModels || 0}</span></span>
         </div>
 
         <!-- Tile 4: Active Agents -->

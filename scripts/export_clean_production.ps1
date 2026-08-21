@@ -68,7 +68,7 @@ foreach ($f in $templateFiles) {
 
 # Initialize fresh empty database collections for zero-history production deployment
 $emptyArray = "[]"
-$cleanCollections = @('providers.json', 'models.json', 'combos.json', 'Activemodels.json', 'api_keys.json', 'api_logs.json', 'system_logs.json', 'users.json')
+$cleanCollections = @('providers.json', 'models.json', 'combos.json', 'Activemodels.json', 'inactivemodel.json', 'api_keys.json', 'api_logs.json', 'system_logs.json', 'users.json')
 foreach ($c in $cleanCollections) {
     Set-Content -Path (Join-Path $dstData $c) -Value $emptyArray -Encoding UTF8 -Force
 }
