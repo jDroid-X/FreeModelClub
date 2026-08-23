@@ -13,4 +13,6 @@ data/session_*.json
 *.log
 .tray_launcher.lock
 test-results/
-
+scratch/
+.gemini/
+jDroid-X-FreeModelClub/
