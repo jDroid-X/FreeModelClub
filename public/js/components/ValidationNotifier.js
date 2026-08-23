@@ -84,6 +84,25 @@ class ValidationNotifier {
       options
     });
   }
+
+  /**
+   * Notification bridge method delegating to ModalDialog.showNotification or showOptionModal
+   */
+  static show(arg1, arg2, arg3) {
+    if (typeof ModalDialog !== 'undefined' && ModalDialog.showNotification) {
+      if (arg3 !== undefined) {
+        // Called as (title, message, type)
+        const type = typeof arg3 === 'string' ? arg3 : 'info';
+        ModalDialog.showNotification(`[${arg1}] ${arg2}`, type);
+      } else {
+        // Called as (message, type)
+        const type = typeof arg2 === 'string' ? arg2 : 'info';
+        ModalDialog.showNotification(arg1, type);
+      }
+    } else {
+      console.log('[ValidationNotifier]', arg1, arg2, arg3);
+    }
+  }
 }
 
 window.ValidationNotifier = ValidationNotifier;

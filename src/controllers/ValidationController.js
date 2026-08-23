@@ -19,10 +19,10 @@ class ValidationController {
 
     let validationResult;
     if (scope === 'provider_registration') {
-      const allProviders = db.read('providers') || [];
+      const allProviders = db.read(db.files.providers) || [];
       validationResult = ValidationService.validateProviderRegistration(data, allProviders);
     } else if (scope === 'model_combo') {
-      const allModels = db.read('models') || [];
+      const allModels = db.read(db.files.models) || [];
       validationResult = ValidationService.validateModelCombo(data, allModels);
     } else {
       validationResult = { isValid: true, issues: [], options: [{ id: 'proceed', label: 'Proceed with Validation', type: 'emerald', isRecommended: true, icon: 'fa-check' }] };
@@ -58,7 +58,7 @@ class ValidationController {
       // In a real scenario, this would set internal token limit config
       resolvedData.displayName = (resolvedData.displayName || 'Groq') + ' (Optimized)';
     } else if (optionId === 'switch_existing') {
-      const allProviders = db.read('providers') || [];
+      const allProviders = db.read(db.files.providers) || [];
       const dup = allProviders.find(p => p.baseUrl === resolvedData.baseUrl);
       if (dup) {
          resolvedData.providerId = dup.id;

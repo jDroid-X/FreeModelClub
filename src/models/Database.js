@@ -90,7 +90,6 @@ class Database {
     if (!fs.existsSync(this.files.providers)) this._writeRaw(this.files.providers, DatabaseSeed.getDefaultProviders());
     if (!fs.existsSync(this.files.models)) this._writeRaw(this.files.models, DatabaseSeed.getDefaultModels());
     if (!fs.existsSync(this.files.api_keys)) this._writeRaw(this.files.api_keys, DatabaseSeed.getDefaultApiKeys());
-    if (!fs.existsSync(this.files.api_keys)) this._writeRaw(this.files.api_keys, DatabaseSeed.getDefaultApiKeys());
     if (!fs.existsSync(this.files.api_logs)) this._writeRaw(this.files.api_logs, []);
     if (!fs.existsSync(this.files.system_logs)) this._writeRaw(this.files.system_logs, DatabaseSeed.getDefaultSystemLogs());
     if (!fs.existsSync(this.files.user_manual)) this._writeRaw(this.files.user_manual, DatabaseSeed.getDefaultUserManual());
@@ -165,12 +164,27 @@ class Database {
     this._flushTimers.delete(filePath);
   }
 
-  /** Raw atomic write to disk (used by initDefaultFiles and flush) */
+  /** Raw atomic write to disk with Windows EBUSY/EPERM retry backoff */
   _writeRaw(filePath, data) {
     const tempFile = `${filePath}.tmp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     try {
       fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
-      fs.renameSync(tempFile, filePath);
+      let renamed = false;
+      let retries = 3;
+      while (retries > 0 && !renamed) {
+        try {
+          fs.renameSync(tempFile, filePath);
+          renamed = true;
+        } catch (renameErr) {
+          retries--;
+          if (retries === 0) {
+            // Windows fallback: copyFileSync then unlink
+            fs.copyFileSync(tempFile, filePath);
+            try { fs.unlinkSync(tempFile); } catch (_) {}
+            renamed = true;
+          }
+        }
+      }
       return true;
     } catch (err) {
       console.error(`Database write error on ${filePath}:`, err.message);

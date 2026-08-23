@@ -207,6 +207,52 @@ class PlaygroundView {
     }
   }
 
+  static openLiveArtifact(encodedCode, lang = 'html') {
+    try {
+      const code = decodeURIComponent(encodedCode);
+      const isHtmlLike = ['html', 'htm', 'svg'].includes((lang || '').toLowerCase());
+
+      const modalContent = isHtmlLike ? `
+        <div style="display: flex; flex-direction: column; height: 72vh; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">
+            <span style="font-size: 0.76rem; color: var(--accent-cyan); font-weight: 700;"><i class="fa-solid fa-code"></i> Live Sandboxed Artifact (${(lang || 'HTML').toUpperCase()})</span>
+            <button class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')); ModalDialog.showNotification('Artifact code copied!','success')"><i class="fa-solid fa-copy"></i> Copy Code</button>
+          </div>
+          <iframe id="live-artifact-iframe" sandbox="allow-scripts allow-modals" style="flex: 1; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; background: #ffffff;"></iframe>
+        </div>
+      ` : `
+        <div style="display: flex; flex-direction: column; height: 68vh; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">
+            <span style="font-size: 0.76rem; color: var(--accent-cyan); font-weight: 700;"><i class="fa-solid fa-code"></i> Artifact Code (${(lang || 'CODE').toUpperCase()})</span>
+            <button class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(decodeURIComponent('${encodedCode}')); ModalDialog.showNotification('Artifact code copied!','success')"><i class="fa-solid fa-copy"></i> Copy Code</button>
+          </div>
+          <pre style="flex: 1; margin: 0; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: 6px; overflow: auto; font-family: 'Fira Code', monospace; font-size: 0.8rem; color: var(--text-main);"><code>${(typeof PlaygroundViewHelper !== 'undefined') ? PlaygroundViewHelper.escapeHtml(code) : code}</code></pre>
+        </div>
+      `;
+
+      ModalDialog.showCustomModal({
+        title: '<i class="fa-solid fa-window-restore" style="color: var(--accent-cyan);"></i> Interactive Artifact Viewer',
+        content: modalContent,
+        width: '850px',
+        confirmText: 'Close'
+      });
+
+      if (isHtmlLike) {
+        setTimeout(() => {
+          const iframe = document.getElementById('live-artifact-iframe');
+          if (iframe && iframe.contentWindow) {
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(code);
+            doc.close();
+          }
+        }, 100);
+      }
+    } catch (err) {
+      ModalDialog.showNotification(`Failed to render artifact: ${err.message}`, 'error');
+    }
+  }
+
   static async fetchWithTimeout(url, timeoutMs = 350) {
     try {
       const controller = new AbortController();
@@ -226,54 +272,49 @@ class PlaygroundView {
     if (window.AppStore && !PlaygroundView._hasRegisteredStoreListeners) {
       PlaygroundView._hasRegisteredStoreListeners = true;
       window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
-        PlaygroundView.allModels = null;
-        PlaygroundView.providers = null;
-        PlaygroundView.combos = null;
         PlaygroundView.loadAllModels(true).then(() => {
           PlaygroundView.populateModelDropdown();
         }).catch(() => {});
       });
       window.AppStore.on('MODELS_MUTATED', () => {
-        PlaygroundView.allModels = null;
         PlaygroundView.loadAllModels(true).then(() => {
           PlaygroundView.populateModelDropdown();
         }).catch(() => {});
       });
     }
 
-    if (!force && PlaygroundView.allModels && PlaygroundView.allModels.length > 0 && PlaygroundView.providers && PlaygroundView.providers.length > 0) {
-      // Return cached catalog instantly; revalidate in background
-      setTimeout(() => PlaygroundView.loadAllModels(true).catch(() => {}), 1000);
+    if (!force && PlaygroundView.allModels && PlaygroundView.allModels.length > 2 && PlaygroundView.providers && PlaygroundView.providers.length > 2) {
       return;
     }
 
     try {
-      const [modelsRes, providersRes, combosRes, activeCacheRes] = await Promise.all([
+      const [modelsRes, allModelsRes, providersRes, combosRes] = await Promise.all([
         ApiService.getActiveModels().catch(() => ({ models: [] })),
+        ApiService.getModels().catch(() => ({ models: [] })),
         ApiService.getAllProviders().catch(() => ({ providers: [] })),
-        ApiService.getCombos().catch(() => ({ combos: [] })),
-        ApiService.getActiveModelsCache().catch(() => ({ activeModels: [] }))
+        ApiService.getCombos().catch(() => ({ combos: [] }))
       ]);
 
       const dbProviders = Array.isArray(providersRes) ? providersRes : (providersRes && providersRes.providers) || [];
-      PlaygroundView.providers = dbProviders.filter(p => p.isActive);
+      PlaygroundView.providers = dbProviders.filter(p => p.isActive && !p.isArchived);
+
+      // Merge active models with all models catalog for SSOT completeness
+      const activeList = (modelsRes && modelsRes.models && modelsRes.models.length > 0) ? modelsRes.models : [];
+      const fullList = (allModelsRes && allModelsRes.models && allModelsRes.models.length > 0) ? allModelsRes.models : [];
+      
+      // Use active models if available, otherwise fallback to full models filtered by active providers
+      let combined = activeList.length > 0 ? activeList : fullList.filter(m => PlaygroundView.providers.some(p => p.id === m.providerId || p.id === m.provider));
+      if (combined.length === 0 && fullList.length > 0) {
+        combined = fullList;
+      }
+      PlaygroundView.allModels = combined;
+
+      const dbCombos = Array.isArray(combosRes) ? combosRes : (combosRes && combosRes.combos) || [];
+      PlaygroundView.combos = dbCombos.filter(c => c.isActive);
 
       const localProv = dbProviders.find(p => p.id === 'ollama' || p.baseUrl?.includes('11434') || p.protocol?.toLowerCase().includes('ollama'));
       const localBaseUrl = localProv?.baseUrl ? (localProv.baseUrl.replace(/\/v1\/?$/, '').replace(/\/+$/, '') + '/api/tags') : 'http://localhost:11434/api/tags';
       const ollamaTagsRes = await PlaygroundView.fetchWithTimeout(localBaseUrl, 350);
-
-      let allModelsList = (modelsRes && modelsRes.models) ? modelsRes.models : [];
-      
-      // Filter the models list using the Zero-Trust SSOT ActiveModelAgent cache
-      if (activeCacheRes && activeCacheRes.activeModels && activeCacheRes.activeModels.length > 0) {
-        const strictCache = activeCacheRes.activeModels;
-        allModelsList = allModelsList.filter(m => strictCache.includes(m.id) || strictCache.includes(m.modelId));
-      }
-      
-      PlaygroundView.allModels = allModelsList;
-
-      const dbCombos = Array.isArray(combosRes) ? combosRes : (combosRes && combosRes.combos) || [];
-      PlaygroundView.combos = dbCombos.filter(c => c.isActive);
 
       if (ollamaTagsRes && ollamaTagsRes.ok && typeof ollamaTagsRes.json === 'function') {
         try {
@@ -307,6 +348,27 @@ class PlaygroundView {
       PlaygroundView.combos = [];
       PlaygroundView.localInstalledModels = [];
       PlaygroundView.localIndicatorGreen = false;
+    }
+  }
+
+  static populateModelDropdown() {
+    const provSelect = document.getElementById('chat-provider-select');
+    const modelSelect = document.getElementById('ollama-model-select');
+    if (!provSelect || !modelSelect || typeof ModelDropdownHelper === 'undefined') return;
+
+    const curProv = provSelect.value || (PlaygroundView.providers && PlaygroundView.providers[0] ? PlaygroundView.providers[0].id : 'gemini');
+    provSelect.innerHTML = ModelDropdownHelper.renderProviderComboDropdownHtml(
+      PlaygroundView.providers || [],
+      PlaygroundView.combos || [],
+      curProv,
+      PlaygroundView.allModels || []
+    );
+
+    PlaygroundView.onProviderChange(curProv);
+
+    if (typeof SearchableSelect !== 'undefined') {
+      SearchableSelect.init(provSelect, { placeholder: 'Search providers...', maxHeight: 300 });
+      SearchableSelect.init(modelSelect, { placeholder: 'Search models...', maxHeight: 300 });
     }
   }
 
@@ -392,25 +454,49 @@ class PlaygroundView {
     }
   }
 
+  static async refreshProvidersAndModels() {
+    const icon = document.getElementById('btn-refresh-providers-models');
+    if (icon) icon.classList.add('fa-spin');
+    ModalDialog.showNotification('Syncing latest providers, combos, and free models...', 'info');
+    try {
+      await PlaygroundView.loadAllModels(true);
+      const provSelect = document.getElementById('chat-provider-select');
+      const curProv = provSelect ? provSelect.value : 'gemini';
+      if (provSelect && typeof ModelDropdownHelper !== 'undefined') {
+        provSelect.innerHTML = ModelDropdownHelper.renderProviderComboDropdownHtml(
+          PlaygroundView.providers || [],
+          PlaygroundView.combos || [],
+          curProv,
+          PlaygroundView.allModels || []
+        );
+        if (typeof SearchableSelect !== 'undefined') {
+          SearchableSelect.init(provSelect, { placeholder: 'Select provider...', maxHeight: 250 });
+        }
+      }
+      PlaygroundView.populateModelDropdown();
+      ModalDialog.showNotification(`Synced ${PlaygroundView.providers?.length || 0} providers & ${PlaygroundView.allModels?.length || 0} models!`, 'success');
+    } catch(err) {
+      ModalDialog.showNotification(`Sync error: ${err.message}`, 'error');
+    } finally {
+      if (icon) icon.classList.remove('fa-spin');
+    }
+  }
+
   // ── Render Entrypoint ──
   static async render(container) {
-    if (!PlaygroundView.allModels || PlaygroundView.allModels.length === 0) {
-      PlaygroundView.allModels = [
-        { id: 'llama-3.3-70b-versatile', providerId: 'groq', name: 'Llama 3.3 70B (Groq)' },
-        { id: 'llama3:latest', providerId: 'ollama', name: 'Llama 3 (Ollama)' }
-      ];
-      PlaygroundView.providers = [
-        { id: 'groq', displayName: 'Groq Cloud' },
-        { id: 'ollama', displayName: 'Ollama / Localhost' }
-      ];
+    // Ensure models, providers, and combos are loaded from SSOT
+    if (!PlaygroundView.allModels || PlaygroundView.allModels.length <= 2 || !PlaygroundView.providers || PlaygroundView.providers.length <= 2) {
+      await PlaygroundView.loadAllModels(false);
     }
     PlaygroundView.loadSessions();
 
     const selectedModelId = (window.app && window.app.selectedModelId) || 'llama-3.3-70b-versatile';
-    let initialProvider = 'groq';
-    const selectedModelObj = PlaygroundView.allModels.find(m => m.id === selectedModelId);
+    let initialProvider = 'gemini';
+    const selectedModelObj = (PlaygroundView.allModels || []).find(m => m.id === selectedModelId);
     if (selectedModelObj && selectedModelObj.providerId) {
        initialProvider = selectedModelObj.providerId;
+    } else if (PlaygroundView.providers && PlaygroundView.providers.length > 0) {
+       initialProvider = PlaygroundView.providers[0].id;
     }
 
     let providerOptions = '';
@@ -423,17 +509,17 @@ class PlaygroundView {
       );
     }
 
-    let initialModels = PlaygroundView.allModels.filter(m => m.providerId === initialProvider || (m.provider && m.provider === initialProvider));
+    let initialModels = (PlaygroundView.allModels || []).filter(m => m.providerId === initialProvider || (m.provider && m.provider === initialProvider));
     if (initialModels.length === 0 && initialProvider === 'ollama') {
-       initialModels = PlaygroundView.allModels.filter(m => m.id.toLowerCase().includes('ollama'));
+       initialModels = (PlaygroundView.allModels || []).filter(m => m.id.toLowerCase().includes('ollama'));
     }
     if (initialModels.length === 0) {
-       initialModels = PlaygroundView.allModels;
+       initialModels = PlaygroundView.allModels || [];
     }
 
     let defaultModelId = selectedModelId;
     if (PlaygroundView.localIndicatorGreen && initialProvider === 'ollama') {
-       const installedModel = initialModels.find(m => PlaygroundView.localInstalledModels.some(n => n === m.modelId || n === m.id || n.startsWith(m.modelId)));
+       const installedModel = initialModels.find(m => (PlaygroundView.localInstalledModels || []).some(n => n === m.modelId || n === m.id || n.startsWith(m.modelId)));
        if (installedModel) {
           defaultModelId = installedModel.id;
           if (window.app) window.app.selectedModelId = defaultModelId;
@@ -453,24 +539,16 @@ class PlaygroundView {
 
     // Hydrate full model catalog and active tags in background without blocking initial paint
     setTimeout(() => {
-      PlaygroundView.loadAllModels().then(() => {
-        const provSelect = document.getElementById('chat-provider-select');
-        const curProv = (provSelect && provSelect.value) || initialProvider;
-        if (provSelect && typeof ModelDropdownHelper !== 'undefined') {
-          provSelect.innerHTML = ModelDropdownHelper.renderProviderComboDropdownHtml(
-            PlaygroundView.providers || [],
-            PlaygroundView.combos || [],
-            curProv,
-            PlaygroundView.allModels || []
-          );
-        }
-        PlaygroundView.onProviderChange(curProv);
+      PlaygroundView.loadAllModels(true).then(() => {
+        PlaygroundView.populateModelDropdown();
         PlaygroundView.renderAgentsWindow();
       }).catch(() => {});
     }, 0);
 
+    const savedWorkspace = localStorage.getItem('fmc_ide_workspace') || localStorage.getItem('fmc_project_workspace_path') || '';
+
     container.innerHTML = `
-      <div id="playground-workspace-container" class="glass-panel" style="padding: 2px; margin: 2px; overflow: hidden; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-card); display: flex; width: calc(100% - 4px); height: calc(100vh - 112px); position: relative; box-shadow: var(--tile-shadow); box-sizing: border-box;">
+      <div id="playground-workspace-container" class="glass-panel" style="padding: 2px; margin: 0; overflow: hidden; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-card); display: flex; width: 100%; height: 100%; position: relative; box-shadow: var(--tile-shadow); box-sizing: border-box;">
         
         <!-- LEFT SIDEBAR: 2-TAB PANEL (Chat | IDE) -->
         <div id="left-sidebar" class="sidebar-container" style="width: 240px; min-width: 0; max-width: 550px; background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: relative; transition: width 0.1s ease; flex-shrink: 0;">
@@ -524,13 +602,16 @@ class PlaygroundView {
             </div>
             <!-- Workspace Path -->
             <div id="ide-workspace-path-display" class="sidebar-path-display" style="padding: 2px 6px; height: 24px; min-height: 24px; line-height: 20px; font-size: 0.84rem; font-weight: 600; color: var(--primary-light); background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; box-sizing: border-box;">
-              No workspace opened
+              ${savedWorkspace || 'No workspace opened'}
             </div>
             <!-- File Tree -->
             <div id="ide-file-tree-sidebar" style="flex: 1; overflow-y: auto; padding: 1px 2px; font-size: 0.85rem; font-weight: 600;">
               <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem; font-weight: 600;">
-                <i class="fa-solid fa-folder-open" style="font-size: 1.4rem; margin-bottom: 6px; opacity: 0.7; color: var(--primary-light);"></i><br>
-                Open a folder to start coding
+                <i class="fa-solid fa-folder-open" style="font-size: 1.6rem; margin-bottom: 8px; opacity: 0.8; color: var(--primary-light);"></i><br>
+                <div style="margin-bottom: 10px; font-size: 0.76rem; color: var(--text-muted);">Choose a local system folder to explore files</div>
+                <button type="button" onclick="IDEWorkspaceView.openWorkspaceFromSidebar()" class="btn btn-primary btn-xs" style="padding: 5px 14px; font-size: 0.72rem; border-radius: 4px; cursor: pointer;">
+                  <i class="fa-solid fa-folder-open" style="margin-right: 4px;"></i> Open Folder
+                </button>
               </div>
             </div>
             <!-- Quick Actions -->
@@ -557,7 +638,7 @@ class PlaygroundView {
         <div id="sidebar-resizer" style="width: 4px; cursor: col-resize; background: transparent; z-index: 10; margin-left: -2px; transition: background 0.15s ease; flex-shrink: 0;" onmousedown="PlaygroundView.startSidebarResize(event)" onmouseover="this.style.background='var(--accent-cyan)'" onmouseout="if(!PlaygroundView.isResizingSidebar) this.style.background='transparent'"></div>
 
         <!-- IDE Editor Drawer (slides from left edge) -->
-        <div id="ide-editor-drawer" class="editor-drawer" style="position: absolute; left: 240px; top: 0; bottom: 0; width: 0; max-width: 500px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); transition: width 0.3s ease; overflow-y: auto; overflow-x: hidden; z-index: 100;">
+        <div id="ide-editor-drawer" class="editor-drawer" style="position: absolute; left: 240px; top: 0; bottom: 0; width: 0; max-width: 500px; background: var(--bg-sidebar); border-right: none; transition: width 0.3s ease; overflow-y: auto; overflow-x: hidden; z-index: 100; display: none;">
           <div id="ide-editor-content" style="width: 0; transition: width 0.3s ease; height: 100%;"></div>
           <!-- Close Button -->
           <button onclick="PlaygroundView.closeEditorDrawer()" class="btn btn-link btn-xs editor-close-btn" style="position: absolute; top: 8px; right: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; z-index: 101;">
@@ -588,9 +669,9 @@ class PlaygroundView {
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0 0 0; border-top: 1px solid var(--border-color); gap: 4px; flex-wrap: wrap; margin: 0;">
                 <!-- Left Side: All Controls in Responsive Row -->
                 <div style="display: flex; gap: 3px; align-items: center; flex: 1; min-width: 260px; flex-wrap: wrap; margin: 0; padding: 0;">
-                  <!-- Sidebar & Drawer Toggles -->
-                  <button class="fmc-chat-icon-btn" title="Toggle Left Sidebar" onclick="PlaygroundView.toggleSidebar('left')">
-                    <i class="fa-solid fa-bars-staggered"></i>
+                  <!-- Sync / Refresh Providers & Models -->
+                  <button class="fmc-chat-icon-btn" title="Refresh & Sync Providers and Models" onclick="PlaygroundView.refreshProvidersAndModels()">
+                    <i id="btn-refresh-providers-models" class="fa-solid fa-arrows-rotate" style="color: var(--accent-cyan);"></i>
                   </button>
                   <button class="fmc-chat-icon-btn" title="Model Parameters Drawer" onclick="PlaygroundView.toggleSidebar('right')">
                     <i class="fa-solid fa-sliders"></i>
@@ -654,6 +735,18 @@ class PlaygroundView {
 
     PlaygroundView.renderAgentsWindow();
     
+    // Restore and hydrate IDE workspace in sidebar
+    if (typeof IDEWorkspaceView !== 'undefined') {
+      const savedWs = localStorage.getItem('fmc_ide_workspace') || localStorage.getItem('fmc_project_workspace_path');
+      if (savedWs) {
+        IDEWorkspaceView.workspacePath = savedWs;
+        const pathDisplay = document.getElementById('ide-workspace-path-display');
+        if (pathDisplay) pathDisplay.textContent = savedWs;
+        IDEWorkspaceView.loadFileTreeForSidebar();
+      }
+    }
+    PlaygroundView.updateWorkspaceIndicator();
+
     // Dynamic Pixel Height Auto-Fit & Window Resize Listener
     PlaygroundView.adjustLayoutHeight();
     if (!PlaygroundView._resizeListenerAttached) {
@@ -714,12 +807,17 @@ class PlaygroundView {
     const ws = document.getElementById('playground-workspace-container');
     if (!ws) return;
 
+    // Pixel-perfect: measure actual top offset from viewport and fill remaining
     const wsRect = ws.getBoundingClientRect();
-    const topOffset = wsRect.top > 0 ? wsRect.top : 108;
-    const availableHeight = Math.max(300, window.innerHeight - topOffset - 4);
+    const topOffset = wsRect.top > 0 ? wsRect.top : 0;
+    const availableHeight = Math.max(300, window.innerHeight - topOffset - 2);
 
     ws.style.height = `${availableHeight}px`;
     ws.style.maxHeight = `${availableHeight}px`;
+
+    // Ensure chat input area is never clipped at the bottom
+    const chatPane = document.getElementById('chat-workspace-pane');
+    if (chatPane) chatPane.style.height = '100%';
 
     const msgContainer = document.getElementById('chat-messages-container');
     if (msgContainer) {
@@ -1118,6 +1216,9 @@ class PlaygroundView {
     const content = document.getElementById('ide-editor-content');
     
     if (drawer && content) {
+      drawer.classList.add('open');
+      drawer.style.display = 'block';
+      drawer.style.borderRight = '1px solid var(--border-color)';
       // Responsive width: up to 60% of viewport but never exceeding 500px
       const maxWidth = 500; // px
       const calculatedWidth = Math.min(window.innerWidth * 0.6, maxWidth);
@@ -1140,7 +1241,10 @@ class PlaygroundView {
     const content = document.getElementById('ide-editor-content');
     
     if (drawer && content) {
+      drawer.classList.remove('open');
       drawer.style.width = '0';
+      drawer.style.borderRight = 'none';
+      drawer.style.display = 'none';
       content.style.width = '0';
       PlaygroundView.editorDrawerOpen = false;
     }
@@ -1214,7 +1318,7 @@ class PlaygroundView {
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
                       <div class="agv-msg-actions-top" style="display: flex; align-items: center; gap: 4px;">
-                        <button type="button" class="fmc-chat-icon-btn" onclick="navigator.clipboard.writeText(document.getElementById('${bubbleId}').innerText); ModalDialog.showNotification('Message text copied!','success')" title="Copy Message Text">
+                        <button type="button" class="fmc-chat-icon-btn" onclick="const el=document.getElementById('${bubbleId}'); if(el){navigator.clipboard.writeText(el.innerText); ModalDialog.showNotification('Message text copied!','success');}" title="Copy Message Text">
                           <i class="fa-regular fa-copy"></i>
                         </button>
                         ${isUser ? `
@@ -1510,208 +1614,7 @@ class PlaygroundView {
       return;
     }
 
-    // ── Legacy Fallback: Original inline streaming (preserved for backward compat) ──
-    // Handle Agent Tags & Slash Commands Simulation
-    if (PlaygroundView.currentAgent && PlaygroundView.currentAgent !== '@copilot') {
-       userText = PlaygroundView.currentAgent + ' ' + userText;
-    }
-
-    if (PlaygroundView.activeContextAttachments.length > 0) {
-       const attachments = PlaygroundView.activeContextAttachments.map(a => '[Attached: ' + a.name + ']').join(' ');
-       userText = attachments + ' \n\n' + userText;
-    }
-
-    const userMsg = { role: 'user', content: userText, timestamp: new Date().toISOString() };
-    activeSession.messages.push(userMsg);
-
-    let optionText = 'Agent';
-    if (modelSelectEl && modelSelectEl.options[modelSelectEl.selectedIndex]) {
-        optionText = modelSelectEl.options[modelSelectEl.selectedIndex].text.replace(' (Inactive)', '');
-    }
-
-    const assistantMsg = { role: 'assistant', content: '', modelName: optionText, timestamp: new Date().toISOString() };
-    activeSession.messages.push(assistantMsg);
-
-    PlaygroundView.isGenerating = true;
-    PlaygroundView.activeAbortController = new AbortController();
-    PlaygroundView.updateSendButtonState(true);
-
-    PlaygroundView.renderMessages();
-    PlaygroundView.renderAgentsWindow();
-    PlaygroundView.saveSessions();
-
-    const container = document.getElementById('chat-messages-container');
-    const mainContainer = document.getElementById('fmc-main-content');
-    
-    const msgIndex = activeSession.messages.length - 1;
-    const assistantBubbleId = 'msg_bubble_' + msgIndex;
-    const mainBubbleId = 'main_msg_bubble_' + msgIndex;
-
-    try {
-      const response = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...ApiService.getAuthHeader()
-        },
-        body: JSON.stringify({
-          model: modelId,
-          messages: activeSession.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
-          stream: true
-        }),
-        signal: PlaygroundView.activeAbortController.signal
-      });
-
-      if (!response.ok) {
-        throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-      }
-
-      const isFailover = response.headers.get('X-FMC-Failover') === 'true';
-      if (isFailover) {
-         const failoverProvider = response.headers.get('X-FMC-Failover-Provider');
-         const failoverToModel = response.headers.get('X-FMC-Failover-To');
-         if (failoverToModel) {
-            const providerSelectEl = document.getElementById('chat-provider-select');
-            if (providerSelectEl && failoverProvider && failoverProvider !== 'unknown') {
-               let provFound = false;
-               for (let i=0; i<providerSelectEl.options.length; i++) {
-                   if (providerSelectEl.options[i].value === failoverProvider) {
-                       providerSelectEl.selectedIndex = i;
-                       provFound = true; break;
-                   }
-               }
-               if (provFound) PlaygroundView.onProviderChange(failoverProvider);
-            }
-            
-            const modelSelectEl2 = document.getElementById('ollama-model-select');
-            if (modelSelectEl2) {
-               let modFound = false;
-               for (let i=0; i<modelSelectEl2.options.length; i++) {
-                   if (modelSelectEl2.options[i].value === failoverToModel || modelSelectEl2.options[i].value.includes(failoverToModel)) {
-                       modelSelectEl2.selectedIndex = i;
-                       modFound = true; break;
-                   }
-               }
-               if (modFound) {
-                   const selectedOpt = modelSelectEl2.options[modelSelectEl2.selectedIndex];
-                   if (selectedOpt) {
-                       activeSession.messages[msgIndex].modelName = selectedOpt.text.replace(' (Inactive)', '') + ' (Failover)';
-                       PlaygroundView.onModelChange(modelSelectEl2.value);
-                       PlaygroundView.renderMessages();
-                   }
-               }
-            }
-         }
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let fullText = '';
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data: ')) {
-            const jsonStr = trimmed.substring(6).trim();
-            if (jsonStr === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const delta = parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content;
-              if (delta) {
-                fullText += delta;
-                assistantMsg.content = fullText;
-                
-                const assistantBubbleEl = document.getElementById(assistantBubbleId);
-                const mainBubbleEl = document.getElementById(mainBubbleId);
-                
-                if (assistantBubbleEl) assistantBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(fullText);
-                if (mainBubbleEl) mainBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(fullText);
-                
-                if (container) container.scrollTop = container.scrollHeight;
-                if (mainContainer && PlaygroundView.activeTab === 'agents-window') mainContainer.scrollTop = mainContainer.scrollHeight;
-              }
-            } catch (e) {}
-          }
-        }
-      }
-
-      if (!fullText && buffer) {
-        try {
-          const parsed = JSON.parse(buffer);
-          fullText = (parsed.choices && parsed.choices[0] && parsed.choices[0].message && parsed.choices[0].message.content) || '';
-        } catch (e) {}
-      }
-
-      assistantMsg.content = fullText || 'No response returned from Ollama.';
-      
-      const assistantBubbleEl = document.getElementById(assistantBubbleId);
-      const mainBubbleEl = document.getElementById(mainBubbleId);
-      if (assistantBubbleEl) assistantBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(assistantMsg.content);
-      if (mainBubbleEl) mainBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(assistantMsg.content);
-      
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        assistantMsg.content += ' [Generation Stopped]';
-      } else {
-        assistantMsg.content = 'Error: ' + (err.message || 'Failed to connect to proxy endpoint.');
-        
-        // Robust ValidationNotifier Fallback Loop
-        if (typeof ValidationNotifier !== 'undefined') {
-          ValidationNotifier.showOptionPopup({
-            title: 'Execution Engine Error',
-            message: `The proxy engine encountered an error: <code style="color: var(--accent-rose);">${err.message}</code><br><br>Would you like to force a failover to the next available free model or retry?`,
-            icon: 'fa-network-wired',
-            options: [
-              {
-                id: 'retry',
-                label: 'Retry Current Request',
-                type: 'primary',
-                icon: 'fa-rotate-right',
-                action: () => { 
-                  const inputEl = document.getElementById('chat-user-input');
-                  if (inputEl) inputEl.value = userText;
-                  if (activeSession && activeSession.messages && activeSession.messages.length >= 2) {
-                    activeSession.messages.pop(); // remove failed assistant msg
-                    activeSession.messages.pop(); // remove user msg so it doesn't duplicate
-                  }
-                  PlaygroundView.sendMessage(); 
-                }
-              },
-              {
-                id: 'failover',
-                label: 'Switch Provider & Retry',
-                type: 'emerald',
-                icon: 'fa-arrow-right-arrow-left',
-                action: () => { 
-                   ModalDialog.showNotification('Switching to alternate provider...', 'info');
-                }
-              }
-            ]
-          });
-        }
-      }
-      const assistantBubbleEl = document.getElementById(assistantBubbleId);
-      const mainBubbleEl = document.getElementById(mainBubbleId);
-      if (assistantBubbleEl) assistantBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(assistantMsg.content);
-      if (mainBubbleEl) mainBubbleEl.innerHTML = PlaygroundViewHelper.formatChatMessageContent(assistantMsg.content);
-    } finally {
-      PlaygroundView.isGenerating = false;
-      PlaygroundView.activeAbortController = null;
-      PlaygroundView.updateSendButtonState(false);
-      PlaygroundView.saveSessions();
-      PlaygroundView.renderMessages();
-      PlaygroundView.renderAgentsWindow();
-      if (container) container.scrollTop = container.scrollHeight;
-      if (mainContainer && PlaygroundView.activeTab === 'agents-window') mainContainer.scrollTop = mainContainer.scrollHeight;
-    }
+    ModalDialog.showNotification('Chat Orchestrator engine is initializing. Please retry in a moment.', 'warning');
   }
 
   // ── IDE Workspace Integration ──

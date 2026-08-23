@@ -185,13 +185,103 @@ class ModelClubHierarchyHelper {
     }
   }
 
-  static getActiveComboId() { return Array.from(this.selectedCombos)[0] || (this.combos[0] ? this.combos[0].id : null); }
-  static testSelectedCombo() { const cId = this.getActiveComboId(); if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning'); ModalDialog.showNotification(`Testing Combo Agent [${cId}]...`, 'info'); }
-  static cloneSelectedCombo() { const cId = this.getActiveComboId(); if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning'); const c = this.combos.find(x => x.id === cId); if (c && typeof ModelClubView !== 'undefined') ModelClubView.openCreateComboStudio(c.modelsList || [], `${c.name}-copy`); }
-  static copySelectedComboCode() { const cId = this.getActiveComboId(); if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning'); const origin = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:12247'); navigator.clipboard.writeText(`// FMC API\nfetch('${origin}/v1/chat/completions', { method: 'POST', body: JSON.stringify({ model: '${cId}' }) });`); ModalDialog.showNotification('API Code copied to clipboard!', 'success'); }
-  static toggleSelectedComboActive() { const cId = this.getActiveComboId(); if (cId && typeof ModelClubComboHelper !== 'undefined') ModelClubComboHelper.toggleActive(cId, () => this.refreshGrid()); }
-  static editSelectedCombo() { const cId = this.getActiveComboId(); if (cId && typeof ModelClubComboHelper !== 'undefined') ModelClubComboHelper.openEditComboModal(cId, this.combos, () => this.refreshGrid()); }
-  static deleteSelectedCombo() { const cId = this.getActiveComboId(); if (cId && typeof ModelClubComboHelper !== 'undefined') ModelClubComboHelper.deleteCombo(cId, () => this.refreshGrid()); }
+  static getActiveComboId() {
+    if (this.selectedCombos && this.selectedCombos.size > 0) {
+      return Array.from(this.selectedCombos)[0];
+    }
+    if (this.activeItem && this.viewLevel === 'combos') {
+      const match = (this.combos || []).find(c => c.id === this.activeItem || c.name === this.activeItem);
+      if (match) return match.id;
+    }
+    const defaultMaster = (this.combos || []).find(c => (c.name && c.name.toLowerCase().includes('jdroidxyz')) || c.id === 'jdroidxyz-combo-agent');
+    if (defaultMaster) return defaultMaster.id;
+    return (this.combos && this.combos[0]) ? this.combos[0].id : null;
+  }
+
+  static async testSelectedCombo() {
+    const cId = this.getActiveComboId();
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning');
+    
+    ModalDialog.showNotification(`Testing reachability of Combo Agent [${cId}]...`, 'info');
+    try {
+      const res = await ApiService.request(`/api/models/combos/${encodeURIComponent(cId)}/test-run`, { method: 'POST' });
+      if (res && res.success) {
+        const pooled = res.pooledModels || [];
+        const content = `
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:0.8rem;">
+            <div style="background:rgba(16,185,129,0.08); border:1px solid var(--accent-emerald); padding:8px 10px; border-radius:6px;">
+              <strong style="color:var(--accent-emerald);"><i class="fa-solid fa-flask"></i> Reachability Test: ${res.name || cId}</strong>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Strategy: <strong>${res.strategy || 'Round Robin'}</strong> | Total Pooled Models: <strong>${res.pooledModelCount || pooled.length}</strong></div>
+            </div>
+            <div style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
+              ${pooled.length === 0 ? '<div style="color:var(--text-muted); font-size:0.75rem; text-align:center; padding:10px;">No pooled models in this combo.</div>' : pooled.map(m => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color);">
+                  <div>
+                    <strong style="color:var(--text-main); font-size:0.75rem;">${m.modelName || m.modelId || m.id}</strong>
+                    <div style="font-size:0.68rem; color:var(--text-muted);">ID: <code>${m.id}</code></div>
+                  </div>
+                  <span class="badge ${m.status !== 'Inactive' ? 'badge-emerald' : 'badge-rose'}" style="font-size:0.65rem;">
+                    <i class="fa-solid ${m.status !== 'Inactive' ? 'fa-check' : 'fa-xmark'}"></i> ${m.status !== 'Inactive' ? 'Reachable' : 'Inactive'}
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        ModalDialog.showCustomModal({
+          title: `<i class="fa-solid fa-flask" style="color:var(--accent-amber);"></i> Combo Agent Reachability Diagnostics`,
+          content,
+          confirmText: 'Done',
+          showCancel: false
+        });
+      } else {
+        ModalDialog.showNotification(`Combo test failed: ${res.error || 'Unknown error'}`, 'error');
+      }
+    } catch(e) {
+      ModalDialog.showNotification(`Combo test error: ${e.message}`, 'error');
+    }
+  }
+
+  static cloneSelectedCombo() { 
+    const cId = this.getActiveComboId(); 
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning'); 
+    const c = (this.combos || []).find(x => x.id === cId); 
+    if (c && typeof ModelClubView !== 'undefined') {
+      ModelClubView.openCreateComboStudio(c.modelsList || [], `${c.name}-copy`); 
+    }
+  }
+
+  static copySelectedComboCode() { 
+    const cId = this.getActiveComboId(); 
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning'); 
+    const origin = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:12247'); 
+    navigator.clipboard.writeText(`// FMC API Connection Example\nfetch('${origin}/v1/chat/completions', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    model: '${cId}',\n    messages: [{ role: 'user', content: 'Hello!' }]\n  })\n});`); 
+    ModalDialog.showNotification(`Integration code for "${cId}" copied to clipboard!`, 'success'); 
+  }
+
+  static toggleSelectedComboActive() { 
+    const cId = this.getActiveComboId(); 
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning');
+    if (typeof ModelClubComboHelper !== 'undefined') {
+      ModelClubComboHelper.toggleActive(cId, () => this.refreshGrid()); 
+    }
+  }
+
+  static editSelectedCombo() { 
+    const cId = this.getActiveComboId(); 
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning');
+    if (typeof ModelClubComboHelper !== 'undefined') {
+      ModelClubComboHelper.openEditComboModal(cId, this.combos, () => this.refreshGrid()); 
+    }
+  }
+
+  static deleteSelectedCombo() { 
+    const cId = this.getActiveComboId(); 
+    if (!cId) return ModalDialog.showNotification('Please select a combo agent first!', 'warning');
+    if (typeof ModelClubComboHelper !== 'undefined') {
+      ModelClubComboHelper.deleteCombo(cId, () => this.refreshGrid()); 
+    }
+  }
 
   static refreshGrid() { 
     const g = document.getElementById('model-club-content-grid'); 

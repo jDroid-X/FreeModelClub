@@ -25,38 +25,23 @@ if /i not "!CONFIRM!"=="Y" (
 
 echo.
 echo =======================================================
-echo  [STEP 1/4] Terminating All Background Services ^& Processes
+echo  [██░░░░░░░░] 25%% [STEP 1/4] Terminating All Background Services (jDroid-X-FMC)
 echo =======================================================
 
-:: Stop Tray Launcher PowerShell Hosts
-echo [INFO] Stopping all FreeModelsClub tray processes...
-powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { `$_.CommandLine -like '*tray_launcher.ps1*' -or `$_.CommandLine -like '*server.js*' } | ForEach-Object { Stop-Process -Id `$_.ProcessId -Force -ErrorAction SilentlyContinue }"
-
-:: Force Kill Port 12247 (Primary Proxy)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":12247 "') do (
-    taskkill /PID %%a /T /F >nul 2>&1
-)
-
-:: Force Kill Port 11434 (Secondary Ollama Bridge)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":11434 "') do (
-    taskkill /PID %%a /T /F >nul 2>&1
-)
-
-:: Force Kill Port 5678 (n8n Workflow Service)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5678 "') do (
-    taskkill /PID %%a /T /F >nul 2>&1
-)
+echo [INFO] Stopping all FreeModelsClub background processes...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and ($_.CommandLine -like '*tray_launcher.ps1*' -or $_.CommandLine -like '*server.js*' -or $_.CommandLine -like '*FreeModelsClub*') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; try { Get-NetTCPConnection -LocalPort 12247 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } catch {}" >nul 2>&1
+timeout /t 2 /nobreak >nul
 
 echo [OK] All background server processes terminated.
 
 echo.
 echo =======================================================
-echo  [STEP 2/4] Removing Application Packages ^& Binaries
+echo  [████░░░░░░] 50%% [STEP 2/4] Removing Application Packages ^& Binaries
 echo =======================================================
 
 if exist "%NODE_MODULES%" (
     echo [INFO] Removing node_modules...
-    rmdir /S /Q "%NODE_MODULES%"
+    rmdir /S /Q "%NODE_MODULES%" >nul 2>&1
     echo [OK] node_modules removed.
 ) else (
     echo [INFO] No node_modules found in current workspace.
@@ -64,57 +49,62 @@ if exist "%NODE_MODULES%" (
 
 if exist "%APP_DIR%.node" (
     echo [INFO] Removing portable Node.js runtime...
-    rmdir /S /Q "%APP_DIR%.node"
+    rmdir /S /Q "%APP_DIR%.node" >nul 2>&1
     echo [OK] Portable Node.js runtime removed.
 )
 
 if exist "%APP_DIR%logs" (
     echo [INFO] Removing runtime logs...
-    rmdir /S /Q "%APP_DIR%logs"
+    rmdir /S /Q "%APP_DIR%logs" >nul 2>&1
 )
 
 if exist "%APP_DIR%dist" (
     echo [INFO] Removing build output artifacts...
-    rmdir /S /Q "%APP_DIR%dist"
+    rmdir /S /Q "%APP_DIR%dist" >nul 2>&1
 )
 
-if exist "%APP_DIR%.tray_launcher.lock" del /F /Q "%APP_DIR%.tray_launcher.lock"
-if exist "%APP_DIR%public\status.json" del /F /Q "%APP_DIR%public\status.json"
-if exist "%APP_DIR%public\status.js" del /F /Q "%APP_DIR%public\status.js"
+if exist "%APP_DIR%.tray_launcher.lock" del /F /Q "%APP_DIR%.tray_launcher.lock" >nul 2>&1
+if exist "%APP_DIR%public\status.json" del /F /Q "%APP_DIR%public\status.json" >nul 2>&1
+if exist "%APP_DIR%public\status.js" del /F /Q "%APP_DIR%public\status.js" >nul 2>&1
 
 echo [OK] Runtime buffers and build artifacts purged.
 
 echo.
 echo =======================================================
-echo  [STEP 3/4] Cleaning Shortcuts ^& Shell Integrations
+echo  [██████░░░░] 75%% [STEP 3/4] Cleaning Shortcuts ^& Shell Integrations
 echo =======================================================
 
 if exist "%USERPROFILE%\Desktop\FreeModelsClub.lnk" (
-    del /F /Q "%USERPROFILE%\Desktop\FreeModelsClub.lnk"
+    del /F /Q "%USERPROFILE%\Desktop\FreeModelsClub.lnk" >nul 2>&1
     echo [OK] Removed Desktop Shortcut.
 )
 
 if exist "%APPDATA%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk" (
-    del /F /Q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk"
+    del /F /Q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk" >nul 2>&1
     echo [OK] Removed Start Menu Shortcut.
+)
+
+if exist "%ProgramData%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk" (
+    del /F /Q "%ProgramData%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk" >nul 2>&1
+    echo [OK] Removed Global Start Menu Shortcut.
 )
 
 echo.
 echo =======================================================
-echo  [STEP 4/4] User Database ^& Configuration Options
+echo  [██████████] 100%% [STEP 4/4] User Database ^& Configuration Options
 echo =======================================================
 set /p KEEP_DATA="Do you want to KEEP your provider API keys and database in 'data/' folder? (Y/N): "
 if /i "!KEEP_DATA!"=="N" (
     if exist "%DATA_DIR%" (
         echo [INFO] Purging user data and cryptographic vault keys...
-        rmdir /S /Q "%DATA_DIR%"
+        rmdir /S /Q "%DATA_DIR%" >nul 2>&1
         echo [OK] User database and vault keys permanently deleted.
     )
 ) else (
     echo [OK] User data preserved in "%DATA_DIR%".
 )
 
-:: Also clean legacy installation path if it existed
+:: Clean legacy installation path if it exists
 if exist "%USERPROFILE%\jDroid-X\FreeModelClub" (
     if /i "!KEEP_DATA!"=="N" (
         rmdir /S /Q "%USERPROFILE%\jDroid-X\FreeModelClub" >nul 2>&1

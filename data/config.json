@@ -1,7 +1,8 @@
 ﻿{
     "port":  12247,
-    "rateLimitRPM":  30,
+    "monitoringFrequencyHours":  1,
     "rateLimitTPM":  70000,
     "autoStart":  true,
-    "monitoringFrequencyHours":  1
+    "rateLimitRPM":  30,
+    "theme":  "platinum"
 }

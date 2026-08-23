@@ -14,7 +14,8 @@ class ModelClubPanelRenderer {
     if (lvl === 'combos') {
       const c = (combos || []).find(x => x.id === itm) || (combos || [])[0] || {};
       icon = 'fa-layer-group'; title = c.name || 'Model Combo'; color = 'var(--accent-emerald)'; bg = 'rgba(16,185,129,0.02)';
-      sub1 = `Strategy: ${c.strategy || 'Round Robin'}`;
+      const lkgpInfo = c.lastKnownGoodModelId ? ` | Pinned (LKGP): ${c.lastKnownGoodModelId}` : '';
+      sub1 = `Strategy: ${c.strategy || 'Round Robin'}${lkgpInfo}`;
       sub2 = `${c.description || 'Model combo cluster'}`;
       const comboModels = (c.modelsList || []).map(id => (models || []).find(m => m.id === id || m.modelId === id)).filter(Boolean);
       modelCount = comboModels.length;
@@ -62,9 +63,25 @@ class ModelClubPanelRenderer {
       }
       btnHtml = `<button class="btn btn-primary btn-xs" onclick="ModelClubView.createComboForGroup('${encodeURIComponent(pName)}', '${encodeURIComponent(JSON.stringify(pModels.map(m=>m.id)))}')"><i class="fa-solid fa-plus"></i> + Create Combo</button>`;
     } else {
-      const jdroidx = (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroid'));
+      const jdroidx = (combos || []).find(c => c.name && (c.name.toLowerCase().includes('jdroidxyz') || c.name.toLowerCase().includes('jdroid')))
+        || { name: 'jDroidxyz-combo-agent', id: 'combo_1785085494991_5mmp0', strategy: 'Round Robin', modelsList: [] };
       const jId = jdroidx ? jdroidx.id : '';
-      btnHtml = `<button class="btn btn-secondary btn-xs" onclick="ModelClubView.openEditComboModal('${jId}')"><i class="fa-solid fa-pen-to-square"></i> Edit Agent</button>`;
+      icon = 'fa-gem';
+      title = jdroidx.name || 'jDroidxyz-combo-agent';
+      color = 'var(--accent-emerald)';
+      bg = 'rgba(16,185,129,0.02)';
+      sub1 = `Master Agent | Strategy: ${jdroidx.strategy || 'Round Robin'}`;
+      sub2 = 'Master Multi-Model Combo Agent & Universal Load-Balanced Swarm';
+      const masterModels = jdroidx && Array.isArray(jdroidx.modelsList) && jdroidx.modelsList.length > 0
+        ? jdroidx.modelsList.map(id => (models || []).find(m => m.id === id || m.modelId === id)).filter(Boolean)
+        : (models || []);
+      modelCount = masterModels.length;
+      if (fmt && modelCount > 0) {
+        const sums = fmt.calculateSkillTokenSums(masterModels, providers);
+        tokenHtml = `<strong>Tokens:</strong> <span style="color:var(--accent-emerald);font-weight:600;">${fmt.formatNumberAutoUnit(sums.consumed)} Consumed</span> <span style="color:var(--border-color);margin:0 4px;">|</span> <span style="color:var(--accent-cyan);font-weight:600;">${fmt.formatNumberAutoUnit(sums.available)} Available</span>`;
+        limitsHtml = `<strong>Limits (Est):</strong> ${fmt.formatNumberAutoUnit(sums.available / Math.max(1, masterModels.length))} Avg TPM/RPM`;
+      }
+      btnHtml = `<button class="btn btn-secondary btn-xs" onclick="ModelClubView.openEditComboModal('${jId}')"><i class="fa-solid fa-pen-to-square"></i> Edit Master Agent</button>`;
     }
 
     if (!tokenHtml) {
@@ -126,14 +143,29 @@ class ModelClubPanelRenderer {
 
   static renderBox(title, icon, color, rawList, selSet, idFn, nameFn, toggleFn) {
     const list = [...rawList].sort((a, b) => (selSet.has(idFn(b)) ? 1 : 0) - (selSet.has(idFn(a)) ? 1 : 0));
+    const safeTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
     return `<div class="glass-panel" style="padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden;box-sizing:border-box;">
       <div style="font-size:0.72rem;font-weight:700;color:${color};border-bottom:1px solid var(--border-color);padding-bottom:3px;display:flex;justify-content:space-between;align-items:center;">
         <span><i class="fa-solid ${icon}"></i> ${title} <strong style="color:${color};">${selSet.size}/${rawList.length}</strong></span>
+      </div>
+      <div style="padding: 1px 0 3px 0;">
+        <input type="text" class="form-control" style="width:100%;font-size:0.68rem;padding:2px 5px;height:20px;border:1px solid rgba(255,255,255,0.05);border-radius:4px;background:rgba(0,0,0,0.2);color:var(--text-main);" placeholder="Filter ${title}..." onkeyup="
+          const q = this.value.toLowerCase();
+          const p = this.parentElement.parentElement;
+          p.querySelectorAll('.matrix-item-${safeTitle}').forEach(el => {
+            el.style.display = el.getAttribute('data-name').toLowerCase().includes(q) ? 'flex' : 'none';
+          });
+        " />
       </div>
       <div style="flex:1;overflow-y:auto;max-height:340px;display:flex;flex-direction:column;gap:3px;padding-right:2px;">
         ${list.map(item => {
           const id = idFn(item), name = nameFn(item), ch = selSet.has(id);
           const isModel = toggleFn === 'toggleModel';
+          const isCombo = toggleFn === 'toggleCombo';
+          const isSkill = toggleFn === 'toggleSkill';
+          const isFamily = toggleFn === 'toggleFamily';
+          const isProvider = toggleFn === 'toggleProvider';
+
           const tokenInfo = isModel && typeof FormatHelper !== 'undefined'
             ? `<span style="font-size:0.55rem;color:var(--accent-amber);margin-left:4px;">${FormatHelper.formatNumberAutoUnit((item.totalPromptTokens||0)+(item.totalCompletionTokens||0))}</span>`
             : '';
@@ -141,16 +173,48 @@ class ModelClubPanelRenderer {
           const visionTag = isModel && (item.supportsVision || item.hasVision) ? `<i class="fa-solid fa-eye" style="color:var(--accent-cyan);font-size:0.55rem;margin-left:3px;" title="Vision / Multimodal"></i>` : '';
           const reasonTag = isModel && (item.supportsReasoning || item.hasReasoning) ? `<i class="fa-solid fa-brain" style="color:var(--accent-amber);font-size:0.55rem;margin-left:3px;" title="Chain-of-Thought / Deep Reasoning"></i>` : '';
           
-          return `<label style="display:flex;align-items:center;justify-content:space-between;font-family:var(--font-main);font-size:var(--font-size-base, 0.68rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 5px;border-radius:4px;background:${ch?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.02)'};border:1px solid ${ch?color:'rgba(255,255,255,0.05)'};cursor:pointer;">
-            <span style="display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              <input type="checkbox" ${ch?'checked':''} onchange="ModelClubHierarchyHelper.${toggleFn}('${encodeURIComponent(id)}')" />
-              <strong style="color:var(--text-main);">${name}</strong>${visionTag}${reasonTag}${modelCount}${tokenInfo}
-            </span>
-            <span style="display:flex;align-items:center;gap:4px;">
-              ${isModel ? `<button type="button" class="btn btn-secondary btn-xs" style="padding:1px 4px;font-size:0.6rem;" onclick="event.stopPropagation(); ModelClubView.openEditModelModal('${encodeURIComponent(id)}')" title="Edit ROCA Model Config"><i class="fa-solid fa-gear"></i></button>` : ''}
-              ${ch ? '<i class="fa-solid fa-check" style="color:'+color+';font-size:0.58rem;"></i>' : ''}
-            </span>
-          </label>`;
+          const cleanId = id.replace(/[^a-zA-Z0-9]/g, '');
+          let detailsBody = '';
+          if (isModel) {
+            detailsBody = `<div><i class="fa-solid fa-server"></i> Provider: ${item.providerDisplayName || item.providerName || item.providerId || 'N/A'}</div>
+              <div><i class="fa-solid fa-microchip"></i> Family: ${item.family || 'N/A'} | <i class="fa-solid fa-bolt"></i> Latency: ${item.latencyMs || 200}ms</div>
+              <div><i class="fa-solid fa-memory"></i> Context: ${item.contextWindow ? (item.contextWindow/1000).toFixed(0)+'k' : '128k'} | Max Output: ${item.maxTokens || 4096}</div>`;
+          } else if (isCombo) {
+            detailsBody = `<div><i class="fa-solid fa-layer-group"></i> Strategy: ${item.strategy || 'Round Robin'}</div>
+              <div><i class="fa-solid fa-robot"></i> Pooled Models: ${(item.modelsList||[]).length}</div>
+              ${item.lastKnownGoodModelId ? `<div><i class="fa-solid fa-thumbtack" style="color:var(--accent-cyan);"></i> Pinned: ${item.lastKnownGoodModelId}</div>` : ''}`;
+          } else if (isSkill) {
+            detailsBody = `<div><i class="fa-solid fa-brain"></i> Category ID: ${item.categoryId || 'skill'}</div>
+              <div><i class="fa-solid fa-robot"></i> Assigned Models: ${(item.models||[]).length}</div>`;
+          } else if (isFamily) {
+            detailsBody = `<div><i class="fa-solid fa-building"></i> Vendor: ${item.vendor || 'Meta/Google/Various'}</div>
+              <div><i class="fa-solid fa-robot"></i> Family Models: ${(item.models||[]).length}</div>`;
+          } else if (isProvider) {
+            detailsBody = `<div><i class="fa-solid fa-network-wired"></i> Protocol: ${item.protocol || 'OpenAI Compatible'}</div>
+              <div><i class="fa-solid fa-gauge-high"></i> Ping: ${item.pingLatencyMs !== undefined ? item.pingLatencyMs + 'ms' : 'Active'}</div>`;
+          }
+
+          const detailsHtml = detailsBody ? `
+            <div style="display:none; padding:3px 6px; font-size:0.62rem; color:var(--text-muted); background:rgba(0,0,0,0.25); border-top:1px solid rgba(255,255,255,0.05);" id="pdetails-${cleanId}">
+              ${detailsBody}
+            </div>` : '';
+
+          const toggleDetailsFn = detailsBody ? `onclick="event.preventDefault(); event.stopPropagation(); const d=document.getElementById('pdetails-${cleanId}'); if(d) d.style.display = d.style.display==='none' ? 'block' : 'none';"` : '';
+          const infoIcon = detailsBody ? `<i class="fa-solid fa-circle-info" style="margin-left:3px; color:var(--accent-cyan); font-size:0.6rem; cursor:pointer;" title="Toggle Quick Details" ${toggleDetailsFn}></i>` : '';
+
+          return `<div class="matrix-item-${safeTitle}" data-name="${name.replace(/"/g, '&quot;')}" style="display:flex; flex-direction:column; border-radius:4px; background:${ch?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.02)'}; border:1px solid ${ch?color:'rgba(255,255,255,0.05)'}; cursor:pointer; margin-bottom:1px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;font-family:var(--font-main);font-size:var(--font-size-base, 0.68rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 5px;cursor:pointer;margin-bottom:0;">
+              <span style="display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <input type="checkbox" ${ch?'checked':''} onchange="ModelClubHierarchyHelper.${toggleFn}('${encodeURIComponent(id)}')" />
+                <strong style="color:var(--text-main);">${name}</strong>${visionTag}${reasonTag}${modelCount}${tokenInfo}${infoIcon}
+              </span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                ${isModel ? `<button type="button" class="btn btn-secondary btn-xs" style="padding:1px 4px;font-size:0.6rem;" onclick="event.stopPropagation(); ModelClubView.openEditModelModal('${encodeURIComponent(id)}')" title="Edit ROCA Model Config"><i class="fa-solid fa-gear"></i></button>` : ''}
+                ${ch ? '<i class="fa-solid fa-check" style="color:'+color+';font-size:0.58rem;"></i>' : ''}
+              </span>
+            </label>
+            ${detailsHtml}
+          </div>`;
         }).join('')}
       </div></div>`;
   }

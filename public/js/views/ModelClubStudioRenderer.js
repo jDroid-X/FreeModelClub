@@ -29,31 +29,27 @@ class ModelClubStudioRenderer {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;background:rgba(0,0,0,0.25);padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);">
           <div class="form-group" style="margin-bottom:0;">
             <label style="font-size:0.72rem;font-weight:700;color:var(--accent-emerald);">Combo Agent Name *</label>
-            <input type="text" id="studio-combo-name" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;" value="${helper.stagedName || ''}" placeholder="e.g. claude-opus-coding-agent" />
+            <input type="text" id="studio-combo-name" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;" value="${helper.stagedName || ''}" placeholder="e.g. claude-opus-coding-agent" oninput="ModelClubComboStudioHelper.stagedName = this.value" />
           </div>
 
           <div class="form-group" style="margin-bottom:0;">
-            <label style="font-size:0.72rem;font-weight:700;color:var(--accent-cyan);">Load Balancing Strategy</label>
-            <select id="studio-combo-strategy" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;">
-              <option value="Round Robin" ${helper.stagedStrategy === 'Round Robin' ? 'selected' : ''}>Round Robin (Equal Weight)</option>
-              <option value="Fallback" ${helper.stagedStrategy === 'Fallback' ? 'selected' : ''}>Fallback (Failover Sequential)</option>
-              <option value="Auto" ${helper.stagedStrategy === 'Auto' ? 'selected' : ''}>🤖 Auto (Multi-Factor Scoring Engine)</option>
-              <option value="Cost Optimized" ${helper.stagedStrategy === 'Cost Optimized' ? 'selected' : ''}>💲 Cost Optimized (Cheapest Provider First)</option>
-              <option value="Least Used" ${helper.stagedStrategy === 'Least Used' ? 'selected' : ''}>⚖️ Least Used (Min Active Connections)</option>
-              <option value="Power of 2 Choices" ${helper.stagedStrategy === 'Power of 2 Choices' ? 'selected' : ''}>🎲 Power of 2 Choices (P2C Dual Random)</option>
-              <option value="LKGP" ${helper.stagedStrategy === 'LKGP' ? 'selected' : ''}>📌 LKGP (Last-Known-Good Session Sticky)</option>
-              <option value="Fill First" ${helper.stagedStrategy === 'Fill First' ? 'selected' : ''}>🔋 Fill First (Greedy Quota Exhaustion)</option>
-              <option value="Headroom" ${helper.stagedStrategy === 'Headroom' ? 'selected' : ''}>📐 Headroom (Max Context Window Size)</option>
-              <option value="Lowest Latency" ${helper.stagedStrategy === 'Lowest Latency' ? 'selected' : ''}>⚡ Lowest Latency (Speed Optimized)</option>
-              <option value="Weighted" ${helper.stagedStrategy === 'Weighted' ? 'selected' : ''}>📊 Weighted (Custom Probability)</option>
-              <option value="Strict Random" ${helper.stagedStrategy === 'Strict Random' ? 'selected' : ''}>🔀 Strict Random (Pure Uniform Random)</option>
-              <option value="Context Optimized" ${helper.stagedStrategy === 'Context Optimized' ? 'selected' : ''}>📝 Context Optimized (Max Output Tokens)</option>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label style="font-size:0.72rem;font-weight:700;color:var(--accent-cyan);">Load Balancing Strategy</label>
+              <button type="button" class="btn btn-secondary btn-xs" style="font-size:0.6rem;padding:1px 5px;background:rgba(56,189,248,0.15);border:1px solid var(--accent-cyan);color:var(--accent-cyan);cursor:pointer;" onclick="if(typeof ParametersViewModel !== 'undefined') ParametersViewModel.showStrategyGuide()" title="View All 13 Algorithms Matrix">
+                <i class="fa-solid fa-circle-question"></i> Guide
+              </button>
+            </div>
+            <select id="studio-combo-strategy" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;" onchange="ModelClubComboStudioHelper.stagedStrategy = this.value">
+              ${typeof LoadBalancingStrategyHelper !== 'undefined' ? LoadBalancingStrategyHelper.renderOptionsHtml(helper.stagedStrategy || 'Round Robin') : `
+                <option value="Round Robin">Round Robin (Equal Weight)</option>
+                <option value="Fallback">Fallback (Failover Sequential)</option>
+              `}
             </select>
           </div>
 
           <div class="form-group" style="margin-bottom:0;">
             <label style="font-size:0.72rem;font-weight:700;color:var(--text-main);">Description / Purpose</label>
-            <input type="text" id="studio-combo-desc" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;" value="${helper.stagedDesc || ''}" placeholder="e.g. Master multi-model coding agent" />
+            <input type="text" id="studio-combo-desc" class="form-control" style="font-family:var(--font-main);font-size:var(--font-size-base, 0.75rem);font-weight:var(--font-weight-base, normal);font-style:var(--font-style-base, normal);padding:3px 7px;height:28px;" value="${helper.stagedDesc || ''}" placeholder="e.g. Master multi-model coding agent" oninput="ModelClubComboStudioHelper.stagedDesc = this.value" />
           </div>
         </div>
 

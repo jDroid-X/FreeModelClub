@@ -121,9 +121,18 @@ class ModelClubComboStudioHelper {
   }
 
   static async saveStudioCombo() {
-    const name = document.getElementById('studio-combo-name')?.value.trim();
-    const strategy = document.getElementById('studio-combo-strategy')?.value || 'Round Robin';
-    const description = document.getElementById('studio-combo-desc')?.value.trim() || '';
+    const nameEl = document.getElementById('studio-combo-name');
+    const stratEl = document.getElementById('studio-combo-strategy');
+    const descEl = document.getElementById('studio-combo-desc');
+
+    const name = (nameEl ? nameEl.value : this.stagedName || '').trim();
+    const strategy = stratEl ? stratEl.value : (this.stagedStrategy || 'Round Robin');
+    const description = (descEl ? descEl.value : this.stagedDesc || '').trim();
+
+    this.stagedName = name;
+    this.stagedStrategy = strategy;
+    this.stagedDesc = description;
+
     const allModels = (window.ModelClubView && window.ModelClubView.allModels) || [];
     const rawIds = Array.from(this.stagedModelIds);
     const modelIds = rawIds.map(id => {
@@ -142,7 +151,7 @@ class ModelClubComboStudioHelper {
           comboId: this.editingComboId || 'new_combo', 
           name, strategy, description, 
           primaryModelId: modelIds[0], 
-          fallbackModelId: modelIds[1] || modelIds[0], 
+          fallbackModelId: modelIds.length > 1 ? modelIds[1] : null, 
           modelsList: modelIds 
         },
         title: 'Combo Agent Optimization & Validation Check',
@@ -184,6 +193,13 @@ class ModelClubComboStudioHelper {
   }
 
   static refreshStudio() {
+    const nameEl = document.getElementById('studio-combo-name');
+    if (nameEl) this.stagedName = nameEl.value;
+    const stratEl = document.getElementById('studio-combo-strategy');
+    if (stratEl) this.stagedStrategy = stratEl.value;
+    const descEl = document.getElementById('studio-combo-desc');
+    if (descEl) this.stagedDesc = descEl.value;
+
     const g = document.getElementById('model-club-content-grid');
     if (g) g.innerHTML = ModelClubStudioRenderer.renderComboStudioHtml(this);
   }

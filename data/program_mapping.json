@@ -229,6 +229,24 @@
       "file": "src/services/ActiveModelAgent.js",
       "type": "BackendService",
       "dependencies": []
+    },
+    {
+      "module": "ComboSmartAgentBackend",
+      "file": "src/services/ComboSmartAgent.js",
+      "type": "BackendService",
+      "dependencies": [
+        "ModelLoadBalancer",
+        "TokenAgentService",
+        "ActiveConnectionTracker"
+      ]
+    },
+    {
+      "module": "ComboSmartAgentClient",
+      "file": "public/js/agents/ComboSmartAgent.js",
+      "type": "SystemAgent",
+      "dependencies": [
+        "LoadBalancingStrategyHelper"
+      ]
     }
   ]
 }

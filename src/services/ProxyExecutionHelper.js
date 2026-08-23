@@ -25,7 +25,8 @@ class ProxyExecutionHelper {
     estimatedPromptTokens,
     startTime,
     isFailover = false,
-    failoverFrom = null
+    failoverFrom = null,
+    strategyUsed = 'Round Robin'
   }) {
     return new Promise((resolve) => {
       const actualModelId = targetModel.modelId;
@@ -159,6 +160,7 @@ class ProxyExecutionHelper {
       res.setHeader('X-FMC-Resolved-Model', targetModel.id || targetModel.modelId || '');
       res.setHeader('X-FMC-Resolved-Model-Name', targetModel.modelName || targetModel.name || targetModel.modelId || '');
       res.setHeader('X-FMC-Resolved-Provider', targetProvider.displayName || targetProvider.id || '');
+      res.setHeader('X-FMC-Strategy-Used', strategyUsed || 'Round Robin');
 
       if (isFailover) {
         res.setHeader('X-FMC-Failover', 'true');
@@ -281,6 +283,10 @@ class ProxyExecutionHelper {
 
                 AIModel.recordUsage(targetModel.id, promptTokens, completionTokens, latencyMs);
                 ProviderModel.recordUsage(targetProvider.id, promptTokens, completionTokens);
+                try {
+                  const ModelLoadBalancer = require('./ModelLoadBalancer');
+                  ModelLoadBalancer.recordSuccess(targetModel.id || targetModel.modelId, requestBody.comboId || null);
+                } catch(e) {}
 
                 LogModel.recordApiLog({
                   providerId: targetProvider.id,

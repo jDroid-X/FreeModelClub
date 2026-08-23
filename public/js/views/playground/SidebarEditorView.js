@@ -21,6 +21,9 @@ class SidebarEditorView {
     if (!drawer || !content) return;
     
     // Show drawer
+    drawer.classList.add('open');
+    drawer.style.display = 'block';
+    drawer.style.borderRight = '1px solid var(--border-color)';
     drawer.style.width = '55%';
     content.style.width = '100%';
     
@@ -48,17 +51,41 @@ class SidebarEditorView {
   static renderEditor(container, filePath, fileName, content, extension) {
     const lines = content.split('\n');
     const lineNumbers = lines.map((_, i) => 
-      `<div style="padding: 0 8px; color: #858585; font-size: 0.7rem; font-family: 'Fira Code', Consolas, monospace; text-align: right; border-right: 1px solid #3e3e42; min-width: 40px;">${i + 1}</div>`
+      `<div class="line-number" style="padding: 0 8px; color: #5c6370; text-align: right; user-select: none; font-size: 0.72rem; line-height: 1.4;">${i + 1}</div>`
     ).join('');
+
+    const isJs = extension === 'js';
+    const isJson = extension === 'json';
+    const isMd = extension === 'md';
+    const isBat = extension === 'bat' || extension === 'cmd';
+    const isPs1 = extension === 'ps1';
     
+    const iconClass = isJs ? 'fa-brands fa-js' : isJson ? 'fa-solid fa-brackets-curly' : isMd ? 'fa-solid fa-file-lines' : isBat ? 'fa-solid fa-terminal' : isPs1 ? 'fa-solid fa-terminal' : 'fa-solid fa-file-code';
+    const iconColor = isJs ? '#f7df1e' : isJson ? '#ffca28' : isMd ? '#42a5f5' : isBat ? '#ff9800' : isPs1 ? '#2196f3' : '#9e9e9e';
+
     container.innerHTML = `
-      <div style="height: 100%; display: flex; flex-direction: column; background: #1e1e1e;">
-        <!-- Tab Bar -->
-        <div style="display: flex; background: #252526; border-bottom: 1px solid #3e3e42; overflow-x: auto;">
-          <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #1e1e1e; border-right: 1px solid #3e3e42; cursor: pointer; min-width: 120px;">
-            <i class="fa-brands fa-js" style="color: #fbbf24; font-size: 0.7rem;"></i>
-            <span style="font-size: 0.75rem; color: #cccccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${fileName}</span>
-            <button onclick="SidebarEditorView.close()" style="background: transparent; border: none; color: #858585; cursor: pointer; font-size: 0.65rem; padding: 0 2px;">
+      <div class="sidebar-editor-container" style="display: flex; flex-direction: column; height: 100%; background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', 'Courier New', monospace;">
+        <!-- Header -->
+        <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #252526; border-bottom: 1px solid #333; font-size: 0.78rem;">
+          <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <i class="${iconClass}" style="color: ${iconColor};"></i>
+            <span style="font-weight: 600; color: #e0e0e0;">${fileName}</span>
+            <span style="font-size: 0.65rem; color: #888; background: #333; padding: 1px 4px; border-radius: 2px;">${extension.toUpperCase()}</span>
+          </div>
+          
+          <div style="display: flex; gap: 4px;">
+            <button onclick="SidebarEditorView.copyContent()" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem; background: #333; border: 1px solid #444; color: #ccc;" title="Copy Content">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+            <button onclick="SidebarEditorView.saveContent()" class="btn btn-primary btn-xs" style="padding: 2px 6px; font-size: 0.65rem; background: #007acc; border: 1px solid #0098ff; color: white;" title="Save File (Ctrl+S)">
+              <i class="fa-solid fa-floppy-disk"></i>
+            </button>
+            ${isBat || isPs1 ? `
+              <button onclick="SidebarEditorView.runScript()" class="btn btn-success btn-xs" style="padding: 2px 6px; font-size: 0.65rem; background: #2e7d32; border: 1px solid #4caf50; color: white;" title="Run Script">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            ` : ''}
+            <button onclick="SidebarEditorView.close()" class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.65rem; background: #333; border: 1px solid #444; color: #ccc;" title="Close Editor">
               <i class="fa-solid fa-times"></i>
             </button>
           </div>
@@ -250,7 +277,10 @@ class SidebarEditorView {
     const content = document.getElementById('ide-editor-content');
     
     if (drawer && content) {
+      drawer.classList.remove('open');
       drawer.style.width = '0';
+      drawer.style.borderRight = 'none';
+      drawer.style.display = 'none';
       content.style.width = '0';
     }
     

@@ -44,8 +44,11 @@ class ManualView {
       <div class="glass-panel">
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div class="panel-title"><i class="fa-solid fa-book-open"></i> User Manual & Human-In-Loop (HIL) Operational Guide</div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <input type="text" id="manual-search-input" class="form-control" style="width: 220px; font-size: 0.8rem; padding: 4px 10px;" placeholder="Search operational steps & FAQs..." onkeyup="ManualView.filterManualContent(this.value)" />
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="text" id="manual-search-input" class="form-control" style="width: 220px; font-size: 0.8rem; padding: 4px 26px 4px 10px;" placeholder="Search operational steps & FAQs..." oninput="ManualView.filterManualContent(this.value); document.getElementById('manual-search-clear-btn').style.display = this.value ? 'block' : 'none';" />
+              <i id="manual-search-clear-btn" class="fa-solid fa-xmark" style="position: absolute; right: 8px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: none;" onclick="document.getElementById('manual-search-input').value=''; ManualView.filterManualContent(''); this.style.display='none';"></i>
+            </div>
             <button class="btn btn-secondary btn-sm" onclick="ManualView.exportManualMarkdown()"><i class="fa-solid fa-file-arrow-down"></i> Export Markdown</button>
             <button class="btn btn-secondary btn-sm" onclick="ManualView.printManual()"><i class="fa-solid fa-print"></i> Print Manual</button>
           </div>

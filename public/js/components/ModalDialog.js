@@ -51,7 +51,7 @@ class ModalDialog {
     if (modalEl) modalEl.remove();
   }
 
-  static showCustomModal({ title, content, confirmText = 'Close', onConfirm = null, width = '600px' }) {
+  static showCustomModal({ title, content, confirmText = 'Close', onConfirm = null, width = '600px', extraButtonsHtml = '' }) {
     const existing = document.getElementById('fmc-active-modal');
     if (existing) existing.remove();
 
@@ -66,8 +66,9 @@ class ModalDialog {
           <button class="btn btn-secondary btn-sm" onclick="ModalDialog.closeModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body" style="overflow-y: auto; padding-top: 8px;">${content}</div>
-        <div class="modal-footer">
-          <button class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>
+        <div class="modal-footer" id="modal-footer-container" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 10px 16px;">
+          ${extraButtonsHtml}
+          <button class="btn btn-secondary btn-sm" id="modal-confirm-btn">${confirmText}</button>
         </div>
       </div>
     `;

@@ -67,6 +67,10 @@ class NavigationHelper {
             <span id="local-server-status-dot" class="status-dot" style="background: var(--accent-amber);"></span>
             <span id="local-server-status-text">Local Server Checking...</span>
           </div>
+          <div class="status-pill" style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-cyan); cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 4px; margin-top: 2px;" onclick="app.navigate('about')" title="Version 1.0.0 • Click for About & Updates">
+            <i class="fa-solid fa-circle-info" style="font-size: 0.72rem;"></i>
+            <span>v1.0.0 • jDroid-X FMC</span>
+          </div>
         </div>
       </aside>
       <div class="main-wrapper" id="main-wrapper-content">
@@ -103,6 +107,7 @@ class NavigationHelper {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2.5" width="13" height="11" rx="1"></rect><line x1="10.5" y1="2.5" x2="10.5" y2="13.5"></line></svg>
               </button>
             </div>
+            <button class="hamburger-btn" title="Check for Updates" onclick="if(window.AboutView && AboutView.checkForUpdates) { AboutView.checkForUpdates(false); } else if(window.app) { app.navigate('about'); }" style="color: var(--accent-cyan); padding: 3px; margin: 3px;"><i class="fa-solid fa-cloud-arrow-down"></i></button>
             <button class="hamburger-btn" title="Screen Hints" onclick="NavigationHelper.showScreenHint('${activeView}')" style="color: ${themeIconColor}; padding: 3px; margin: 3px;"><i class="fa-solid fa-lightbulb"></i></button>
             <div class="user-profile-menu" id="theme-menu-container" style="padding: 3px; margin: 0;">
               <button class="hamburger-btn" id="theme-toggle-btn" title="Change Theme" style="color: ${themeIconColor}; cursor: pointer; padding: 3px; margin: 0;"><i class="fa-solid fa-palette"></i></button>
@@ -117,6 +122,8 @@ class NavigationHelper {
                 </div>
                 <a class="dropdown-item" onclick="app.navigate('user-profile')"><i class="fa-solid fa-user-circle"></i> My Profile</a>
                 <a class="dropdown-item" onclick="app.navigate('settings')"><i class="fa-solid fa-sliders"></i> Settings & Themes</a>
+                <a class="dropdown-item" onclick="app.navigate('about')"><i class="fa-solid fa-circle-info"></i> About & Updates</a>
+                <a class="dropdown-item" onclick="if(window.AboutView && AboutView.checkForUpdates) { AboutView.checkForUpdates(false); } else { app.navigate('about'); }"><i class="fa-solid fa-cloud-arrow-down"></i> Check for Updates...</a>
                 <a class="dropdown-item" onclick="app.navigate('manual')"><i class="fa-solid fa-book-open"></i> HIL User Manual</a>
                 <a class="dropdown-item" onclick="app.logout()" style="color: var(--accent-rose);"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
               </div>
@@ -233,6 +240,43 @@ class NavigationHelper {
     });
   }
 
+  static getAestheticThemesList() {
+    if (typeof SettingsViewHelper !== 'undefined' && SettingsViewHelper.getThemesList) {
+      return SettingsViewHelper.getThemesList();
+    }
+    return [
+      // 7 Metal Themes
+      { id: 'theme-platinum', name: 'Platinum Light Metal', category: 'Metal', accent: '#dde7f1', icon: 'fa-shield-halved' },
+      { id: 'theme-gold', name: 'Gold Dark Metal', category: 'Metal', accent: '#fbbf24', icon: 'fa-crown' },
+      { id: 'theme-silver', name: 'Silver Light Metal', category: 'Metal', accent: '#475569', icon: 'fa-gem' },
+      { id: 'theme-titanium', name: 'Titanium Dark Metal', category: 'Metal', accent: '#00b4d8', icon: 'fa-cube' },
+      { id: 'theme-bronze', name: 'Bronze Dark Metal', category: 'Metal', accent: '#fb923c', icon: 'fa-hammer' },
+      { id: 'theme-copper', name: 'Copper Dark Metal', category: 'Metal', accent: '#fb7185', icon: 'fa-coins' },
+      { id: 'theme-obsidian', name: 'Obsidian Dark Metal', category: 'Metal', accent: '#22c55e', icon: 'fa-circle-dot' },
+
+      // 5 Natural Themes
+      { id: 'theme-emerald-forest', name: 'Emerald Forest', category: 'Natural', accent: '#10b981', icon: 'fa-tree' },
+      { id: 'theme-deep-ocean', name: 'Deep Ocean', category: 'Natural', accent: '#00f0ff', icon: 'fa-water' },
+      { id: 'theme-nordic-pine', name: 'Nordic Pine', category: 'Natural', accent: '#2dd4bf', icon: 'fa-leaf' },
+      { id: 'theme-sahara-desert', name: 'Sahara Desert', category: 'Natural', accent: '#f59e0b', icon: 'fa-sun' },
+      { id: 'theme-autumn-maple', name: 'Autumn Maple', category: 'Natural', accent: '#e11d48', icon: 'fa-fire' },
+
+      // 5 Cosmic Themes
+      { id: 'theme-nebula-violet', name: 'Nebula Violet', category: 'Cosmic', accent: '#c026d3', icon: 'fa-wand-magic-sparkles' },
+      { id: 'theme-galaxy-starlight', name: 'Galaxy Starlight', category: 'Cosmic', accent: '#6366f1', icon: 'fa-star' },
+      { id: 'theme-solar-flare', name: 'Solar Flare', category: 'Cosmic', accent: '#ff4500', icon: 'fa-meteor' },
+      { id: 'theme-aurora-borealis', name: 'Aurora Borealis', category: 'Cosmic', accent: '#00ffaa', icon: 'fa-wind' },
+      { id: 'theme-deep-cosmos', name: 'Deep Cosmos', category: 'Cosmic', accent: '#8b5cf6', icon: 'fa-globe' },
+
+      // 5 Popular Internet Themes
+      { id: 'theme-dracula', name: 'Dracula Dark', category: 'Popular', accent: '#bd93f9', icon: 'fa-moon' },
+      { id: 'theme-tokyo-night', name: 'Tokyo Night', category: 'Popular', accent: '#7aa2f7', icon: 'fa-city' },
+      { id: 'theme-catppuccin', name: 'Catppuccin Mocha', category: 'Popular', accent: '#cba6f7', icon: 'fa-cat' },
+      { id: 'theme-nord-ice', name: 'Nord Ice', category: 'Popular', accent: '#88c0d0', icon: 'fa-snowflake' },
+      { id: 'theme-cyberpunk', name: 'Cyberpunk Neon', category: 'Popular', accent: '#fee715', icon: 'fa-bolt' }
+    ];
+  }
+
   static bindMenuEvents() {
     const themeBtn = document.getElementById('theme-toggle-btn') || document.querySelector('.user-profile-menu button[title="Change Theme"]');
     const themeDropdown = document.getElementById('theme-dropdown-menu');
@@ -247,34 +291,56 @@ class NavigationHelper {
     const LEAVE_GRACE_MS = 380; // 380ms grace delay gives user comfortable time to navigate cursor
 
     if (themeBtn && themeDropdown) {
-      const themes = typeof SettingsViewHelper !== 'undefined' 
-        ? SettingsViewHelper.getThemesList() 
-        : [
-            { id: 'theme-platinum', name: 'Platinum Light Metal', accent: '#dde7f1', category: 'Metal' },
-            { id: 'theme-gold', name: 'Gold Dark Metal', accent: '#fbbf24', category: 'Metal' },
-            { id: 'theme-silver', name: 'Silver Light Metal', accent: '#475569', category: 'Metal' },
-            { id: 'theme-titanium', name: 'Titanium Dark Metal', accent: '#38bdf8', category: 'Metal' },
-            { id: 'theme-bronze', name: 'Bronze Dark Metal', accent: '#fb923c', category: 'Metal' },
-            { id: 'theme-copper', name: 'Copper Dark Metal', accent: '#fb7185', category: 'Metal' },
-            { id: 'theme-obsidian', name: 'Obsidian Dark Metal', accent: '#818cf8', category: 'Metal' }
-          ];
+      const themes = this.getAestheticThemesList();
+      const categories = ['Metal', 'Natural', 'Cosmic', 'Popular'];
+      const categoryLabels = {
+        'Metal': '7 Metal Themes',
+        'Natural': '5 Natural Themes',
+        'Cosmic': '5 Cosmic Themes',
+        'Popular': '5 Popular Internet Themes'
+      };
       
-      themeDropdown.style.maxHeight = '360px';
+      themeDropdown.style.maxHeight = '390px';
+      themeDropdown.style.width = '280px';
       themeDropdown.style.overflowY = 'auto';
-      themeDropdown.innerHTML = `
-        <div style="padding: 6px 10px; font-size: 0.68rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; border-bottom: 1px solid var(--border-color);">
-          <i class="fa-solid fa-palette"></i> 22 Metallic & Cosmic Palettes
+      
+      let dropdownHtml = `
+        <div style="padding: 7px 12px; font-size: 0.72rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <span><i class="fa-solid fa-palette"></i> Aesthetic Themes (22)</span>
+          <span class="badge badge-cyan" style="font-size: 0.58rem; padding: 1px 5px;">4 Groups</span>
         </div>
-        ${themes.map(t => `
-          <a class="dropdown-item" onclick="app.changeTopTheme('${t.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; font-size: 0.72rem; cursor: pointer;">
-            <span style="display: flex; align-items: center; gap: 6px;">
-              <span style="width: 10px; height: 10px; border-radius: 50%; background: ${t.accent}; display: inline-block; box-shadow: 0 0 4px ${t.accent}60;"></span>
-              ${t.name}
-            </span>
-            <span style="font-size: 0.58rem; color: var(--text-dim); background: rgba(0,0,0,0.2); padding: 1px 4px; border-radius: 3px;">${t.category || 'Theme'}</span>
-          </a>
-        `).join('')}
       `;
+
+      categories.forEach(cat => {
+        const catThemes = themes.filter(t => (t.category || '').toLowerCase() === cat.toLowerCase());
+        if (catThemes.length > 0) {
+          dropdownHtml += `
+            <div style="padding: 4px 10px; font-size: 0.62rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; background: rgba(0,0,0,0.15); border-top: 1px solid var(--border-color); border-bottom: 1px solid rgba(255,255,255,0.03);">
+              ${categoryLabels[cat] || cat}
+            </div>
+          `;
+          catThemes.forEach(t => {
+            dropdownHtml += `
+              <a class="dropdown-item" onclick="app.changeTopTheme('${t.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; font-size: 0.72rem; cursor: pointer;">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                  <span style="width: 10px; height: 10px; border-radius: 50%; background: ${t.accent}; display: inline-block; box-shadow: 0 0 4px ${t.accent}60;"></span>
+                  ${t.name}
+                </span>
+                <span style="font-size: 0.56rem; color: var(--text-dim); background: rgba(0,0,0,0.2); padding: 1px 4px; border-radius: 3px;">${t.category || 'Theme'}</span>
+              </a>
+            `;
+          });
+        }
+      });
+
+      // Direct footer link to Settings Theme Section
+      dropdownHtml += `
+        <a class="dropdown-item" onclick="app.navigate('settings'); setTimeout(() => { if (window.SettingsView) SettingsView.switchTab('themes'); }, 100);" style="border-top: 1px solid var(--border-color); color: var(--accent-cyan); font-weight: 700; text-align: center; justify-content: center; padding: 7px 10px; background: rgba(6,182,212,0.08); font-size: 0.72rem;">
+          <i class="fa-solid fa-sliders" style="margin-right: 4px;"></i> Open Aesthetic Themes in Settings
+        </a>
+      `;
+
+      themeDropdown.innerHTML = dropdownHtml;
 
       // Click to toggle persistent open
       themeBtn.onclick = (e) => {

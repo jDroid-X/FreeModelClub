@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const db = require('../models/Database');
 
 class ActiveModelAgent {
   static DATA_DIR = path.join(__dirname, '../../data');
@@ -21,18 +22,11 @@ class ActiveModelAgent {
    */
   static runClassification() {
     try {
-      const providersPath = path.join(this.DATA_DIR, 'providers.json');
-      const modelsPath = path.join(this.DATA_DIR, 'models.json');
-
-      if (!fs.existsSync(providersPath) || !fs.existsSync(modelsPath)) {
-        return this.lastRunStats;
-      }
-
-      const providers = JSON.parse(fs.readFileSync(providersPath, 'utf8') || '[]');
-      const models = JSON.parse(fs.readFileSync(modelsPath, 'utf8') || '[]');
+      const providers = db.read(db.files.providers) || [];
+      const models = db.read(db.files.models) || [];
 
       const activeProviderIds = new Set(
-        providers.filter(p => p.isActive === true).map(p => p.id)
+        providers.filter(p => p.isActive === true && !p.isArchived).map(p => p.id)
       );
 
       const activeModelIds = [];
@@ -41,7 +35,7 @@ class ActiveModelAgent {
       for (const m of models) {
         const modelId = m.id || m.modelId;
         const providerId = m.providerId || m.provider;
-        const isProviderActive = activeProviderIds.has(providerId) || providerId === 'ollama';
+        const isProviderActive = activeProviderIds.has(providerId);
         const statusLower = (m.status || 'active').toLowerCase();
         const isModelActive = m.isActive !== false && statusLower === 'active';
 
@@ -52,9 +46,13 @@ class ActiveModelAgent {
         }
       }
 
-      // Atomic write to Activemodels.json & inactivemodel.json
-      fs.writeFileSync(this.ACTIVE_FILE, JSON.stringify(activeModelIds, null, 2), 'utf8');
-      fs.writeFileSync(this.INACTIVE_FILE, JSON.stringify(inactiveModelIds, null, 2), 'utf8');
+      // Write through Database SSOT cache layer + flush to disk
+      db.write(this.ACTIVE_FILE, activeModelIds);
+      db.write(this.INACTIVE_FILE, inactiveModelIds);
+      try {
+        fs.writeFileSync(this.ACTIVE_FILE, JSON.stringify(activeModelIds, null, 2), 'utf8');
+        fs.writeFileSync(this.INACTIVE_FILE, JSON.stringify(inactiveModelIds, null, 2), 'utf8');
+      } catch (_) {}
 
       this.lastRunStats = {
         activeCount: activeModelIds.length,

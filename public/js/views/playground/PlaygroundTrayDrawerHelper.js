@@ -699,30 +699,33 @@ class PlaygroundTrayDrawerHelper {
   }
 
   static cycleStrategy(btnEl) {
-    const strategies = [
-      { name: 'Auto', icon: 'fa-arrows-split-up-and-left', color: 'var(--accent-emerald)', desc: 'Multi-Factor Scoring Engine' },
-      { name: 'Cost Optimized', icon: 'fa-dollar-sign', color: 'var(--accent-cyan)', desc: 'Cheapest Provider First' },
-      { name: 'Least Used', icon: 'fa-scale-balanced', color: 'var(--accent-purple)', desc: 'Min Active Connections' },
-      { name: 'Power of 2 Choices', icon: 'fa-dice', color: 'var(--accent-amber)', desc: 'P2C Dual Random' },
-      { name: 'LKGP', icon: 'fa-thumbtack', color: 'var(--primary-light)', desc: 'Session Sticky' },
-      { name: 'Round Robin', icon: 'fa-rotate', color: 'var(--text-main)', desc: 'Equal Distribution' },
-      { name: 'Fallback', icon: 'fa-shield-halved', color: 'var(--accent-rose)', desc: 'Failover Sequential' }
-    ];
+    const list = (typeof LoadBalancingStrategyHelper !== 'undefined')
+      ? LoadBalancingStrategyHelper.getAll()
+      : [
+        { id: 'Round Robin', name: 'Round Robin', icon: 'fa-rotate', color: 'var(--text-main)', shortDesc: 'Equal Weight' }
+      ];
     
     const currentName = localStorage.getItem('fmc_active_strategy') || 'Auto';
-    const currentIdx = strategies.findIndex(s => s.name === currentName);
-    const nextIdx = (currentIdx + 1) % strategies.length;
-    const nextStrat = strategies[nextIdx];
+    const currentIdx = list.findIndex(s => s.id === currentName || s.name === currentName);
+    const nextIdx = (currentIdx + 1) % list.length;
+    const nextStrat = list[nextIdx];
 
-    localStorage.setItem('fmc_active_strategy', nextStrat.name);
+    localStorage.setItem('fmc_active_strategy', nextStrat.id);
+    const selectEl = document.getElementById('select-agent-strategy');
+    if (selectEl) {
+      selectEl.value = nextStrat.id;
+      if (typeof ParametersViewModel !== 'undefined') {
+        ParametersViewModel.updateAgentStrategy(nextStrat.id);
+      }
+    }
 
     if (btnEl) {
       btnEl.innerHTML = `<i class="fa-solid ${nextStrat.icon}" style="color: ${nextStrat.color};"></i> ${nextStrat.name}`;
-      btnEl.title = `Strategy: ${nextStrat.name} (${nextStrat.desc})`;
+      btnEl.title = `Strategy: ${nextStrat.name} (${nextStrat.shortDesc})`;
     }
 
     if (typeof ModalDialog !== 'undefined') {
-      ModalDialog.showNotification(`Playground strategy switched to <strong>${nextStrat.name}</strong> (${nextStrat.desc})`, 'info');
+      ModalDialog.showNotification(`Playground strategy switched to <strong>${nextStrat.name}</strong> (${nextStrat.shortDesc})`, 'info');
     }
   }
 

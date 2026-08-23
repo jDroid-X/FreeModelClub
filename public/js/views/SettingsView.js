@@ -47,7 +47,7 @@ class SettingsView {
               <i class="fa-solid fa-plug-circle-bolt" style="color: var(--primary-light); margin-right: 6px;"></i> Tool Connection
             </button>
             <button class="btn btn-secondary btn-sm settings-nav-btn" id="tab-btn-themes" style="justify-content: flex-start; font-size: 0.75rem; text-align: left;" onclick="SettingsView.switchTab('themes')">
-              <i class="fa-solid fa-palette" style="color: var(--accent-cyan); margin-right: 6px;"></i> 7 Metal Themes
+              <i class="fa-solid fa-palette" style="color: var(--accent-cyan); margin-right: 6px;"></i> Aesthetic Themes
             </button>
             <button class="btn btn-secondary btn-sm settings-nav-btn" id="tab-btn-ui-ux" style="justify-content: flex-start; font-size: 0.75rem; text-align: left;" onclick="SettingsView.switchTab('ui-ux')">
               <i class="fa-solid fa-desktop" style="color: var(--accent-emerald); margin-right: 6px;"></i> UI/UX Features
@@ -716,10 +716,10 @@ class SettingsView {
       <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
           <h3 style="font-size: 1.1rem; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-palette" style="color: var(--accent-cyan);"></i> Theme Studio & Design Systems (22 Themes)
+            <i class="fa-solid fa-palette" style="color: var(--accent-cyan);"></i> Aesthetic Themes & Design Systems (22 Palettes)
           </h3>
           <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">
-            4-Color substrate palettes, percentage luminance depth steps, and specular glow cards.
+            22 Metallic, Natural, Cosmic & Popular curated aesthetic palettes with 4-Color substrate swatches.
           </p>
         </div>
         <button class="btn btn-primary btn-sm" onclick="SettingsThemeHelper.openEditor()" style="font-size: 0.76rem; padding: 5px 12px;">
@@ -727,26 +727,31 @@ class SettingsView {
         </button>
       </div>
 
-      <!-- Category Navigation Filter Pills -->
-      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; background: var(--item-sub-bg, rgba(0,0,0,0.3)); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <button class="btn btn-xs ${currentFilter === 'all' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('all')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-border-all"></i> All Themes (22)
+      <!-- Category Navigation Filter Pills with Distinct Palette Branding -->
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; background: var(--item-sub-bg, rgba(0,0,0,0.3)); padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); align-items: center;">
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('all')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #06b6d4; background: ${currentFilter === 'all' ? '#06b6d4' : 'rgba(6,182,212,0.14)'}; color: ${currentFilter === 'all' ? '#0f172a' : 'var(--text-main)'};">
+          <i class="fa-solid fa-border-all"></i> All Aesthetic Themes (22)
         </button>
-        <button class="btn btn-xs ${currentFilter === 'metal' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('metal')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-gem" style="color: var(--accent-cyan);"></i> 7 Metal Themes
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('metal')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #38bdf8; background: ${currentFilter === 'metal' ? '#38bdf8' : 'rgba(56,189,248,0.14)'}; color: ${currentFilter === 'metal' ? '#0f172a' : 'var(--text-main)'};">
+          <i class="fa-solid fa-gem" style="color: ${currentFilter === 'metal' ? '#0f172a' : '#38bdf8'};"></i> 7 Metal Themes
         </button>
-        <button class="btn btn-xs ${currentFilter === 'natural' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('natural')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-leaf" style="color: var(--accent-emerald);"></i> 5 Natural Themes
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('natural')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #10b981; background: ${currentFilter === 'natural' ? '#10b981' : 'rgba(16,185,129,0.14)'}; color: ${currentFilter === 'natural' ? '#0f172a' : 'var(--text-main)'};">
+          <i class="fa-solid fa-leaf" style="color: ${currentFilter === 'natural' ? '#0f172a' : '#10b981'};"></i> 5 Natural Themes
         </button>
-        <button class="btn btn-xs ${currentFilter === 'cosmic' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('cosmic')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-amber);"></i> 5 Cosmic Themes
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('cosmic')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #f59e0b; background: ${currentFilter === 'cosmic' ? '#f59e0b' : 'rgba(245,158,11,0.14)'}; color: ${currentFilter === 'cosmic' ? '#0f172a' : 'var(--text-main)'};">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: ${currentFilter === 'cosmic' ? '#0f172a' : '#f59e0b'};"></i> 5 Cosmic Themes
         </button>
-        <button class="btn btn-xs ${currentFilter === 'popular' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('popular')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-bolt" style="color: var(--accent-rose);"></i> 5 Popular Internet
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('popular')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #f43f5e; background: ${currentFilter === 'popular' ? '#f43f5e' : 'rgba(244,63,94,0.14)'}; color: ${currentFilter === 'popular' ? '#ffffff' : 'var(--text-main)'};">
+          <i class="fa-solid fa-bolt" style="color: ${currentFilter === 'popular' ? '#ffffff' : '#f43f5e'};"></i> 5 Popular Internet
         </button>
-        <button class="btn btn-xs ${currentFilter === 'custom' ? 'btn-primary' : 'btn-secondary'}" onclick="SettingsView.filterThemesCategory('custom')" style="font-size: 0.72rem; padding: 3px 8px;">
-          <i class="fa-solid fa-palette"></i> Custom Themes (${dbThemes.length})
+        <button class="btn btn-xs" onclick="SettingsView.filterThemesCategory('custom')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1.5px solid #8b5cf6; background: ${currentFilter === 'custom' ? '#8b5cf6' : 'rgba(139,92,246,0.14)'}; color: ${currentFilter === 'custom' ? '#ffffff' : 'var(--text-main)'};">
+          <i class="fa-solid fa-palette" style="color: ${currentFilter === 'custom' ? '#ffffff' : '#8b5cf6'};"></i> Custom Themes (${dbThemes.length})
         </button>
+      </div>
+
+      <!-- Informative Subtitle Notice -->
+      <div style="font-size: 0.72rem; color: var(--accent-cyan); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+        <i class="fa-solid fa-circle-info"></i> Click any theme card below to instantly apply and transform all background canvas, card surfaces, sidebars, borders & buttons!
       </div>
 
       <!-- Themes Grid with Rich 4-Color Metadata Swatches -->
@@ -1283,6 +1288,14 @@ class SettingsView {
     navigator.clipboard.writeText(curl.trim());
     if (typeof ModalDialog !== 'undefined' && ModalDialog.showNotification) {
       ModalDialog.showNotification('cURL snippet copied to clipboard!', 'success');
+    }
+  }
+
+  static openRocasModal(agentId) {
+    if (typeof SettingsAgentHelper !== 'undefined' && SettingsAgentHelper.openRocasModal) {
+      SettingsAgentHelper.openRocasModal(agentId);
+    } else {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification(`Viewing ROCAS Spec for ${agentId}...`, 'info');
     }
   }
 }

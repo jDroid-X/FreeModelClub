@@ -168,11 +168,11 @@ class ProviderModel {
 
     // Prevent adding a new duplicate provider with the same Base URL under a different provider ID
     if (existingIndex < 0) {
+      const normalizedNewBaseUrl = rawBaseUrl.trim().toLowerCase().replace(/\/+$/, '');
       const isDuplicate = providers.some((p) => {
         const cleanPId = (p.id || '').toLowerCase();
-        return cleanPId !== cleanNewId && 
-               p.baseUrl && 
-               p.baseUrl.trim().toLowerCase() === rawBaseUrl.toLowerCase();
+        const cleanPBaseUrl = (p.baseUrl || '').trim().toLowerCase().replace(/\/+$/, '');
+        return cleanPId !== cleanNewId && cleanPBaseUrl === normalizedNewBaseUrl;
       });
 
       if (isDuplicate) {

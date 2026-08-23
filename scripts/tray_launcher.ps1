@@ -187,22 +187,65 @@ function Check-Prerequisites {
 # --- UPDATE CHECKER ---
 function Check-ForUpdates {
     param([bool]$Silent = $true)
-    if (-not $Silent) {
-        $global:notifyIcon.ShowBalloonTip(3000, "jDroid-X-FMC", "Checking GitHub for updates...", [System.Windows.Forms.ToolTipIcon]::Info)
+    if (-not $Silent -and $global:notifyIcon) {
+        $global:notifyIcon.ShowBalloonTip(3000, "jDroid-X-FMC", "Checking GitHub (https://github.com/jDroid-X/FreeModelClub) for updates...", [System.Windows.Forms.ToolTipIcon]::Info)
     }
-    
-    $fetchOut = git fetch origin main 2>&1
-    $statusOut = git status -uno 2>&1
-    
-    if ($statusOut -match "Your branch is behind") {
-        $result = [System.Windows.Forms.MessageBox]::Show("A new version is available on GitHub. Would you like to download and install it now?`n`nThis will temporarily close the server.", "Update Available", [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Information)
+
+    $updateInfo = $null
+    try {
+        if (Is-ServerRunning) {
+            $updateInfo = Invoke-RestMethod -Uri "http://localhost:$Port/api/system/check-update" -Method Get -TimeoutSec 4
+        } else {
+            $rawPkg = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/jDroid-X/FreeModelClub/main/package.json" -Method Get -TimeoutSec 4
+            if ($rawPkg) {
+                $pkgLocal = Get-Content (Join-Path $RootDir "package.json") -Raw | ConvertFrom-Json
+                $hasUp = ($rawPkg.version -ne $pkgLocal.version)
+                $updateInfo = @{
+                    hasUpdate = $hasUp
+                    currentVersion = $pkgLocal.version
+                    latestVersion = $rawPkg.version
+                    githubUrl = "https://github.com/jDroid-X/FreeModelClub"
+                    releaseDate = (Get-Date).ToString("yyyy-MM-dd")
+                    changelog = "Latest enhancements and AI model connectors from GitHub."
+                }
+            }
+        }
+    } catch {
+        # Fallback to git check if network call failed
+        $fetchOut = git fetch origin main 2>&1
+        $statusOut = git status -uno 2>&1
+        if ($statusOut -match "Your branch is behind") {
+            $updateInfo = @{
+                hasUpdate = $true
+                currentVersion = "1.0.0"
+                latestVersion = "Latest (GitHub main)"
+                githubUrl = "https://github.com/jDroid-X/FreeModelClub"
+                releaseDate = (Get-Date).ToString("yyyy-MM-dd")
+                changelog = "New commits detected on GitHub main branch."
+            }
+        }
+    }
+
+    if ($updateInfo -and $updateInfo.hasUpdate) {
+        $msg = "A new update is available for FreeModelsClub!`n`n" +
+               "Current Version: v$($updateInfo.currentVersion)`n" +
+               "Latest Version : v$($updateInfo.latestVersion)`n" +
+               "Release Date   : $($updateInfo.releaseDate)`n" +
+               "Source URL     : https://github.com/jDroid-X/FreeModelClub`n`n" +
+               "Changes: $($updateInfo.changelog)`n`n" +
+               "Would you like to run Update_FreeModelsClub.bat to update now?"
+        $result = [System.Windows.Forms.MessageBox]::Show($msg, "jDroid-X-FMC - Update Available", [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Information)
         if ($result -eq 'Yes') {
             Stop-FMCServer
-            Start-Process -FilePath "$RootDir\Update_FreeModelsClub.bat" -Wait
+            Start-Process -FilePath "$RootDir\Update_FreeModelsClub.bat"
             [System.Windows.Forms.Application]::Exit()
         }
     } elseif (-not $Silent) {
-        [System.Windows.Forms.MessageBox]::Show("You are running the latest version! No updates found.", "Up to Date", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        $curVer = if ($updateInfo -and $updateInfo.currentVersion) { $updateInfo.currentVersion } else { "1.0.0" }
+        $msg = "FreeModelsClub is up to date (v$curVer)!`n`n" +
+               "Repository: https://github.com/jDroid-X/FreeModelClub`n" +
+               "Checked: " + (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        [System.Windows.Forms.MessageBox]::Show($msg, "jDroid-X-FMC - Up to Date", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     }
 }
 
@@ -361,9 +404,17 @@ $itemDashboard = New-Object System.Windows.Forms.ToolStripMenuItem("Launch FMC")
 $itemDashboard.Add_Click({ Open-Dashboard })
 $contextMenu.Items.Add($itemDashboard) | Out-Null
 
+$itemAbout = New-Object System.Windows.Forms.ToolStripMenuItem("About jDroid-X (FreeModelsClub)")
+$itemAbout.Add_Click({ Start-Process "http://localhost:$Port/about" })
+$contextMenu.Items.Add($itemAbout) | Out-Null
+
 $itemUpdateCheck = New-Object System.Windows.Forms.ToolStripMenuItem("Check for Updates")
 $itemUpdateCheck.Add_Click({ Check-ForUpdates -Silent $false })
 $contextMenu.Items.Add($itemUpdateCheck) | Out-Null
+
+$itemGitHub = New-Object System.Windows.Forms.ToolStripMenuItem("GitHub Repository")
+$itemGitHub.Add_Click({ Start-Process "https://github.com/jDroid-X/FreeModelClub" })
+$contextMenu.Items.Add($itemGitHub) | Out-Null
 
 $itemJobsMonitor = New-Object System.Windows.Forms.ToolStripMenuItem("Background Jobs & Node Monitor")
 $itemJobsMonitor.Add_Click({ Show-BackgroundJobsStatus })

@@ -46,11 +46,15 @@ class ToolExecutionLoopService {
     const executedTools = [];
     const agentChain = ['Master Orchestrator'];
 
-    // Set SSE headers
+    // Set SSE headers & FMC Telemetry
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-FMC-Agent-Mode', metadata.agentMode || 'Agent');
+    res.setHeader('X-FMC-Strategy-Used', requestBody.strategyUsed || 'Round Robin');
+    res.setHeader('X-FMC-Resolved-Model', targetModel.modelId || targetModel.id || '');
+    res.setHeader('X-FMC-Resolved-Model-Name', targetModel.name || targetModel.modelName || targetModel.modelId || '');
+    res.setHeader('X-FMC-Resolved-Provider', targetProvider.displayName || targetProvider.id || '');
     res.flushHeaders();
 
     // Emit initial progress event
@@ -60,7 +64,8 @@ class ToolExecutionLoopService {
       model: targetModel.modelId || targetModel.id,
       modelName: targetModel.name || targetModel.modelName || targetModel.modelId,
       provider: targetProvider.displayName,
-      providerId: targetProvider.id
+      providerId: targetProvider.id,
+      strategyUsed: requestBody.strategyUsed || 'Round Robin'
     });
     
     let currentModel = targetModel;
@@ -115,6 +120,7 @@ class ToolExecutionLoopService {
                 modelName: currentModel.name || currentModel.modelName || currentModel.modelId,
                 providerId: currentProvider.id,
                 providerName: currentProvider.displayName,
+                strategyUsed: requestBody.strategyUsed || 'Round Robin',
                 isFailover
               });
 

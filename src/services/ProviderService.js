@@ -176,27 +176,26 @@ class ProviderService {
   static getFallbackFreeModelsForProvider(provider) {
     if (provider.id === 'groq' || provider.baseUrl.includes('groq.com')) {
       return [
+        { id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B (Fast LPU)' },
+        { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B (Groq)' },
         { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
-        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' },
-        { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B Instruct' },
-        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B' },
-        { id: 'gemma2-9b-it', name: 'Gemma 2 9B IT' }
+        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' }
       ];
     }
     if (provider.id === 'openrouter' || provider.baseUrl.includes('openrouter.ai')) {
       return [
-        { id: 'google/gemini-2.0-flash-lite-001:free', name: 'Gemini 2.0 Flash Lite (Free)' },
-        { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 Reasoning (Free)' },
+        { id: 'poolside/laguna-s-2.1:free', name: 'Poolside Laguna S 2.1 (Free)' },
         { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B (Free)' },
         { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B Instruct (Free)' },
+        { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 Reasoning (Free)' },
         { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B Instruct (Free)' }
       ];
     }
     if (provider.id === 'gemini' || provider.baseUrl.includes('googleapis.com')) {
       return [
-        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
-        { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
-        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (Free Tier)' }
+        { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Free)' },
+        { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Free)' },
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' }
       ];
     }
     if (provider.id === 'ollama' || provider.baseUrl.includes('11434')) {

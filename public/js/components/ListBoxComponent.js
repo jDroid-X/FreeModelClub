@@ -21,7 +21,10 @@ class ListBoxComponent {
         <!-- Left Master List Box (35% Width) -->
         <div style="width: 38%; min-width: 220px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: rgba(255,255,255,0.02);">
           <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.3);">
-            <input type="text" id="listbox-search-input" class="form-control" placeholder="Filter items..." style="font-size: 0.76rem; padding: 4px 8px;" onkeyup="ListBoxComponent.filter(this.value)" />
+            <div style="position: relative; display: flex; align-items: center; width: 100%;">
+              <input type="text" id="listbox-search-input" class="form-control" placeholder="Filter items..." style="font-size: 0.76rem; padding: 4px 26px 4px 8px; width: 100%;" oninput="ListBoxComponent.filter(this.value); const clr = document.getElementById('listbox-search-clear-btn'); if (clr) clr.style.display = this.value ? 'block' : 'none';" />
+              <i id="listbox-search-clear-btn" class="fa-solid fa-xmark" style="position: absolute; right: 8px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: none;" onclick="document.getElementById('listbox-search-input').value=''; ListBoxComponent.filter(''); this.style.display='none';"></i>
+            </div>
           </div>
           <div id="listbox-items-pane" style="flex: 1; overflow-y: auto; padding: 4px;"></div>
         </div>

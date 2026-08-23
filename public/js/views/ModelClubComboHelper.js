@@ -31,26 +31,66 @@ class ModelClubComboHelper {
   }
 
   static async deleteCombo(id, onRefresh = null) {
+    const allCombos = (window.ModelClubView && window.ModelClubView.combos) || [];
+    const combo = allCombos.find(c => c.id === id);
+    const comboName = combo ? combo.name : id;
+
     if (typeof ValidationNotifier !== 'undefined') {
       ValidationNotifier.showOptionPopup({
-        title: 'Delete Combo Agent',
-        message: 'Are you sure you want to permanently delete this Combo Agent? This action cannot be undone.',
-        icon: 'fa-trash',
-        confirmText: 'Delete Combo',
-        confirmStyle: 'danger',
-        onConfirm: async () => {
-          try {
-            const res = await ApiService.deleteCombo(id);
-            if (res.success) {
-              ModalDialog.showNotification('Combo Agent deleted!', 'success');
-              if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
-              if (typeof onRefresh === 'function') onRefresh();
-              else if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
+        title: 'Delete Combo Agent Options',
+        message: `Choose how to handle Combo Agent "${comboName}". You can safely deactivate it, make a clone backup, or permanently remove it.`,
+        icon: 'fa-shield-halved',
+        options: [
+          {
+            label: 'Deactivate / Pause Only (Recommended)',
+            type: 'emerald',
+            icon: 'fa-pause',
+            isRecommended: true,
+            action: async () => {
+              await this.toggleActive(id, onRefresh);
             }
-          } catch (e) {
-            ModalDialog.showNotification(`Delete Error: ${e.message}`, 'error');
+          },
+          {
+            label: 'Clone Backup & Delete',
+            type: 'secondary',
+            icon: 'fa-clone',
+            action: async () => {
+              if (combo) {
+                await ApiService.createCombo({
+                  name: `${combo.name}-backup`,
+                  strategy: combo.strategy || 'Round Robin',
+                  description: `Backup of ${combo.name}`,
+                  modelsList: combo.modelsList || []
+                });
+              }
+              const res = await ApiService.deleteCombo(id);
+              if (res.success) {
+                ModalDialog.showNotification(`Combo "${comboName}" backed up and deleted.`, 'success');
+                if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
+                if (typeof onRefresh === 'function') onRefresh();
+                else if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
+              }
+            }
+          },
+          {
+            label: 'Permanently Delete',
+            type: 'danger',
+            icon: 'fa-trash',
+            action: async () => {
+              try {
+                const res = await ApiService.deleteCombo(id);
+                if (res.success) {
+                  ModalDialog.showNotification(`Combo Agent "${comboName}" deleted!`, 'success');
+                  if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
+                  if (typeof onRefresh === 'function') onRefresh();
+                  else if (typeof ModelClubView !== 'undefined') ModelClubView.refreshAll();
+                }
+              } catch (e) {
+                ModalDialog.showNotification(`Delete Error: ${e.message}`, 'error');
+              }
+            }
           }
-        }
+        ]
       });
     } else {
       if (confirm('Are you sure you want to delete this Combo Agent?')) {

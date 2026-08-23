@@ -6,8 +6,10 @@
 
 class ModelClubNavHelper {
   static renderNavTreeHtml(combos, allProviders, familyGroups, skillGroups, currentViewMode, selectedHeader, expandedBranches) {
-    const jdroidx = (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroid'));
-    const modelClubCombos = (combos || []).filter(c => c !== jdroidx);
+    const jdroidx = (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroidxyz'))
+      || (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroid'))
+      || { name: 'jDroidxyz-combo-agent', id: 'combo_1785085494991_5mmp0' };
+    const modelClubCombos = (combos || []).filter(c => c.id !== jdroidx.id && c.name !== jdroidx.name);
 
     return `
       <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;">
@@ -15,8 +17,8 @@ class ModelClubNavHelper {
           <i class="fa-solid fa-gem"></i> Combo Club
         </div>
 
-        <button class="btn btn-secondary btn-xs" style="justify-content: flex-start; text-align: left; padding: 4px 8px; font-size: 0.72rem; ${currentViewMode === 'hierarchy' ? 'border-color: var(--accent-emerald); font-weight: 700;' : ''}" onclick="ModelClubView.switchView('hierarchy')">
-          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${jdroidx ? jdroidx.name : 'jDroidX Agent'}
+        <button class="btn btn-secondary btn-xs" style="justify-content: flex-start; text-align: left; padding: 4px 8px; font-size: 0.72rem; ${currentViewMode === 'hierarchy' && !selectedHeader ? 'border-color: var(--accent-emerald); font-weight: 700;' : ''}" onclick="ModelClubView.switchView('hierarchy')">
+          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${jdroidx.name || 'jDroidxyz-combo-agent'}
           <span class="badge badge-emerald" style="font-size: 0.55rem; margin-left: auto;">Master</span>
         </button>
 

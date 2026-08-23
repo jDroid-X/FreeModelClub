@@ -52,7 +52,7 @@ class ProvidersView {
           <div style="display: flex; gap: 6px;">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-providers-file-input').click()"><i class="fa-solid fa-file-import"></i> Import JSON</button>
             <input type="file" id="import-providers-file-input" style="display: none;" accept=".json" onchange="ProvidersView.importProvidersJson(this)" />
-            <button class="btn btn-secondary btn-sm" onclick="ProvidersView.exportProvidersJson()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+            <button class="btn btn-emerald btn-sm" onclick="RegistrationView.openProviderAgentModal()"><i class="fa-solid fa-robot"></i> Provider Agent</button>
             <button class="btn btn-primary btn-sm" onclick="app.navigate('registration')"><i class="fa-solid fa-plus"></i> Onboard Provider</button>
           </div>
         </div>
@@ -63,7 +63,7 @@ class ProvidersView {
             <div style="margin-bottom: 8px; position: relative;">
               <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 9px; color: var(--text-muted); font-size: 0.8rem;"></i>
               <input type="text" id="provider-search-input" class="input-modern" placeholder="Search providers..." style="width: 100%; padding-left: 28px; padding-right: 28px; font-size: 0.8rem; box-sizing: border-box;" oninput="ProvidersView.filterList(this.value)" />
-              <i class="fa-solid fa-xmark" style="position: absolute; right: 10px; top: 9px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; display: none;" onclick="document.getElementById('provider-search-input').value=''; ProvidersView.filterList(''); this.style.display='none';"></i>
+              <i class="fa-solid fa-xmark" id="provider-search-clear-icon" style="position: absolute; right: 10px; top: 9px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; display: none;" onclick="document.getElementById('provider-search-input').value=''; ProvidersView.filterList(''); this.style.display='none';"></i>
             </div>
             <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-light); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
               <i class="fa-solid fa-filter"></i> Provider Sections
@@ -639,21 +639,46 @@ class ProvidersView {
         ProvidersView.promptEditApiKey(providerId, '', true);
       } else {
         const errInfo = res.errorInfo || (typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getByStatusCode(res.statusCode, res.error || res.message) : { code: 'ERR_PING_FAIL', title: 'Ping Test Failed', definition: res.error || res.message, guidance: 'Check provider API key and Base URL.' });
-        ModalDialog.showCustomModal({
-          title: `<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i> Provider Ping Test: FAIL`,
-          content: typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-rose">${errInfo.definition || res.message}</div>`,
-          confirmText: 'Acknowledge',
-          onConfirm: () => {}
-        });
+        if (typeof ValidationNotifier !== 'undefined') {
+          ValidationNotifier.showOptionPopup({
+            title: `Ping Test Failed: ${providerId}`,
+            message: `Endpoint responded with error: <strong>${errInfo.definition || res.message || 'Ping failed'}</strong>.<br/><br/><span style="color: var(--text-muted); font-size: 0.78rem;">${errInfo.guidance || 'Please verify API key and URL.'}</span>`,
+            icon: 'fa-triangle-exclamation',
+            options: [
+              {
+                id: 'edit_key',
+                label: 'Update API Key',
+                type: 'primary',
+                icon: 'fa-key',
+                action: () => ProvidersView.promptEditApiKey(providerId, '', true)
+              },
+              {
+                id: 'diagnostics',
+                label: 'Run System Diagnostics',
+                type: 'emerald',
+                icon: 'fa-file-waveform',
+                action: () => app.navigate('reports')
+              },
+              {
+                id: 'dismiss',
+                label: 'Dismiss',
+                type: 'secondary',
+                icon: 'fa-check',
+                action: () => {}
+              }
+            ]
+          });
+        } else {
+          ModalDialog.showCustomModal({
+            title: `<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i> Provider Ping Test: FAIL`,
+            content: typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-rose">${errInfo.definition || res.message}</div>`,
+            confirmText: 'Acknowledge',
+            onConfirm: () => {}
+          });
+        }
       }
     } catch (e) {
-      const errInfo = typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.getByStatusCode(null, e.message) : { code: 'ERR_PING_ERR', title: 'Ping Exception', definition: e.message, guidance: 'Check network connectivity.' };
-      ModalDialog.showCustomModal({
-        title: `<i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i> Provider Ping Exception`,
-        content: typeof ErrorDefinitionHelper !== 'undefined' ? ErrorDefinitionHelper.renderErrorCardHtml(errInfo) : `<div class="alert alert-rose">${e.message}</div>`,
-        confirmText: 'Acknowledge',
-        onConfirm: () => {}
-      });
+      ModalDialog.showNotification(`Ping Exception: ${e.message}`, 'error');
     }
   }
 
@@ -931,6 +956,28 @@ class ProvidersView {
     } catch (e) {
       ModalDialog.showNotification('Error syncing tokens', 'error');
     }
+  }
+
+  static filterList(q) {
+    const query = (q || '').toLowerCase().trim();
+    const clearIcon = document.getElementById('provider-search-clear-icon');
+    if (clearIcon) clearIcon.style.display = query ? 'block' : 'none';
+
+    // 1. Filter provider cards in active/inactive/blacklisted tabs
+    const cards = document.querySelectorAll('.provider-card, .glass-panel.provider-item, .glass-panel[style*="display: flex; flex-direction: column"]');
+    cards.forEach(card => {
+      // Avoid filtering the left rail container itself
+      if (card.closest('.glass-panel[style*="width: 20%"]')) return;
+      const text = card.textContent.toLowerCase();
+      card.style.display = (!query || text.includes(query)) ? '' : 'none';
+    });
+
+    // 2. Filter table rows in matrix tab
+    const rows = document.querySelectorAll('table tbody tr');
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = (!query || text.includes(query)) ? '' : 'none';
+    });
   }
 }
 

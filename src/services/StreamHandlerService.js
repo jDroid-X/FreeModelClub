@@ -64,6 +64,10 @@ class StreamHandlerService {
 
       AIModel.recordUsage(targetModel.id, estimatedPromptTokens, estimatedCompletionTokens, latencyMs);
       ProviderModel.recordUsage(targetProvider.id, estimatedPromptTokens, estimatedCompletionTokens);
+      try {
+        const ModelLoadBalancer = require('./ModelLoadBalancer');
+        ModelLoadBalancer.recordSuccess(targetModel.id || targetModel.modelId, comboId || null);
+      } catch(e) {}
 
       LogModel.recordApiLog({
         providerId: targetProvider.id,

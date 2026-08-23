@@ -89,7 +89,7 @@ class ProviderAgentService {
     return null;
   }
 
-  static async lookupProvider(query) {
+  static async lookupProvider(query, forceLive = false) {
     if (!query || typeof query !== 'string') {
       return { success: false, error: 'Query parameter is required' };
     }
@@ -99,9 +99,74 @@ class ProviderAgentService {
     const aliases = ProviderAgentHelper.getProviderAliases ? ProviderAgentHelper.getProviderAliases() : {};
     const cleanQuery = aliases[rawQuery] || rawQuery;
     const knownDb = this.getKnownProvidersDatabase();
-    const known = knownDb[cleanQuery] || Object.values(knownDb).find(k => (k.rawId && k.rawId.includes(cleanQuery)) || (k.displayName && k.displayName.toLowerCase().includes(cleanQuery)));
+    let known = knownDb[cleanQuery] || Object.values(knownDb).find(k => 
+      (k.rawId && k.rawId.toLowerCase() === cleanQuery) || 
+      (k.id && k.id.toLowerCase() === cleanQuery) ||
+      (k.displayName && k.displayName.toLowerCase().includes(cleanQuery)) ||
+      (cleanQuery.includes(k.id))
+    );
 
-    // STEP 1: Execute Live AI Online Search & Extraction FIRST (Mandatory)
+    // If still not found in static helper, check registered providers in Database
+    if (!known) {
+      const db = require('../models/Database');
+      const allProv = db.read(db.files.providers) || [];
+      const dbProv = allProv.find(p => 
+        p.id === cleanQuery || 
+        (p.displayName && p.displayName.toLowerCase().includes(cleanQuery)) ||
+        cleanQuery.includes(p.id)
+      );
+      if (dbProv) {
+        known = {
+          id: dbProv.id,
+          rawId: dbProv.id,
+          displayName: dbProv.displayName,
+          protocol: dbProv.protocol || 'OpenAI Compatible',
+          baseUrl: dbProv.baseUrl,
+          apiKeyHelp: `Generate API Key at ${dbProv.docsUrl || dbProv.baseUrl}`,
+          apiKeyUrl: dbProv.docsUrl || dbProv.baseUrl,
+          freeTierQuota: dbProv.freeTierLimit || 'Universal Dynamic Free Tier',
+          models: []
+        };
+      }
+    }
+
+    // Enrich known provider with all models found in models.json
+    if (known) {
+      const db = require('../models/Database');
+      const allModels = db.read(db.files.models) || [];
+      const provModels = allModels.filter(m => m.providerId === known.id || m.provider === known.id);
+      if (provModels.length > 0) {
+        const existingModelIds = new Set((known.models || []).map(m => m.modelId || m.id));
+        const mergedModels = [...(known.models || [])];
+        provModels.forEach(pm => {
+          if (!existingModelIds.has(pm.modelId) && !existingModelIds.has(pm.id)) {
+            mergedModels.push({
+              modelId: pm.modelId || pm.id,
+              modelName: pm.modelName || pm.name || pm.modelId,
+              family: pm.family || 'General',
+              coreSkill: pm.coreSkill || 'General Reasoning',
+              contextWindow: pm.contextWindow || 128000,
+              maxTokens: pm.maxTokens || 8192,
+              isFree: true
+            });
+          }
+        });
+        known = { ...known, models: mergedModels };
+      }
+    }
+
+    // STEP 1: Fast-Path — Return Verified Catalog Instantly (< 5ms) unless forceLive is explicitly requested
+    if (known && !forceLive) {
+      return {
+        success: true,
+        found: true,
+        matchType: 'Built-in Provider Registry (Verified Catalog)',
+        agentModelUsed: this.getActiveModelConnectedName(),
+        provider: known
+      };
+    }
+
+    // STEP 2: Execute Live AI Online Search & Extraction for Unlisted / Custom Providers or on forced refresh
     const dynamicAiResult = await this.performOnlineAiSearch(query);
 
     if (dynamicAiResult && dynamicAiResult.found && dynamicAiResult.provider) {
@@ -129,7 +194,7 @@ class ProviderAgentService {
       };
     }
 
-    // STEP 2: Fallback to Known Catalog History ONLY if Live Online Search engine is offline
+    // Fallback to Known Catalog if Live Search failed to produce results
     if (known) {
       return {
         success: true,

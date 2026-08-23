@@ -108,12 +108,14 @@ class ChatOrchestrator {
 
     // ── Phase 3: Request Dispatch ──
     try {
+      const activeStrategy = (typeof localStorage !== 'undefined' ? localStorage.getItem('fmc_active_strategy') : null) || activeSession.agentStrategy || 'Round Robin';
       const requestPayload = {
         model: modelId,
         messages: activeSession.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
         stream: true,
         agentMode,
         context: contextPayload,
+        strategy: activeStrategy,
         temperature: activeSession.temperature || 0.7,
         max_tokens: activeSession.maxTokens || 4096
       };
@@ -122,6 +124,7 @@ class ChatOrchestrator {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-fmc-strategy': activeStrategy,
           ...((typeof ApiService !== 'undefined') ? ApiService.getAuthHeader() : {})
         },
         body: JSON.stringify(requestPayload),
@@ -141,9 +144,12 @@ class ChatOrchestrator {
       const resolvedModelName = response.headers.get('X-FMC-Resolved-Model-Name');
       const resolvedModelId = response.headers.get('X-FMC-Resolved-Model');
       const resolvedProvider = response.headers.get('X-FMC-Resolved-Provider');
+      const strategyUsed = response.headers.get('X-FMC-Strategy-Used') || activeStrategy;
       const isFailover = response.headers.get('X-FMC-Failover') === 'true';
+      if (strategyUsed) assistantMsg.strategyUsed = strategyUsed;
       if (resolvedModelName || resolvedModelId) {
-        assistantMsg.modelName = isFailover ? `${resolvedModelName || resolvedModelId} (Failover)` : (resolvedModelName || resolvedModelId);
+        const stratSuffix = strategyUsed ? ` [${strategyUsed}]` : '';
+        assistantMsg.modelName = isFailover ? `${resolvedModelName || resolvedModelId} (Failover)` : `${resolvedModelName || resolvedModelId}${stratSuffix}`;
         const badgeEl = document.querySelector(`[data-msg-index="${msgIndex}"] .chat-bubble-model-tag`) ||
                         document.getElementById(`model_tag_${msgIndex}`);
         if (badgeEl) badgeEl.textContent = `jDroid-X-FMC (${assistantMsg.modelName})`;
@@ -219,14 +225,26 @@ class ChatOrchestrator {
 
               case 'resolved_model':
                 if (event.modelName || event.modelId) {
-                  const resolvedLabel = event.isFailover ? `${event.modelName || event.modelId} (Failover)` : (event.modelName || event.modelId);
+                  const stratSuffix = (event.strategyUsed || assistantMsg.strategyUsed) ? ` [${event.strategyUsed || assistantMsg.strategyUsed}]` : '';
+                  const resolvedLabel = event.isFailover ? `${event.modelName || event.modelId} (Failover)${stratSuffix}` : `${event.modelName || event.modelId}${stratSuffix}`;
                   assistantMsg.modelName = resolvedLabel;
                   assistantMsg.modelId = event.modelId;
+                  if (event.strategyUsed) assistantMsg.strategyUsed = event.strategyUsed;
                   const tagEl = document.getElementById(`model_tag_${msgIndex}`);
                   if (tagEl) tagEl.textContent = `jDroid-X-FMC (${resolvedLabel})`;
 
                   if (typeof window.PlaygroundView !== 'undefined' && window.PlaygroundView.syncActiveModelSelection) {
                     window.PlaygroundView.syncActiveModelSelection(event.modelId, event.providerId, event.modelName, event.isFailover);
+                  }
+
+                  if (typeof ComboSmartAgent !== 'undefined' && ComboSmartAgent.recordResolution) {
+                    ComboSmartAgent.recordResolution({
+                      modelId: event.modelId,
+                      modelName: event.modelName,
+                      providerName: event.providerName,
+                      strategyUsed: event.strategyUsed || assistantMsg.strategyUsed,
+                      isFailover: event.isFailover
+                    });
                   }
                 }
                 break;
@@ -317,15 +335,18 @@ class ChatOrchestrator {
   // ── Fallback to standard /v1/chat/completions streaming ──
   static async _fallbackToStandardStream(session, assistantMsg, msgIndex, modelId, bubbleId, mainBubbleId) {
     try {
+      const activeStrategy = (typeof localStorage !== 'undefined' ? localStorage.getItem('fmc_active_strategy') : null) || session.agentStrategy || 'Round Robin';
       const response = await fetch('/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-fmc-strategy': activeStrategy,
           ...((typeof ApiService !== 'undefined') ? ApiService.getAuthHeader() : {})
         },
         body: JSON.stringify({
           model: modelId,
           messages: session.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+          strategy: activeStrategy,
           stream: true
         }),
         signal: this.activeAbortController.signal
@@ -336,12 +357,15 @@ class ChatOrchestrator {
       const resolvedModelName = response.headers.get('X-FMC-Resolved-Model-Name');
       const resolvedModelId = response.headers.get('X-FMC-Resolved-Model');
       const resolvedProvider = response.headers.get('X-FMC-Resolved-Provider');
+      const strategyUsed = response.headers.get('X-FMC-Strategy-Used') || activeStrategy;
       const isFailover = response.headers.get('X-FMC-Failover') === 'true';
+      if (strategyUsed) assistantMsg.strategyUsed = strategyUsed;
       if (resolvedModelName || resolvedModelId) {
-        assistantMsg.modelName = isFailover ? `${resolvedModelName || resolvedModelId} (Failover)` : (resolvedModelName || resolvedModelId);
+        const stratSuffix = strategyUsed ? ` [${strategyUsed}]` : '';
+        assistantMsg.modelName = isFailover ? `${resolvedModelName || resolvedModelId} (Failover)` : `${resolvedModelName || resolvedModelId}${stratSuffix}`;
         const badgeEl = document.querySelector(`[data-msg-index="${msgIndex}"] .chat-bubble-model-tag`) ||
                         document.getElementById(`model_tag_${msgIndex}`);
-        if (badgeEl) badgeEl.textContent = assistantMsg.modelName;
+        if (badgeEl) badgeEl.textContent = `jDroid-X-FMC (${assistantMsg.modelName})`;
 
         if (typeof PlaygroundView !== 'undefined' && PlaygroundView.syncActiveModelSelection) {
           PlaygroundView.syncActiveModelSelection(resolvedModelId, resolvedProvider, resolvedModelName, isFailover);

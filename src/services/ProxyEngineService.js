@@ -15,13 +15,78 @@ const db = require('../models/Database');
 
 class ProxyEngineService {
   static rrCounters = {};
-  
-  static getBlacklistedStatus() {
-    return [];
+  static blacklistedProviders = new Map(); // providerId -> expireTimestamp
+  static failureCounters = new Map();     // providerId -> consecutiveFailures
+  static blacklistSleepMinutes = 30;
+  static circuitBreakerThreshold = 3;
+
+  static setBlacklistSleepMinutes(mins) {
+    if (typeof mins === 'number' && mins > 0) {
+      this.blacklistSleepMinutes = mins;
+    }
   }
-  
+
+  static getBlacklistedStatus() {
+    const now = Date.now();
+    const result = [];
+    for (const [providerId, expireTime] of this.blacklistedProviders.entries()) {
+      if (expireTime > now) {
+        result.push({
+          providerId,
+          remainingMinutes: Math.max(1, Math.round((expireTime - now) / 60000)),
+          expiresAt: new Date(expireTime).toISOString()
+        });
+      } else {
+        this.blacklistedProviders.delete(providerId);
+        this.failureCounters.delete(providerId);
+      }
+    }
+    return result;
+  }
+
   static isProviderBlacklisted(providerId) {
+    if (!providerId) return false;
+    const expireTime = this.blacklistedProviders.get(providerId);
+    if (!expireTime) return false;
+    if (Date.now() < expireTime) return true;
+    this.blacklistedProviders.delete(providerId);
+    this.failureCounters.delete(providerId);
     return false;
+  }
+
+  static blacklistProvider(providerId, minutes = this.blacklistSleepMinutes) {
+    if (!providerId) return false;
+    const duration = (typeof minutes === 'number' && minutes > 0) ? minutes : this.blacklistSleepMinutes;
+    this.blacklistedProviders.set(providerId, Date.now() + duration * 60 * 1000);
+    return true;
+  }
+
+  static unblacklistProvider(providerId) {
+    if (!providerId) return false;
+    this.blacklistedProviders.delete(providerId);
+    this.failureCounters.delete(providerId);
+    return true;
+  }
+
+  static unblacklistAllProviders() {
+    this.blacklistedProviders.clear();
+    this.failureCounters.clear();
+    return true;
+  }
+
+  static recordProviderSuccess(providerId) {
+    if (providerId) {
+      this.failureCounters.delete(providerId);
+    }
+  }
+
+  static recordProviderFailure(providerId) {
+    if (!providerId) return;
+    const current = (this.failureCounters.get(providerId) || 0) + 1;
+    this.failureCounters.set(providerId, current);
+    if (current >= this.circuitBreakerThreshold) {
+      this.blacklistProvider(providerId, this.blacklistSleepMinutes);
+    }
   }
 
   static async handleChatCompletion(req, res, clientKey = 'direct-ui') {
@@ -58,9 +123,10 @@ class ProxyEngineService {
         return activeModelsCache.includes(m.id) || activeModelsCache.includes(m.modelId);
       });
       
+      const activeStrategy = req.headers['x-fmc-strategy'] || requestBody.strategy || combo.strategy || 'Fallback';
       if (comboModels.length > 0) {
         const ModelLoadBalancer = require('./ModelLoadBalancer');
-        targetModel = ModelLoadBalancer.select(comboModels, combo.strategy || 'Fallback', {}, {
+        targetModel = ModelLoadBalancer.select(comboModels, activeStrategy, {}, {
           comboId: combo.id,
           lastKnownGoodModelId: combo.lastKnownGoodModelId
         });
@@ -175,6 +241,7 @@ class ProxyEngineService {
       try {
         let result = preflightResult;
         if (!result) {
+          const activeStrategy = req.headers['x-fmc-strategy'] || requestBody.strategy || (combo ? combo.strategy : 'Round Robin');
           result = await ProxyExecutionHelper.executeProxyRequest({
             req,
             res,
@@ -186,30 +253,34 @@ class ProxyEngineService {
             estimatedPromptTokens,
             startTime,
             isFailover,
-            failoverFrom
+            failoverFrom,
+            strategyUsed: activeStrategy
           });
         }
 
           if (result.success) {
-          // Record successful request with resolved model details
-          // Note: ProxyExecutionHelper also records its own detailed log with token counts
-          const comboInfo = combo && combo.id ? { comboId: combo.id } : {};
-          LogModel.recordApiLog({
-            clientKey,
-            providerId: currentProvider.id,
-            providerName: currentProvider.displayName,
-            modelId: currentModel.id || currentModel.modelId,
-            endpoint: '/v1/chat/completions',
-            statusCode: 200,
-            status: isFailover ? 'SUCCESS_FAILOVER' : 'SUCCESS',
-            ...comboInfo
-          });
+            ProxyEngineService.recordProviderSuccess(currentProvider.id);
+            // Record successful request with resolved model details
+            // Note: ProxyExecutionHelper also records its own detailed log with token counts
+            const comboInfo = combo && combo.id ? { comboId: combo.id } : {};
+            LogModel.recordApiLog({
+              clientKey,
+              providerId: currentProvider.id,
+              providerName: currentProvider.displayName,
+              modelId: currentModel.id || currentModel.modelId,
+              endpoint: '/v1/chat/completions',
+              statusCode: 200,
+              status: isFailover ? 'SUCCESS_FAILOVER' : 'SUCCESS',
+              ...comboInfo
+            });
             if (combo) {
               combo.lastKnownGoodModelId = currentModel.id;
               ComboModel.save(combo);
             }
             return;
           }
+
+          ProxyEngineService.recordProviderFailure(currentProvider.id);
 
           if (result && (result.statusCode === 401 || result.statusCode === 403)) {
             // Temporary in-memory cooldown without permanently corrupting user database config

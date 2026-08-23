@@ -9,6 +9,7 @@
 class RegistrationView {
   static snippets = {};
   static providersList = [];
+  static allModelsList = [];
   static stagedModels = [];
   static fetchedModels = [];
 
@@ -45,11 +46,12 @@ class RegistrationView {
 
   static async render(container) {
     try {
-      const [providersRes, snippetsRes] = await Promise.all([
-        ApiService.getAllProviders(), ApiService.getSnippets()
+      const [providersRes, snippetsRes, modelsRes] = await Promise.all([
+        ApiService.getAllProviders(), ApiService.getSnippets(), ApiService.getModels()
       ]);
       this.snippets = snippetsRes.snippets || {};
       this.providersList = providersRes.providers || [];
+      this.allModelsList = (modelsRes && (modelsRes.data || modelsRes.models)) || [];
     } catch (err) {
       console.warn('RegistrationView render fallback:', err.message);
       if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Registration rendering fallback active. ' + err.message, 'warning');
@@ -57,8 +59,17 @@ class RegistrationView {
 
     try {
       const draft = sessionStorage.getItem('fmc_draft_models');
-      if (draft) this.stagedModels = JSON.parse(draft);
-      else this.stagedModels = [];
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(m => m && (m.modelName || m.name || m.modelId))) {
+          this.stagedModels = parsed;
+        } else {
+          sessionStorage.removeItem('fmc_draft_models');
+          this.stagedModels = [];
+        }
+      } else {
+        this.stagedModels = [];
+      }
     } catch (e) {
       this.stagedModels = [];
     }
@@ -69,6 +80,7 @@ class RegistrationView {
     const allPaneProviders = dbProviders.length > 0
       ? dbProviders.map(reg => {
           const pre = predefined.find(p => p.id === reg.id);
+          const pModelCount = this.allModelsList.filter(m => m.providerId === reg.id || m.provider === reg.id).length;
           return {
             id: reg.id,
             name: reg.displayName || reg.id,
@@ -77,7 +89,7 @@ class RegistrationView {
             color: pre ? pre.color : 'var(--accent-cyan)',
             isActive: Boolean(reg.isActive),
             apiKey: reg.apiKey || '',
-            modelsCount: (reg.models && reg.models.length) || 0
+            modelsCount: pModelCount || ((reg.models && reg.models.length) || 0)
           };
         })
       : predefined.map(p => ({ ...p, isActive: false, modelsCount: 0 }));
@@ -175,7 +187,7 @@ class RegistrationView {
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px; font-weight: 600;">Display Name <span style="color: var(--accent-rose);">*</span></label>
-            <input type="text" id="reg-prov-name" class="form-control" placeholder="e.g. Groq Cloud" style="padding: 4px 8px; font-size: 0.76rem; height: 26px;" required onchange="this.value = this.value.split(/[\\s/]+/).slice(0, 2).join(' ')" />
+            <input type="text" id="reg-prov-name" class="form-control" placeholder="e.g. Groq Cloud" style="padding: 4px 8px; font-size: 0.76rem; height: 26px;" required />
           </div>
         </div>
 
@@ -289,8 +301,7 @@ class RegistrationView {
     const registered = this.providersList.find(r => r.id === pid);
 
     const idVal = registered ? registered.id : (found ? found.id : pid);
-    let nameVal = registered ? registered.displayName : (found ? found.name : pid);
-    nameVal = nameVal.split(/[\s/]+/).slice(0, 2).join(' ');
+    const nameVal = (registered ? registered.displayName : (found ? found.name : pid)) || pid;
 
     const idField = document.getElementById('reg-prov-id');
     const nameField = document.getElementById('reg-prov-name');
@@ -306,7 +317,20 @@ class RegistrationView {
     if (urlField) urlField.value = registered ? registered.baseUrl : (defaultUrls[proto] || '');
     if (keyInput) keyInput.value = registered ? (registered.apiKey || '') : (proto === 'Ollama Local API' ? 'ollama-local' : '');
 
-    if (registered && Array.isArray(registered.models) && registered.models.length > 0) {
+    const existingModels = (this.allModelsList || []).filter(m => (m.providerId === idVal || m.provider === idVal || m.providerId === pid));
+    if (existingModels.length > 0) {
+      this.stagedModels = existingModels.map(m => ({ 
+        id: m.id || `${idVal}_${m.modelId}`, 
+        modelId: m.modelId || m.id, 
+        name: m.modelName || m.name || m.modelId, 
+        modelName: m.modelName || m.name || m.modelId, 
+        contextWindow: m.contextWindow || '128k', 
+        isFree: m.isFree !== false, 
+        coreSkill: m.coreSkill || 'General Knowledge', 
+        family: m.family || 'General Family' 
+      }));
+      this.fetchedModels = [...this.stagedModels];
+    } else if (registered && Array.isArray(registered.models) && registered.models.length > 0) {
       this.stagedModels = registered.models.map(m => ({ 
         id: m.id || m.modelId, 
         modelId: m.modelId || m.id, 
@@ -317,59 +341,110 @@ class RegistrationView {
         coreSkill: m.coreSkill || 'General Knowledge', 
         family: m.family || 'General Family' 
       }));
+      this.fetchedModels = [...this.stagedModels];
     } else {
       this.stagedModels = [];
+      this.fetchedModels = [];
     }
     
-    this.fetchedModels = [];
     this.renderDiscoveredModelsContainer();
     this.renderStagedTable();
   }
 
   static applyProviderData(id, name, proto, url, encModels) {
+    if (window.app && window.app.currentView !== 'registration') {
+      window.app.navigate('registration');
+      setTimeout(() => {
+        RegistrationView.applyProviderData(id, name, proto, url, encModels);
+      }, 200);
+      return;
+    }
+
+    let p = null;
+    // Handle case where id is actually an encoded provider JSON payload
+    if (typeof id === 'string' && (id.startsWith('{') || id.startsWith('%7B'))) {
+      try { p = JSON.parse(decodeURIComponent(id)); } catch (e) { try { p = JSON.parse(id); } catch (err) {} }
+    } else if (typeof id === 'object' && id !== null) {
+      p = id;
+    }
+
+    if (p) {
+      return this.applyAgentProviderData(p);
+    }
+
+    const safeId = (typeof id === 'string') ? decodeURIComponent(id).toLowerCase().replace(/[^a-z0-9_-]/g, '').trim() : '';
+    const safeName = (typeof name === 'string') ? decodeURIComponent(name).trim() : safeId;
+    const safeProto = (typeof proto === 'string') ? decodeURIComponent(proto).trim() : 'OpenAI Compatible';
+    const safeUrl = (typeof url === 'string') ? decodeURIComponent(url).trim() : '';
+
     const idField = document.getElementById('reg-prov-id');
     const nameField = document.getElementById('reg-prov-name');
     const protoField = document.getElementById('reg-prov-protocol');
     const urlField = document.getElementById('reg-prov-url');
 
-    if (idField) idField.value = id;
-    if (nameField) nameField.value = name;
-    if (protoField) protoField.value = proto;
-    if (urlField) urlField.value = url;
+    if (idField) idField.value = safeId;
+    if (nameField) nameField.value = safeName;
+    if (protoField) protoField.value = safeProto;
+    if (urlField) urlField.value = safeUrl;
 
+    let parsedModels = [];
     if (encModels) {
       try {
-        const models = JSON.parse(decodeURIComponent(encModels));
-        if (Array.isArray(models) && models.length > 0) {
-          const popupCbs = document.querySelectorAll('.popup-model-cb:checked, .pa-popup-model-cb:checked');
-          const checkedIds = Array.from(popupCbs).map(c => c.value);
-          const filteredModels = checkedIds.length > 0 ? models.filter(m => checkedIds.includes(m.modelId || m.id)) : models;
+        parsedModels = typeof encModels === 'string' ? JSON.parse(decodeURIComponent(encModels)) : encModels;
+      } catch (e) {
+        try { parsedModels = JSON.parse(encModels); } catch (err) {}
+      }
+    }
 
-          this.stagedModels = filteredModels.map(m => ({
-            id: `${id}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
-            modelId: m.modelId || m.id,
-            name: m.modelName || m.id,
-            modelName: m.modelName || m.id,
-            family: m.family || 'General',
-            coreSkill: m.coreSkill || 'General Reasoning',
-            contextWindow: m.contextWindow || 128000,
-            providerId: `${id}`,
-            providerName: name,
-            isFree: true
-          }));
-          this.renderStagedTable();
-        }
-      } catch (e) {}
+    if (Array.isArray(parsedModels) && parsedModels.length > 0) {
+      const popupCbs = document.querySelectorAll('.popup-model-cb:checked, .pa-popup-model-cb:checked');
+      const checkedIds = Array.from(popupCbs).map(c => c.value);
+      const filteredModels = checkedIds.length > 0 ? parsedModels.filter(m => checkedIds.includes(m.modelId || m.id)) : parsedModels;
+
+      this.fetchedModels = filteredModels.map(m => ({
+        id: `${safeId}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        modelId: m.modelId || m.id,
+        name: m.modelName || m.id,
+        modelName: m.modelName || m.id,
+        family: m.family || 'General',
+        coreSkill: m.coreSkill || 'General Reasoning',
+        contextWindow: m.contextWindow || 128000,
+        maxTokens: m.maxTokens || 8192,
+        providerId: safeId,
+        providerName: safeName,
+        isFree: true
+      }));
+      this.stagedModels = [...this.fetchedModels];
+
+      const container = document.getElementById('models-checkbox-container');
+      const badge = document.getElementById('discovered-models-badge');
+      if (container) {
+        container.innerHTML = this.fetchedModels.map(m => `
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; margin-bottom: 6px; cursor: pointer;">
+            <input type="checkbox" class="fetched-model-cb" value="${m.id}" checked />
+            <strong style="color: var(--text-main);">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.modelId)}</strong>
+            <span style="font-size: 0.72rem; color: var(--accent-cyan);">(${m.family || 'General'}) ${m.coreSkill ? '• ' + m.coreSkill : ''}</span>
+          </label>
+        `).join('');
+      }
+      if (badge) {
+        badge.textContent = `Step 1: Discovered Free Models Pool (${this.fetchedModels.length})`;
+      }
+      this.renderStagedTable();
     }
     ModalDialog.closeModal();
-    ModalDialog.showNotification(`Applied specs & ${this.stagedModels.length} models for '${name}'! Enter API key to save.`, 'success');
+    ModalDialog.showNotification(`Applied specs & ${this.stagedModels.length} models for '${safeName}'! Enter API key to save.`, 'success');
     setTimeout(() => { document.getElementById('reg-prov-key')?.focus(); }, 150);
   }
 
   static async testAgentProviderKey(encodedData) {
     try {
-      const p = JSON.parse(decodeURIComponent(encodedData));
-      ModalDialog.showNotification(`Testing pre-flight connection to ${p.displayName}...`, 'info');
+      let p = encodedData;
+      if (typeof encodedData === 'string') {
+        try { p = JSON.parse(decodeURIComponent(encodedData)); } catch (e) { p = JSON.parse(encodedData); }
+      }
+      const safeName = p.displayName || p.rawId || p.id || 'Provider';
+      ModalDialog.showNotification(`Testing pre-flight connection to ${safeName}...`, 'info');
       const res = await ApiService.testProviderConnection({
         providerId: p.rawId || p.id,
         baseUrl: p.baseUrl,
@@ -377,9 +452,9 @@ class RegistrationView {
         protocol: p.protocol || 'OpenAI Compatible'
       });
       if (res && (res.status === 'SUCCESS' || res.success || res.status === 'OK' || res.healthy)) {
-        ModalDialog.showNotification(`Pre-Flight Ping SUCCESS: ${p.displayName} endpoint is active & reachable!`, 'success');
+        ModalDialog.showNotification(`Pre-Flight Ping SUCCESS: ${safeName} endpoint is active & reachable!`, 'success');
       } else {
-        ModalDialog.showNotification(`Pre-Flight Ping: ${p.displayName} endpoint ping completed (${res.message || 'Ready'}).`, 'info');
+        ModalDialog.showNotification(`Pre-Flight Ping: ${safeName} endpoint ping completed (${res.message || 'Ready'}).`, 'info');
       }
     } catch (e) {
       ModalDialog.showNotification(`Pre-Flight Ping Note: Endpoint checked (${e.message || 'Ready'}).`, 'info');
@@ -387,9 +462,23 @@ class RegistrationView {
   }
 
   static applyAgentProviderData(encodedData) {
+    if (window.app && window.app.currentView !== 'registration') {
+      window.app.navigate('registration');
+      setTimeout(() => {
+        RegistrationView.applyAgentProviderData(encodedData);
+      }, 200);
+      return;
+    }
+
     try {
-      const p = JSON.parse(decodeURIComponent(encodedData));
-      const pid = p.rawId || p.id;
+      let p = encodedData;
+      if (typeof encodedData === 'string') {
+        try { p = JSON.parse(decodeURIComponent(encodedData)); } catch (e) { p = JSON.parse(encodedData); }
+      }
+      const safeId = (p.rawId || p.id || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
+      const safeName = (p.displayName || safeId || '').trim();
+      const safeProto = (p.protocol || 'OpenAI Compatible').trim();
+      const safeUrl = (p.baseUrl || '').trim();
 
       const idField = document.getElementById('reg-prov-id');
       const nameField = document.getElementById('reg-prov-name');
@@ -397,12 +486,10 @@ class RegistrationView {
       const urlField = document.getElementById('reg-prov-url');
       const keyField = document.getElementById('reg-prov-key');
 
-      if (idField) idField.value = pid;
-      let nameVal = p.displayName || pid;
-      nameVal = nameVal.split(/[\s/]+/).slice(0, 2).join(' ');
-      if (nameField) nameField.value = nameVal;
-      if (protoField) protoField.value = p.protocol || 'OpenAI Compatible';
-      if (urlField) urlField.value = p.baseUrl;
+      if (idField) idField.value = safeId;
+      if (nameField) nameField.value = safeName;
+      if (protoField) protoField.value = safeProto;
+      if (urlField) urlField.value = safeUrl;
       if (keyField) {
         keyField.placeholder = p.keyPrefix ? `${p.keyPrefix}...` : 'Enter API Key...';
         keyField.value = '';
@@ -411,9 +498,17 @@ class RegistrationView {
       if (Array.isArray(p.models) && p.models.length > 0) {
         RegistrationView.fetchedModels = p.models.map(m => ({
           ...m,
-          id: `${pid}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
-          providerId: `${pid}`,
-          providerName: p.displayName
+          id: `${safeId}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
+          modelId: m.modelId || m.id,
+          modelName: m.modelName || m.id,
+          name: m.modelName || m.id,
+          providerId: safeId,
+          providerName: safeName,
+          family: m.family || 'General',
+          coreSkill: m.coreSkill || 'General Reasoning',
+          contextWindow: m.contextWindow || 128000,
+          maxTokens: m.maxTokens || 8192,
+          isFree: true
         }));
         RegistrationView.stagedModels = [...RegistrationView.fetchedModels];
 
@@ -435,7 +530,7 @@ class RegistrationView {
       }
 
       ModalDialog.closeModal();
-      ModalDialog.showNotification(`Provider Agent auto-filled specs for '${p.displayName}'! Add your API key and click Save.`, 'success');
+      ModalDialog.showNotification(`Provider Agent auto-filled specs for '${safeName}'! Add your API key and click Save.`, 'success');
       setTimeout(() => { document.getElementById('reg-prov-key')?.focus(); }, 150);
     } catch (err) {
       ModalDialog.showNotification(`Failed to apply provider data: ${err.message}`, 'error');
@@ -500,22 +595,38 @@ class RegistrationView {
       const apiKey = document.getElementById('reg-prov-key')?.value || '';
       
       let rawList = [];
-      let res = null;
 
-      if (url) {
-        res = await ApiService.fetchModelsFromProvider(normalizedProvId || 'custom', url, apiKey);
-        if (res && res.success && res.freeModels && res.freeModels.length > 0) {
-          rawList = res.freeModels;
-        }
+      // 1. Instant check in cached memory models (< 1ms)
+      const existingInMem = (this.allModelsList || []).filter(m => (m.providerId === provId || m.provider === provId || m.providerId === normalizedProvId));
+      if (existingInMem && existingInMem.length > 0) {
+        rawList = existingInMem;
       }
 
+      // 2. Fast Provider Agent Lookup with 3.5s timeout guard so UI never hangs
       if (rawList.length === 0) {
-        res = await ApiService.agentLookupProvider(normalizedProvId || provName);
-        if (res && res.provider && res.provider.models) {
-          rawList = res.provider.models;
+        try {
+          const lookupPromise = ApiService.agentLookupProvider(normalizedProvId || provName || proto);
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3500));
+          const res = await Promise.race([lookupPromise, timeoutPromise]);
+          if (res && res.provider && Array.isArray(res.provider.models) && res.provider.models.length > 0) {
+            rawList = res.provider.models;
+          }
+        } catch (e) {
+          console.warn('Agent lookup fallback:', e.message);
         }
       }
 
+      // 3. If custom unlisted endpoint with user API key, probe remote endpoint
+      if (rawList.length === 0 && url && apiKey) {
+        try {
+          const fetchRes = await ApiService.fetchModelsFromProvider(normalizedProvId || 'custom', url, apiKey);
+          if (fetchRes && fetchRes.success && fetchRes.freeModels && fetchRes.freeModels.length > 0) {
+            rawList = fetchRes.freeModels;
+          }
+        } catch (e) {}
+      }
+
+      // 4. Fallback protocol defaults
       if (rawList.length === 0) {
         rawList = this.getDefaultModelsForProtocol(proto);
       }
@@ -533,8 +644,10 @@ class RegistrationView {
         isFree: true
       }));
 
+      this.stagedModels = [...this.fetchedModels];
       this.renderDiscoveredModelsContainer();
-      ModalDialog.showNotification(`Discovered ${this.fetchedModels.length} free models for ${provName}!`, 'success');
+      this.renderStagedTable();
+      ModalDialog.showNotification(`Discovered & staged ${this.fetchedModels.length} free models for ${provName}!`, 'success');
 
     } catch (err) {
       console.warn('Provider Agent lookup failed, loading defaults:', err);
@@ -550,8 +663,10 @@ class RegistrationView {
         providerName: provName,
         isFree: true
       }));
+      this.stagedModels = [...this.fetchedModels];
       this.renderDiscoveredModelsContainer();
-      ModalDialog.showNotification(`Loaded ${this.fetchedModels.length} default free models for ${provName}!`, 'info');
+      this.renderStagedTable();
+      ModalDialog.showNotification(`Loaded & staged ${this.fetchedModels.length} default free models for ${provName}!`, 'info');
     } finally {
       if (btn) {
         btn.innerHTML = origBtnHtml;
@@ -598,6 +713,87 @@ class RegistrationView {
   static removeStagedModel(id) { 
     this.stagedModels = this.stagedModels.filter(m => m.id !== id); 
     this.renderStagedTable(); 
+  }
+
+  static updateStagedModel(modelId, field, value) {
+    const model = this.stagedModels.find(m => m.id === modelId || m.modelId === modelId);
+    if (model) {
+      model[field] = value;
+      sessionStorage.setItem('fmc_draft_models', JSON.stringify(this.stagedModels));
+    }
+  }
+
+  static toggleSelectAllStagedModels(checked) {
+    document.querySelectorAll('.staged-model-cb').forEach(cb => cb.checked = Boolean(checked));
+  }
+
+  static removeSelectedStagedModels() {
+    const cbs = document.querySelectorAll('.staged-model-cb:checked');
+    const checkedIds = new Set(Array.from(cbs).map(cb => cb.value));
+    if (checkedIds.size === 0) {
+      ModalDialog.showNotification('Please select at least one staged model to remove.', 'warning');
+      return;
+    }
+    this.stagedModels = this.stagedModels.filter(m => !checkedIds.has(m.id) && !checkedIds.has(m.modelId));
+    this.renderStagedTable();
+    ModalDialog.showNotification(`Removed ${checkedIds.size} selected models from staging.`, 'info');
+  }
+
+  static async deleteDeprecatedModel(modelId) {
+    if (!modelId) return;
+    try {
+      if (typeof ApiService.deleteModel === 'function') {
+        await ApiService.deleteModel(modelId);
+      }
+      this.stagedModels = this.stagedModels.filter(m => m.id !== modelId && m.modelId !== modelId);
+      this.renderStagedTable();
+      if (window.AppStore && window.AppStore.emit) window.AppStore.emit('MODELS_MUTATED');
+      ModalDialog.showNotification(`Deprecated model '${modelId}' permanently deleted.`, 'success');
+    } catch (e) {
+      ModalDialog.showNotification(`Failed to delete model: ${e.message}`, 'error');
+    }
+  }
+
+  static showDiscoveredModelsListDetail() {
+    if (!this.fetchedModels || this.fetchedModels.length === 0) {
+      ModalDialog.showNotification('No discovered models available to inspect.', 'info');
+      return;
+    }
+    ModalDialog.showCustomModal({
+      title: `<i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i> Discovered Models Pool Details (${this.fetchedModels.length})`,
+      content: `
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+          <div style="font-size: 0.78rem; color: var(--text-muted); padding: 4px 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+            Detailed specs for all models discovered by Provider Agent for this provider.
+          </div>
+          <table class="table-custom" style="width: 100%; font-size: 0.75rem;">
+            <thead>
+              <tr>
+                <th>Model ID</th>
+                <th>Display Name</th>
+                <th>Family</th>
+                <th>Core Skill</th>
+                <th>Context Window</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.fetchedModels.map(m => `
+                <tr>
+                  <td><code style="color: var(--accent-cyan);">${m.modelId || m.id}</code></td>
+                  <td><strong style="color: var(--text-main);">${m.modelName || m.name || m.id}</strong></td>
+                  <td><span class="badge badge-indigo" style="font-size: 0.65rem;">${m.family || 'General'}</span></td>
+                  <td>${m.coreSkill || 'General Reasoning'}</td>
+                  <td>${m.contextWindow ? (typeof m.contextWindow === 'number' ? (m.contextWindow/1000) + 'k' : m.contextWindow) : '128k'}</td>
+                  <td><span class="badge badge-emerald" style="font-size: 0.65rem;">Free Tier</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `,
+      confirmText: 'Close'
+    });
   }
 
   static clearAllStagedModels() {
@@ -710,7 +906,59 @@ class RegistrationView {
           window.AppStore.emit('PROVIDER_STATE_CHANGED');
           window.AppStore.emit('MODELS_MUTATED');
         }
-        setTimeout(() => app.navigate('providers'), 500);
+
+        ModalDialog.showOptionModal({
+          title: `Provider Registered: ${name}`,
+          message: `Successfully registered provider <strong>${name}</strong> with ${this.stagedModels.length} active models. What would you like to do next?`,
+          icon: 'fa-circle-check',
+          options: [
+            {
+              id: 'go_providers',
+              label: 'View in Providers Panel',
+              type: 'secondary',
+              icon: 'fa-network-wired',
+              action: () => {
+                // View only — navigate to providers panel
+                app.navigate('providers');
+              }
+            },
+            {
+              id: 'go_playground',
+              label: 'Start Chatting in Playground',
+              type: 'primary',
+              icon: 'fa-comments',
+              action: () => {
+                // Auto-save View activity: refresh providers state before navigating
+                if (window.AppStore && window.AppStore.emit) {
+                  window.AppStore.emit('PROVIDER_STATE_CHANGED');
+                  window.AppStore.emit('MODELS_MUTATED');
+                }
+                app.navigate('playground');
+              }
+            },
+            {
+              id: 'create_combo',
+              label: 'Create Model Combo (Virtual Pool)',
+              type: 'emerald',
+              isRecommended: true,
+              icon: 'fa-wand-magic-sparkles',
+              action: () => {
+                // Auto-save View + Start activities: refresh state + preload playground session
+                if (window.AppStore && window.AppStore.emit) {
+                  window.AppStore.emit('PROVIDER_STATE_CHANGED');
+                  window.AppStore.emit('MODELS_MUTATED');
+                  window.AppStore.emit('PLAYGROUND_SESSION_READY', { providerId: id, providerName: name });
+                }
+                app.navigate('model-club');
+                setTimeout(() => {
+                  if (window.ModelClubView && window.ModelClubView.openComboStudio) {
+                    window.ModelClubView.openComboStudio(null, (this.stagedModels || []).map(m => m.id), `${id}-fast-combo`);
+                  }
+                }, 300);
+              }
+            }
+          ]
+        });
       } else {
         ModalDialog.showNotification(`Registration Failed: ${res?.message || res?.error || 'Error saving provider.'}`, 'error');
       }
@@ -752,14 +1000,59 @@ class RegistrationView {
           badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Active';
         }
       } else {
-        ModalDialog.showNotification(`Connection Test: ${res?.message || 'Ready for configuration.'}`, 'info');
+        const errorMsg = res?.message || res?.error || 'Connection check encountered an issue.';
+        ModalDialog.showNotification(`Connection Note: ${errorMsg}`, 'warning');
         if (badge) {
-          badge.className = 'badge badge-cyan';
-          badge.innerHTML = '<i class="fa-solid fa-circle-info"></i> Endpoint Verified';
+          badge.className = 'badge badge-rose';
+          badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Check Key / URL';
+        }
+        if (typeof ValidationNotifier !== 'undefined') {
+          ValidationNotifier.showOptionPopup({
+            title: `Connection Check: ${pid || 'Provider'}`,
+            message: `Endpoint ping responded with: <strong>${errorMsg}</strong>.<br/><br/>Would you like to auto-detect working credentials or visit the provider key portal?`,
+            icon: 'fa-triangle-exclamation',
+            options: [
+              {
+                id: 'auto_agent',
+                label: 'Auto-Detect with Provider Agent',
+                type: 'emerald',
+                icon: 'fa-wand-magic-sparkles',
+                action: () => RegistrationView.fetchFreeModels()
+              },
+              {
+                id: 'open_portal',
+                label: 'Open Key Portal',
+                type: 'primary',
+                icon: 'fa-arrow-up-right-from-square',
+                action: () => {
+                  const portals = {
+                    groq: 'https://console.groq.com/keys',
+                    cerebras: 'https://cloud.cerebras.ai',
+                    sambanova: 'https://cloud.sambanova.ai/apis',
+                    mistral: 'https://console.mistral.ai/api-keys',
+                    openrouter: 'https://openrouter.ai/keys',
+                    gemini: 'https://aistudio.google.com/app/apikey',
+                    nvidia: 'https://build.nvidia.com',
+                    cohere: 'https://dashboard.cohere.com/api-keys',
+                    together: 'https://api.together.xyz/settings/api-keys'
+                  };
+                  const targetUrl = portals[pid] || 'https://console.groq.com/keys';
+                  window.open(targetUrl, '_blank');
+                }
+              },
+              {
+                id: 'dismiss',
+                label: 'Keep Current Settings',
+                type: 'secondary',
+                icon: 'fa-check',
+                action: () => {}
+              }
+            ]
+          });
         }
       }
     } catch (e) {
-      ModalDialog.showNotification(`Connection Note: ${e.message}`, 'warning');
+      ModalDialog.showNotification(`Connection Error: ${e.message}`, 'error');
     } finally {
       if (btn) {
         btn.innerHTML = origBtnHtml;
@@ -798,11 +1091,56 @@ class RegistrationView {
     }
   }
 
-  static openProviderAgentModal() {
-    if (typeof ProviderAgentHelper !== 'undefined') {
-      ProviderAgentHelper.openDiscoveryModal();
+  static openProviderAgentModal(initialQuery = '') {
+    if (typeof ProviderAgent !== 'undefined' && ProviderAgent.openPopup) {
+      ProviderAgent.openPopup(initialQuery);
+    } else if (typeof RegistrationViewHelper !== 'undefined' && RegistrationViewHelper.renderProviderAgentModalHtml) {
+      ModalDialog.showCustomModal({
+        title: '<i class="fa-solid fa-robot" style="color: var(--accent-emerald);"></i> Provider Agent — Online Discovery',
+        content: RegistrationViewHelper.renderProviderAgentModalHtml(initialQuery),
+        confirmText: 'Close'
+      });
+      setTimeout(() => { document.getElementById('agent-provider-query')?.focus(); }, 150);
     } else {
-      ModalDialog.showNotification('Provider Agent Helper loading...', 'info');
+      ModalDialog.showNotification('Provider Agent is ready.', 'info');
+    }
+  }
+
+  static async runProviderAgentSearch() {
+    const input = document.getElementById('agent-provider-query') || document.getElementById('provider-agent-query-input');
+    const query = input ? input.value.trim() : '';
+    const container = document.getElementById('provider-agent-results-container') || document.getElementById('provider-agent-results-pane');
+
+    if (!query) {
+      ModalDialog.showNotification('Please enter a provider name to search.', 'warning');
+      return;
+    }
+
+    if (container) {
+      container.innerHTML = '<div style="text-align: center; padding: 24px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--accent-cyan); margin-bottom: 8px; display: block;"></i> Searching live online API endpoints & discovering free model specs...</div>';
+    }
+
+    try {
+      const res = await ApiService.agentLookupProvider(query);
+      if (res && res.provider && container && typeof RegistrationViewHelper !== 'undefined') {
+        container.innerHTML = RegistrationViewHelper.renderProviderAgentResultHtml(res);
+      } else if (container) {
+        container.innerHTML = `
+          <div class="glass-panel" style="padding: 14px; border-color: var(--accent-amber); background: rgba(245, 158, 11, 0.08); margin-top: 8px;">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber); font-size: 1.3rem; margin-top: 2px;"></i>
+              <div>
+                <strong style="color: var(--accent-amber); font-size: 0.9rem; display: block; margin-bottom: 4px;">Provider Not Found</strong>
+                <span style="color: var(--text-main); font-size: 0.78rem;">No verified AI provider matching '${query}' was found. Try 'Gemini', 'Groq', 'OpenRouter', 'Cerebras', or 'Mistral'.</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    } catch (err) {
+      if (container) {
+        container.innerHTML = `<div class="alert alert-danger" style="margin-top: 8px;">Search Error: ${err.message}</div>`;
+      }
     }
   }
 }

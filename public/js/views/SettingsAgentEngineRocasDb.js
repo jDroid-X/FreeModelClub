@@ -125,6 +125,21 @@ class SettingsAgentEngineRocasDb {
         context: 'ModelComboService.js, ModelClubComboStudioHelper.js, combos.json.',
         actions: 'createCombo(), routeComboRequest(), executeRoundRobin(), executeFallback().',
         systemSpecs: 'Supports Round-Robin index pointer and Fallback priority queue.'
+      },
+      combo_smart_agent: {
+        agentId: 'combo_smart_agent',
+        name: 'Combo Smart Agent (22-Agent Master Orchestrator)',
+        role: 'Unified 22-Agent Orchestrator & Adaptive Strategy Switching Engine',
+        task: 'Analyze prompt intent (vision, code synthesis, large context, fast autocomplete), dynamically delegate across 13 Load Balancing algorithms, 4 Core Engines, and 5 Auxiliary Agents.',
+        goal: 'Maximum throughput, sub-50ms routing overhead, zero-downtime failover, and automated prompt-intent optimization.',
+        constraints: 'Preflight token budget validation; auto-fallback to active provider if quota exhausted; zero broken dependencies.',
+        input: 'Chat prompt messages array, model ID, workspace context, and requested strategy override.',
+        output: 'Orchestrated completion payload with dynamic strategy tag, resolved model metadata, and SSE streaming telemetry.',
+        validation: 'Validates active provider readiness, token TPM budget, and context window limits before outbound dispatch.',
+        objectives: 'Enterprise-grade autonomous multi-agent delegation & dynamic load balancing.',
+        context: 'src/services/ComboSmartAgent.js, public/js/agents/ComboSmartAgent.js, openaiRoutes.js, ToolExecutionLoopService.js.',
+        actions: 'analyzePromptIntent(), resolveOptimalStrategy(), resolveTargetCandidate(), validatePreflight(), getTelemetry().',
+        systemSpecs: 'Coordinates 13 Load Balancing Algorithms, 4 Core Engines, 5 Auxiliary Agents. Response headers: X-FMC-Strategy-Used, X-FMC-Resolved-Model.'
       }
     };
   }

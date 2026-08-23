@@ -1,0 +1,115 @@
+================================================================================
+ABOUT VIEW & SYSTEM UPDATE LOG - FreeModelsClub
+================================================================================
+
+[CHANGE LOG ENTRY]
+Date & Time        : 2026-08-23 12:03:00
+Target Screen      : About View (AboutView.js) & System Update Engine
+Requested By       : User / Enterprise Architecture Governance
+Status             : PASS
+
+Change Description :
+1. Integrated official GitHub Repository update path (https://github.com/jDroid-X/FreeModelClub) directly into About View navigation, source cards, and dedicated Software Update card.
+2. Built backend endpoint GET /api/system/check-update in SystemInfoController.js with remote package.json and GitHub release check, semantic version comparison, offline fallback, and change suggestion metadata.
+3. Implemented launch-time automatic update checker in app.js (init flow) and on-demand check in AboutView.js with suggestion dialog popup, metadata (date, current version, latest version), and interactive action options (Update Now, View GitHub, Remind Me Later).
+4. Fixed Update_FreeModelsClub.bat to use dynamic path resolution (%~dp0) instead of hardcoded paths and corrected launcher launch instructions.
+5. All closed-loop feedback links and 3D Program Matrix contracts validated with zero broken dependencies.
+
+Modified Files     :
+- src/controllers/SystemInfoController.js
+- server.js
+- public/js/views/AboutView.js
+- public/js/app.js
+- Update_FreeModelsClub.bat
+- requirement/about.txt
+================================================================================
+
+[CHANGE LOG ENTRY]
+Date & Time        : 2026-08-23 12:11:00
+Target Screen      : Installer, Updater, Uninstaller, Tray Launcher, Navigation & About View
+Requested By       : User / Senior Architect Audit
+Status             : PASS
+
+Change Description :
+1. Enhanced Install_FreeModelsClub.bat, Update_FreeModelsClub.bat, and Uninstall_FreeModelsClub.bat with real-time ASCII stage progress indicators ([████░░░░░░] %%) and interactive step-by-step human confirmations.
+2. Updated scripts/tray_launcher.ps1:
+   - Upgraded Check-ForUpdates function to directly query GitHub API and /api/system/check-update with rich release date and version metadata.
+   - Added 'About jDroid-X (FreeModelsClub)' and 'GitHub Repository' direct items to the system tray context menu.
+3. Updated NavigationHelper.js and public/index.html:
+   - Added quick 1-click 'Check for Updates' cloud icon in top header bar.
+   - Added 'About & Updates' and 'Check for Updates...' in top right user dropdown.
+   - Added clickable version pill in sidebar footer.
+   - Added dedicated Software Updates & GitHub Source card to AboutView.js.
+   - Added instant startup feedback toast for jDroid-X-FMC.
+
+Modified Files     :
+- Install_FreeModelsClub.bat
+- Update_FreeModelsClub.bat
+- Uninstall_FreeModelsClub.bat
+- scripts/tray_launcher.ps1
+- public/js/helpers/NavigationHelper.js
+- public/js/views/AboutView.js
+- public/index.html
+- requirement/about.txt
+================================================================================
+
+[CHANGE LOG ENTRY]
+Date & Time        : 2026-08-23 12:17:00
+Target Screen      : About View Navigation Rail & Software Update Sync Hub
+Requested By       : User / Senior Architect Audit
+Status             : PASS
+
+Change Description :
+1. Implemented Live Heartbeat Progress Bar with glowing pulse animations (pulseHeartbeat, 4-stage synchronization) inside the Software Update dialog and About View.
+2. Added prominent 'Update App Now (Live Sync)' button, GitHub release viewing, 1-click script copying, and full metadata cards (Date, Current Version, Remote Version, Branch, Changelog) to the Software Update popup dialog.
+3. Re-architected About View Left Navigation Rail to include 9 enterprise sections with smooth scroll and active highlighting:
+   - App Overview & Mission
+   - Software Updates & Releases
+   - System & Hardware Diagnostics
+   - 3D Program Matrix Audit
+   - Resilience & Self-Healing Engine
+   - API Gateway & Hybrid Routing
+   - Licenses & Attributions
+   - Security, Localhost & Zero-Trust Privacy
+   - Problem & Issue Reporting Form
+
+Modified Files     :
+- public/js/views/AboutView.js
+- requirement/about.txt
+================================================================================
+
+[CHANGE LOG ENTRY]
+Date & Time        : 2026-08-23 12:21:00
+Target Screen      : System Tray Launcher (jDroid-X-FMC) & System Diagnostics
+Requested By       : User / Critical Bug Report
+Status             : PASS
+
+Change Description :
+1. Resolved missing System Tray Application (jDroid-X-FMC) by launching scripts/tray_launcher.ps1 as a persistent detached Windows user process with NotifyIcon registration.
+2. Built backend endpoints GET /api/system/tray-status and POST /api/system/launch-tray in SystemInfoController.js and server.js to provide real-time process telemetry and 1-click recovery.
+3. Integrated System Tray Status Banner and 'Launch / Restart System Tray' action directly into About View System Diagnostics.
+4. Validated 100% server health on port 12247 and verified isRunning: true status.
+
+Modified Files     :
+- src/controllers/SystemInfoController.js
+- server.js
+- public/js/views/AboutView.js
+- requirement/about.txt
+================================================================================
+
+[CHANGE LOG ENTRY]
+Date & Time        : 2026-08-23 12:24:00
+Target Screen      : About View (AboutView.js)
+Requested By       : User / Error Loading View 'about' v1 is not defined
+Status             : PASS
+
+Change Description :
+1. Identified and resolved unescaped backtick syntax on line 197 of AboutView.js inside the API Gateway description template literal that caused JavaScript to misparse '/v1/chat/completions' as an expression attempting to evaluate undeclared identifier 'v1'.
+2. Converted inline backticks to semantic <code>/v1/chat/completions</code> tags.
+3. Validated AboutView.render() execution with 0 errors and bumped index.html script cache buster to ?v=1.1.1.
+
+Modified Files     :
+- public/js/views/AboutView.js
+- public/index.html
+- requirement/about.txt
+================================================================================

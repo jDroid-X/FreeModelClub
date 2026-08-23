@@ -44,7 +44,7 @@ class RegistrationViewHelper {
             <tr style="${rowStyle}">
               <td style="text-align: center; padding: 3px 4px;"><input type="checkbox" class="staged-model-cb" value="${m.id}" /></td>
               <td style="padding: 3px 6px;">
-                <strong style="color: var(--text-main); font-size: 0.76rem;">${typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : (m.modelName || m.name || m.modelId)}</strong>
+                <strong style="color: var(--text-main); font-size: 0.76rem;">${m.modelName || m.name || m.displayName || (typeof FormatHelper !== 'undefined' ? FormatHelper.getModelDisplayName(m) : '') || m.modelId || m.id || 'AI Model'}</strong>
                 ${isDeprecated ? '<span class="badge badge-rose" style="font-size: 0.58rem; margin-left: 4px;">Deprecated</span>' : ''}
               </td>
               <td style="padding: 3px 6px;">
@@ -424,59 +424,6 @@ print(response.choices[0].message.content)`;
 });
 const data = await response.json();
 console.log(data);`;
-
-    const toolConfigSnippet = `{
-  "vendor": "openai-compatible",
-  "name": "FreeModelsClub Localhost Proxy",
-  "api_base": "${proxyBaseUrl}/v1",
-  "api_key": "${proxyKey}"
-}`;
-
-    return `
-      <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 6px;">
-        Use these 1-click vendor integration snippets to connect VS Code, Cursor, Python scripts, or cURL directly to the local proxy on port 12247.
-      </div>
-
-      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <strong style="color: var(--accent-cyan); font-size: 0.74rem;"><i class="fa-brands fa-python"></i> 1. Python OpenAI SDK</strong>
-          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-py').innerText); ModalDialog.showNotification('Python snippet copied!', 'success');">Copy</button>
-        </div>
-        <pre id="snippet-py" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-emerald);"><code>${this.escapeHtml(pythonSnippet)}</code></pre>
-      </div>
-
-      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <strong style="color: var(--accent-amber); font-size: 0.74rem;"><i class="fa-solid fa-terminal"></i> 2. cURL HTTP Command</strong>
-          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-curl').innerText); ModalDialog.showNotification('cURL snippet copied!', 'success');">Copy</button>
-        </div>
-        <pre id="snippet-curl" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-amber);"><code>${this.escapeHtml(curlSnippet)}</code></pre>
-      </div>
-
-      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <strong style="color: var(--primary-light); font-size: 0.74rem;"><i class="fa-brands fa-js"></i> 3. JavaScript Fetch API</strong>
-          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-js').innerText); ModalDialog.showNotification('JavaScript snippet copied!', 'success');">Copy</button>
-        </div>
-        <pre id="snippet-js" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--primary-light);"><code>${this.escapeHtml(jsSnippet)}</code></pre>
-      </div>
-
-      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <strong style="color: var(--accent-emerald); font-size: 0.74rem;"><i class="fa-solid fa-plug"></i> 4. VS Code & Cursor Config</strong>
-          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-tool').innerText); ModalDialog.showNotification('Tool Config copied!', 'success');">Copy</button>
-        </div>
-        <pre id="snippet-tool" style="margin: 0; font-size: 0.68rem; max-height: 120px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-emerald);"><code>${this.escapeHtml(toolConfigSnippet)}</code></pre>
-      </div>
-    `;
-  }
-
-  // HC-01,06,07,08,09,11: Fallback model catalog — synced with ProviderAgentHelper known DB.
-  // OpenRouter: all 15 live free models (pricing.prompt=0). Groq/Gemini: deprecated models removed.
-  // Ollama: attempts live /api/tags query; falls back to catalog. Unknown protocol: returns [] to
-  // force user to use Search or Provider Agent instead of showing fake model IDs.
-  static getDefaultModelsForProtocol(proto) {
-    // HC-09: Ollama — attempt live model discovery from local daemon
     if (proto === 'Ollama Local API') {
       return [
         { id: 'llama3.3:latest', name: 'Ollama Llama 3.3 Local', family: 'Llama', coreSkill: 'Local Private Reasoning', contextWindow: 128000 },
@@ -544,6 +491,103 @@ console.log(data);`;
     }
     // HC-11: Unknown protocol — return empty to force user to use Search / Provider Agent
     return [];
+  }
+
+  // HC-05/HC-13/HC-14: Integration snippets — port, host and model are resolved dynamically.
+  static renderIntegrationDrawerContent(snippets = {}) {
+    // Resolve proxy URL from current browser context so it works on any host/port
+    const proxyPort = (typeof window !== 'undefined' && window.location?.port) ? window.location.port : '12247';
+    const proxyHost = (typeof window !== 'undefined' && window.location?.hostname) ? window.location.hostname : 'localhost';
+    const proxyBaseUrl = `http://${proxyHost}:${proxyPort}`;
+    // HC-16: Use first registered active model name if available, else use generic placeholder
+    let activeModelId = 'llama-3.3-70b-versatile';
+    try {
+      if (typeof window !== 'undefined' && window.app?.state?.models && window.app.state.models.length > 0) {
+        activeModelId = window.app.state.models[0].modelId || activeModelId;
+      }
+    } catch(e) {}
+    const proxyKey = 'fmc-local-key';
+
+    const curlSnippet = snippets.curl?.chatCompletions || `curl -X POST ${proxyBaseUrl}/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${proxyKey}" \\
+  -d '{
+    "model": "${activeModelId}",
+    "messages": [{"role": "user", "content": "Hello FMC Proxy!"}]
+  }'`;
+
+    const pythonSnippet = snippets.python?.chatCompletions || `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${proxyBaseUrl}/v1",
+    api_key="${proxyKey}"
+)
+
+response = client.chat.completions.create(
+    model="${activeModelId}",
+    messages=[{"role": "user", "content": "Hello FMC Localhost Proxy!"}]
+)
+
+print(response.choices[0].message.content)`;
+
+    const jsSnippet = `const response = await fetch('${proxyBaseUrl}/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${proxyKey}'
+  },
+  body: JSON.stringify({
+    model: '${activeModelId}',
+    messages: [{ role: 'user', content: 'Hello FMC!' }]
+  })
+});
+const data = await response.json();
+console.log(data);`;
+
+    const toolConfigSnippet = `{
+  "vendor": "openai-compatible",
+  "name": "FreeModelsClub Localhost Proxy",
+  "api_base": "${proxyBaseUrl}/v1",
+  "api_key": "${proxyKey}"
+}`;
+
+    return `
+      <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 6px;">
+        Use these 1-click vendor integration snippets to connect VS Code, Cursor, Python scripts, or cURL directly to the local proxy on port 12247.
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong style="color: var(--accent-cyan); font-size: 0.74rem;"><i class="fa-brands fa-python"></i> 1. Python OpenAI SDK</strong>
+          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-py').innerText); ModalDialog.showNotification('Python snippet copied!', 'success');">Copy</button>
+        </div>
+        <pre id="snippet-py" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-emerald);"><code>${this.escapeHtml(pythonSnippet)}</code></pre>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong style="color: var(--accent-amber); font-size: 0.74rem;"><i class="fa-solid fa-terminal"></i> 2. cURL HTTP Command</strong>
+          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-curl').innerText); ModalDialog.showNotification('cURL snippet copied!', 'success');">Copy</button>
+        </div>
+        <pre id="snippet-curl" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-amber);"><code>${this.escapeHtml(curlSnippet)}</code></pre>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong style="color: var(--primary-light); font-size: 0.74rem;"><i class="fa-brands fa-js"></i> 3. JavaScript Fetch API</strong>
+          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-js').innerText); ModalDialog.showNotification('JavaScript snippet copied!', 'success');">Copy</button>
+        </div>
+        <pre id="snippet-js" style="margin: 0; font-size: 0.68rem; max-height: 140px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--primary-light);"><code>${this.escapeHtml(jsSnippet)}</code></pre>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong style="color: var(--accent-emerald); font-size: 0.74rem;"><i class="fa-solid fa-plug"></i> 4. VS Code & Cursor Config</strong>
+          <button type="button" class="btn btn-secondary btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('snippet-tool').innerText); ModalDialog.showNotification('Tool Config copied!', 'success');">Copy</button>
+        </div>
+        <pre id="snippet-tool" style="margin: 0; font-size: 0.68rem; max-height: 120px; overflow: auto; background: var(--bg-dark); padding: 6px; border-radius: 4px; color: var(--accent-emerald);"><code>${this.escapeHtml(toolConfigSnippet)}</code></pre>
+      </div>
+    `;
   }
 
   static escapeHtml(str) {

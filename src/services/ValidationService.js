@@ -62,15 +62,20 @@ class ValidationService {
     const issues = [];
     const options = [];
 
-    if (!comboData.id || comboData.id.trim().length < 2) {
-      issues.push({ field: 'id', rule: 'REQUIRED', message: 'Combo ID/Name is required.' });
+    const nameOrId = comboData.id || comboData.name;
+    if (!nameOrId || nameOrId.trim().length < 2) {
+      issues.push({ field: 'name', rule: 'REQUIRED', message: 'Combo Name is required (minimum 2 characters).' });
     }
 
-    if (!comboData.primaryModelId) {
-      issues.push({ field: 'primaryModelId', rule: 'REQUIRED', message: 'Primary Model selection is required.' });
+    const modelsList = comboData.modelsList || comboData.models || [];
+    const hasPrimary = Boolean(comboData.primaryModelId);
+    const hasModelsList = Array.isArray(modelsList) && modelsList.length > 0;
+
+    if (!hasPrimary && !hasModelsList) {
+      issues.push({ field: 'models', rule: 'REQUIRED', message: 'At least one model must be selected for the combo pool.' });
     }
 
-    if (comboData.primaryModelId && comboData.fallbackModelId && comboData.primaryModelId === comboData.fallbackModelId) {
+    if (comboData.primaryModelId && comboData.fallbackModelId && comboData.primaryModelId === comboData.fallbackModelId && (!hasModelsList || modelsList.length > 1)) {
       issues.push({ field: 'fallbackModelId', rule: 'DUPLICATE_MODEL', message: 'Fallback model should differ from primary model for true high-availability.' });
       options.push({ id: 'auto_assign_fallback', label: 'Auto-Assign Alternate Fallback Model', type: 'emerald', isRecommended: true, icon: 'fa-network-wired' });
     }

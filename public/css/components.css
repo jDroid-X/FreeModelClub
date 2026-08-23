@@ -129,17 +129,17 @@
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
 }
 
-/* 25% Darker Button Background than Card Background (or Theme-Specific Variable) */
+/* Secondary / Action Buttons — Soft Cyan / Ice Blue Glass Tint with Electric Cyan Outline */
 .btn-secondary, button.btn-secondary, .tray-btn-premium, .collapse-sidebar-btn {
-  background: var(--btn-secondary-bg, color-mix(in srgb, var(--bg-card) 75%, black 25%)) !important;
-  color: var(--btn-secondary-color, var(--text-main)) !important;
-  border: 2px solid var(--border-color) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: var(--btn-secondary-bg, #CCEBF2) !important;
+  color: var(--btn-secondary-color, #0F172A) !important;
+  border: 1.5px solid var(--btn-secondary-border, #06B6D4) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .btn-secondary:hover, button.btn-secondary:hover, .tray-btn-premium:hover, .collapse-sidebar-btn:hover {
-  background: var(--btn-secondary-hover, color-mix(in srgb, var(--bg-card) 65%, black 35%)) !important;
-  border-color: var(--border-glow) !important;
+  background: var(--btn-secondary-hover, #BFE4EE) !important;
+  border-color: var(--btn-secondary-hover-border, #00BCD4) !important;
 }
 
 .btn-accent {
@@ -710,6 +710,10 @@
 /* Editor Drawer */
 .editor-drawer {
   background: var(--bg-sidebar) !important;
+  border-right: none !important;
+}
+
+.editor-drawer.open {
   border-right: 1px solid var(--border-color) !important;
 }
 

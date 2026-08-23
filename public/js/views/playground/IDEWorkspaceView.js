@@ -55,7 +55,7 @@ class IDEWorkspaceView {
       workspacePath = localStorage.getItem('fmc_ide_workspace');
     }
 
-    const container = document.getElementById('fmc-main-content');
+    const container = document.getElementById('fmc-main-content') || document.getElementById('view-container');
     if (!container) return;
 
     container.innerHTML = `

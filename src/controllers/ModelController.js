@@ -6,6 +6,7 @@
 
 const AIModel = require('../models/AIModel');
 const ComboModel = require('../models/ComboModel');
+const LogModel = require('../models/LogModel');
 const ModelFamilyService = require('../services/ModelFamilyService');
 const ModelComboService = require('../services/ModelComboService');
 
@@ -66,6 +67,9 @@ class ModelController {
       });
 
       AIModel.saveBatch(updated);
+      try {
+        LogModel.recordSystemLog('TAXONOMY_RECALCULATED', 'INFO', `Recalculated core skills & taxonomy pyramid for ${updated.length} models`);
+      } catch(e) {}
       return res.json({ success: true, count: updated.length, models: updated });
     } catch (e) {
       return res.status(500).json({ success: false, error: e.message });
@@ -78,6 +82,7 @@ class ModelController {
       if (!model) return res.status(404).json({ success: false, error: 'Model not found' });
       const updated = AIModel.update(model.id, { status: model.status === 'Active' ? 'Inactive' : 'Active' });
       try {
+        LogModel.recordSystemLog('MODEL_STATUS_TOGGLED', 'INFO', `Toggled model '${model.modelName || model.id}' status to ${updated.status}`);
         const ActiveModelAgent = require('../services/ActiveModelAgent');
         ActiveModelAgent.runClassification();
       } catch (e) {}
@@ -90,6 +95,7 @@ class ModelController {
       const updated = AIModel.update(req.params.id, req.body || {});
       if (!updated) return res.status(404).json({ success: false, error: 'Model not found' });
       try {
+        LogModel.recordSystemLog('MODEL_CONFIG_UPDATED', 'INFO', `Updated ROCA Model Config for '${updated.modelName || updated.modelId}' (${req.params.id})`);
         const ActiveModelAgent = require('../services/ActiveModelAgent');
         ActiveModelAgent.runClassification();
       } catch (e) {}
@@ -108,6 +114,7 @@ class ModelController {
       }
       const result = AIModel.updateBatch(modelIds, updates);
       try {
+        LogModel.recordSystemLog('MODEL_BATCH_UPDATE', 'INFO', `Batch updated ${result.count} models with attributes: ${Object.keys(updates).join(', ')}`);
         const ActiveModelAgent = require('../services/ActiveModelAgent');
         ActiveModelAgent.runClassification();
       } catch (e) {}
@@ -208,6 +215,9 @@ class ModelController {
       }
       const result = ModelComboService.createCombo(req.body);
       if (!result.valid) return res.status(result.status || 400).json({ success: false, error: result.error });
+      try {
+        LogModel.recordSystemLog('COMBO_CREATED', 'INFO', `Created new Model Combo Agent '${result.combo.name}' with strategy '${result.combo.strategy}' (${result.combo.modelsList.length} models)`);
+      } catch(e) {}
       return res.json({ success: true, combo: result.combo });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -225,6 +235,9 @@ class ModelController {
       }
       const result = ModelComboService.updateCombo(req.params.id, req.body);
       if (!result.valid) return res.status(result.status || 400).json({ success: false, error: result.error });
+      try {
+        LogModel.recordSystemLog('COMBO_UPDATED', 'INFO', `Updated Model Combo Agent '${result.combo.name}' (${req.params.id})`);
+      } catch(e) {}
       return res.json({ success: true, combo: result.combo });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -233,6 +246,9 @@ class ModelController {
     try {
       const combo = ComboModel.toggle(req.params.id);
       if (!combo) return res.status(404).json({ success: false, error: 'Combo not found' });
+      try {
+        LogModel.recordSystemLog('COMBO_STATUS_TOGGLED', 'INFO', `Toggled Model Combo Agent '${combo.name}' active status to ${combo.isActive}`);
+      } catch(e) {}
       return res.json({ success: true, combo });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -242,6 +258,9 @@ class ModelController {
       const existing = ComboModel.getById(req.params.id);
       if (!existing) return res.status(404).json({ success: false, error: 'Combo not found' });
       ComboModel.delete(req.params.id);
+      try {
+        LogModel.recordSystemLog('COMBO_DELETED', 'INFO', `Deleted Model Combo Agent '${existing.name}' (${req.params.id})`);
+      } catch(e) {}
       return res.json({ success: true });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }
@@ -259,6 +278,9 @@ class ModelController {
       const combo = ComboModel.getById(req.params.id);
       if (!combo) return res.status(404).json({ success: false, error: 'Combo not found' });
       const pooledModels = AIModel.getAll().filter(m => (combo.modelsList || []).includes(m.id));
+      try {
+        LogModel.recordSystemLog('COMBO_TEST_RUN', 'INFO', `Executed reachability diagnostics for Combo Agent '${combo.name}' (${pooledModels.length} pooled models)`);
+      } catch(e) {}
       return res.json({ success: true, comboId: combo.id, name: combo.name, strategy: combo.strategy, pooledModelCount: pooledModels.length, pooledModels: pooledModels.map(m => ({ id: m.id, modelId: m.modelId, modelName: m.modelName, status: m.status })) });
     } catch (e) { return res.status(500).json({ success: false, error: e.message }); }
   }

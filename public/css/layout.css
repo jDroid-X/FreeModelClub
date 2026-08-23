@@ -237,6 +237,7 @@
   position: sticky;
   top: 0;
   z-index: 90;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -393,7 +394,9 @@
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100% !important;
-  height: calc(100vh - 108px) !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 0 !important;
   overflow: hidden !important;
 }
 
@@ -802,7 +805,7 @@
 
 .dash-middle-panels-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 4px;
   margin-bottom: 4px;
 }

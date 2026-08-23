@@ -28,19 +28,31 @@ class DashboardView {
   static _hasRegisteredStoreListeners = false;
 
   static async render(container, isSilentRefresh = false) {
-    // Reactive EventBus Cache Invalidation
-    if (window.AppStore && !DashboardView._hasRegisteredStoreListeners) {
+    // Reactive EventBus & Global Data Changed Cache Invalidation
+    if (!DashboardView._hasRegisteredStoreListeners) {
       DashboardView._hasRegisteredStoreListeners = true;
-      window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+      if (window.AppStore) {
+        window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+          DashboardView.cachedProviders = null;
+          DashboardView.cachedModels = null;
+          if (window.app && window.app.currentView === 'dashboard') {
+            const c = document.getElementById('view-container');
+            if (c) DashboardView.render(c, true);
+          }
+        });
+        window.AppStore.on('MODELS_MUTATED', () => {
+          DashboardView.cachedModels = null;
+          if (window.app && window.app.currentView === 'dashboard') {
+            const c = document.getElementById('view-container');
+            if (c) DashboardView.render(c, true);
+          }
+        });
+      }
+      window.addEventListener('fmc_data_changed', () => {
+        DashboardView.cachedTelemetry = null;
+        DashboardView.cachedModels = null;
         DashboardView.cachedProviders = null;
-        DashboardView.cachedModels = null;
-        if (window.app && window.app.currentView === 'dashboard') {
-          const c = document.getElementById('view-container');
-          if (c) DashboardView.render(c, true);
-        }
-      });
-      window.AppStore.on('MODELS_MUTATED', () => {
-        DashboardView.cachedModels = null;
+        DashboardView.cachedLogs = null;
         if (window.app && window.app.currentView === 'dashboard') {
           const c = document.getElementById('view-container');
           if (c) DashboardView.render(c, true);
@@ -57,7 +69,6 @@ class DashboardView {
     // 1. Instantly render DOM layout shell on initial call (0ms Instant Load)
     if (!isSilentRefresh) {
       container.innerHTML = DashboardView._buildHtmlLayout(telemetryData, modelsList, providersList, apiLogs, userEmail);
-      DashboardView._initActiveAgents();
       DashboardView.startLivePolling(container);
     }
 
@@ -126,44 +137,6 @@ class DashboardView {
     }
   }
 
-  static _initActiveAgents() {
-    setTimeout(() => {
-      if (window.ListBoxComponent && document.getElementById('dashboard-active-agents-listbox')) {
-        const agentSpecs = (typeof SettingsViewHelper !== 'undefined') ? SettingsViewHelper.getDefaultRocasSpecs() : [];
-        ListBoxComponent.render('dashboard-active-agents-listbox', {
-          items: agentSpecs.map(a => ({ 
-            id: a.id, 
-            title: a.name, 
-            subtitle: a.role,
-            description: a.role, 
-            icon: 'fa-robot', 
-            badge: 'Active',
-            badgeClass: 'badge-cyan',
-            details: {
-              'Agent Role': a.role,
-              'Primary Goal': a.goal,
-              'Execution Task': a.task,
-              'Assigned Model': a.model || 'Dynamic LLM'
-            }
-          })),
-          selectedId: null,
-          height: '100%',
-          onSelect: (item) => {
-            ModalDialog.showOptionModal({
-              title: `Agent Status: ${item.title}`,
-              message: `Role: ${item.description}<br/>Status: Monitoring System.<br/>Select an action:`,
-              icon: 'fa-robot',
-              options: [
-                { id: 'view', label: 'View Specifications', icon: 'fa-eye', action: () => { if(typeof SettingsView!=='undefined') SettingsView.openRocasModal(item.id); } },
-                { id: 'close', label: 'Close', type: 'secondary', icon: 'fa-xmark' }
-              ]
-            });
-          }
-        });
-      }
-    }, 0);
-  }
-
   static _buildHtmlLayout(telemetryData, modelsList, providersList, apiLogs, userEmail) {
     const totalTokens = (telemetryData && telemetryData.consumed && telemetryData.consumed.month) ?? 0;
     return `
@@ -171,9 +144,9 @@ class DashboardView {
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; padding: 3px; margin-bottom: 3px;">
           <div class="panel-title"><i class="fa-solid fa-chart-line"></i> Dashboard & Operational Metrics</div>
           <div style="display: flex; gap: 4px;">
-            <button class="btn btn-secondary btn-xs" onclick="DashboardView.openAdvancedAnalyticsGenerator()"><i class="fa-solid fa-chart-pie" style="color: var(--accent-cyan);"></i> Advanced Pivot Analytics</button>
-            <button class="btn btn-secondary btn-xs" onclick="DashboardView.exportDashboardPdf()"><i class="fa-solid fa-file-pdf" style="color: var(--accent-rose);"></i> Export Audit PDF</button>
-            <button class="btn btn-secondary btn-xs" onclick="app.navigate('registration')"><i class="fa-solid fa-plus-circle"></i> Add Provider</button>
+            <button class="btn btn-secondary btn-xs" style="background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" onclick="DashboardView.openAdvancedAnalyticsGenerator()"><i class="fa-solid fa-chart-pie" style="color: #0369a1;"></i> Advanced Pivot Analytics</button>
+            <button class="btn btn-secondary btn-xs" style="background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" onclick="DashboardView.exportDashboardPdf()"><i class="fa-solid fa-file-pdf" style="color: var(--accent-rose);"></i> Export Audit PDF</button>
+            <button class="btn btn-secondary btn-xs" style="background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" onclick="app.navigate('registration')"><i class="fa-solid fa-plus-circle" style="color: #0369a1;"></i> Add Provider</button>
           </div>
         </div>
 
@@ -184,40 +157,38 @@ class DashboardView {
               <i class="fa-solid fa-gauge-high"></i> Telemetry Rail
             </div>
             
-            <div style="display: flex; gap: 3px; background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; margin-bottom: 3px; border: 1px solid var(--border-color);">
-              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="DashboardView.exportDashboardPdf()" title="Export PDF Report"><i class="fa-solid fa-file-pdf" style="color: var(--accent-rose);"></i></button>
-              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="app.navigate('reports')" title="View API Logs"><i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i></button>
-              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="app.navigate('reports'); setTimeout(() => { if (typeof ReportsView !== 'undefined') ReportsView.switchTab('system'); }, 150);" title="View System Event Logs"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-amber);"></i></button>
-              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1;" onclick="window.location.reload(true)" title="Hard Refresh"><i class="fa-solid fa-rotate" style="color: var(--accent-emerald);"></i></button>
+            <div style="display: flex; gap: 3px; background: #CCEBF2; padding: 3px; border-radius: 4px; margin-bottom: 3px; border: 1.5px solid #06B6D4;">
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1; background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A;" onclick="DashboardView.exportDashboardPdf()" title="Export PDF Report"><i class="fa-solid fa-file-pdf" style="color: var(--accent-rose);"></i></button>
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1; background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A;" onclick="app.navigate('reports')" title="View API Logs"><i class="fa-solid fa-list-check" style="color: #06b6d4;"></i></button>
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1; background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A;" onclick="app.navigate('reports'); setTimeout(() => { if (typeof ReportsView !== 'undefined') ReportsView.switchTab('system'); }, 150);" title="View System Event Logs"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-amber);"></i></button>
+              <button class="btn btn-secondary btn-xs" style="padding: 3px; font-size: 0.75rem; flex: 1; background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A;" onclick="window.location.reload(true)" title="Hard Refresh"><i class="fa-solid fa-rotate" style="color: var(--accent-emerald);"></i></button>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem;">
-              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">System Account</span>
-                <strong style="color: var(--accent-cyan); word-break: break-all; font-size: 0.72rem;">${userEmail}</strong>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem;">
+              <div style="background: #CCEBF2; padding: 4px; border-radius: 4px; border: 1.5px solid #06B6D4; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="color: #334155; display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700;">
+                  <i class="fa-solid fa-user-shield" style="color: #0369a1;"></i> System Account
+                </div>
+                <strong style="color: #0369a1; word-break: break-all; font-size: 0.72rem; display: block; margin-top: 1px;">${userEmail}</strong>
               </div>
-              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">Total Token Consumed</span>
-                <strong style="color: var(--accent-emerald); font-size: 0.88rem;">${typeof FormatHelper !== 'undefined' ? FormatHelper.formatNumberAutoUnit(totalTokens) : totalTokens}</strong>
+              <div style="background: #CCEBF2; padding: 4px; border-radius: 4px; border: 1.5px solid #06B6D4; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="color: #334155; display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700;">
+                  <i class="fa-solid fa-bolt" style="color: #059669;"></i> Total Token Consumed
+                </div>
+                <strong style="color: #059669; font-size: 0.88rem; display: block; margin-top: 1px;">${typeof FormatHelper !== 'undefined' ? FormatHelper.formatNumberAutoUnit(totalTokens) : totalTokens}</strong>
               </div>
-              <div style="background: var(--bg-hover-overlay, rgba(255,255,255,0.04)); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color);">
-                <span style="color: var(--text-muted); display: block; font-size: 0.68rem; font-weight: 600;">Registered Providers</span>
-                <strong style="color: var(--accent-amber); font-size: 0.88rem;">${providersList.length} <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">(${providersList.filter(p => p.isActive).length} Active)</span></strong>
+              <div style="background: #CCEBF2; padding: 4px; border-radius: 4px; border: 1.5px solid #06B6D4; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="color: #334155; display: flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700;">
+                  <i class="fa-solid fa-server" style="color: #d97706;"></i> Registered Providers
+                </div>
+                <strong style="color: #d97706; font-size: 0.88rem; display: block; margin-top: 1px;">${providersList.length} <span style="font-size: 0.72rem; color: #059669; font-weight: 700;">(${providersList.filter(p => p.isActive).length} Active)</span></strong>
               </div>
             </div>
 
-            <div style="border-top: 1px solid var(--border-color); padding-top: 3px; display: flex; flex-direction: column; gap: 3px; margin-top: 3px;">
-              <button class="btn btn-secondary btn-xs" style="width: 100%; justify-content: flex-start; padding: 3px;" onclick="if(typeof ProvidersView!=='undefined') ProvidersView.syncTokenLimits()">
-                <i class="fa-solid fa-arrows-rotate" style="color: var(--accent-cyan); margin-right: 4px;"></i> Sync Token Limits
+            <div style="border-top: 1.5px solid #06B6D4; padding-top: 4px; display: flex; flex-direction: column; gap: 3px; margin-top: 4px;">
+              <button class="btn btn-secondary btn-xs" style="width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 5px 6px; background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; transition: all 0.2s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.15);" onclick="if(typeof ProvidersView!=='undefined') ProvidersView.syncTokenLimits()">
+                <i class="fa-solid fa-arrows-rotate" style="color: #0369a1;"></i> <span style="color: #0369a1;">Sync Token Limits</span>
               </button>
-            </div>
-
-            <!-- Active System Agents ListBox -->
-            <div style="border-top: 1px solid var(--border-color); padding-top: 3px; margin-top: 3px; display: flex; flex-direction: column; flex: 1;">
-              <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase;">
-                <i class="fa-solid fa-robot"></i> Active Agents
-              </div>
-              <div id="dashboard-active-agents-listbox" style="flex: 1; min-height: 120px;"></div>
             </div>
           </div>
 
@@ -241,8 +212,8 @@ class DashboardView {
                 </div>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   <input type="text" id="dash-stream-search" class="form-control" style="font-size: 0.70rem; padding: 2px 6px; width: 150px;" placeholder="Filter stream logs..." onkeyup="DashboardView.filterStream(this.value)" />
-                  <button id="dash-btn-pause-polling" class="btn btn-secondary btn-xs" onclick="DashboardView.togglePollingPause()" title="Freeze stream for HIL inspection">
-                    <i class="fa-solid fa-pause"></i> Pause Stream
+                  <button id="dash-btn-pause-polling" class="btn btn-secondary btn-xs" style="background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" onclick="DashboardView.togglePollingPause()" title="Freeze stream for HIL inspection">
+                    <i class="fa-solid fa-pause" style="color: #0369a1;"></i> Pause Stream
                   </button>
                 </div>
               </div>
@@ -294,7 +265,7 @@ class DashboardView {
                         <td style="padding: 3px 4px;">${m.contextWindow ? (m.contextWindow / 1000) + 'k' : '128k'}</td>
                         <td style="padding: 3px 4px; text-align: center;"><span class="badge badge-emerald">Free</span></td>
                         <td style="padding: 3px 4px; text-align: right;">
-                          <button class="btn btn-secondary btn-xs" onclick="DashboardView.openModelSpecsDrawer('${m.id}')"><i class="fa-solid fa-info-circle"></i> Specs</button>
+                          <button class="btn btn-secondary btn-xs" style="background: #CCEBF2 !important; border: 1.5px solid #06B6D4 !important; color: #0F172A !important; font-weight: 700; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" onclick="DashboardView.openModelSpecsDrawer('${m.id}')"><i class="fa-solid fa-info-circle" style="color: #0369a1;"></i> Specs</button>
                         </td>
                       </tr>
                     `).join('')}

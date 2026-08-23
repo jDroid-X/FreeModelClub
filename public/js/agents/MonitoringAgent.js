@@ -80,4 +80,10 @@ class MonitoringAgent {
   }
 }
 
-window.MonitoringAgent = MonitoringAgent;
+if (typeof window !== 'undefined') {
+  window.MonitoringAgent = MonitoringAgent;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MonitoringAgent;
+}

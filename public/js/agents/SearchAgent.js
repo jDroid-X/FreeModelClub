@@ -86,4 +86,10 @@ class SearchAgent {
   }
 }
 
-window.SearchAgent = SearchAgent;
+if (typeof window !== 'undefined') {
+  window.SearchAgent = SearchAgent;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SearchAgent;
+}

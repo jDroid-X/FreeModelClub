@@ -15,13 +15,19 @@ class ModelLoadBalancer {
     this.lkgpModelId = null;
   }
 
-  /**
-   * Record a successful response for LKGP tracking.
-   * @param {string} modelId 
-   */
-  recordSuccess(modelId) {
+  recordSuccess(modelId, comboId = null) {
     if (modelId) {
       this.lkgpModelId = modelId;
+      if (comboId) {
+        try {
+          const ComboModel = require('../models/ComboModel');
+          const combo = ComboModel.getById(comboId);
+          if (combo && combo.lastKnownGoodModelId !== modelId) {
+            combo.lastKnownGoodModelId = modelId;
+            ComboModel.save(combo);
+          }
+        } catch(e) {}
+      }
     }
   }
 

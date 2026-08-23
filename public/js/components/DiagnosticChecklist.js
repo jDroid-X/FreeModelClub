@@ -28,7 +28,7 @@ class DiagnosticChecklist {
           try {
             const res = await ApiService.getAllProviders();
             const providers = Array.isArray(res) ? res : (res && res.providers ? res.providers : []);
-            return providers.some(p => p.isActive && p.apiKey && p.apiKey !== '********' && !p.apiKey.includes('...'));
+            return providers.some(p => p.isActive && Boolean(p.apiKey));
           } catch { return false; }
         }
       },

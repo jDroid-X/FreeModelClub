@@ -20,7 +20,10 @@ class ModelClubView {
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
           <div class="panel-title"><i class="fa-solid fa-cubes-stacked"></i> Model Club Taxonomy & Models Combo <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 8px; font-weight: normal;"><i class="fa-solid fa-sitemap"></i> (5-Pane Matrix View)</span></div>
           <div style="display: flex; gap: 8px; align-items: center; flex: 1; max-width: 380px; justify-content: flex-end;">
-            <input type="text" id="model-club-search" class="form-control" style="font-size: 0.76rem; padding: 3px 8px; height: 28px;" placeholder="Search free models..." onkeyup="ModelClubView.filterView()" />
+            <div style="position: relative; display: flex; align-items: center; width: 100%;">
+              <input type="text" id="model-club-search" class="form-control" style="font-size: 0.76rem; padding: 3px 26px 3px 8px; height: 28px; width: 100%;" placeholder="Search free models..." oninput="ModelClubView.filterView(); document.getElementById('mc-search-clear-btn').style.display = this.value ? 'block' : 'none';" />
+              <i id="mc-search-clear-btn" class="fa-solid fa-xmark" style="position: absolute; right: 8px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: none;" onclick="document.getElementById('model-club-search').value=''; ModelClubView.filterView(); this.style.display='none';"></i>
+            </div>
             <button class="btn btn-secondary btn-sm" onclick="ModelClubView.refreshAll()"><i class="fa-solid fa-rotate"></i> Refresh</button>
           </div>
         </div>
@@ -86,12 +89,10 @@ class ModelClubView {
     if (e) {
       e.stopImmediatePropagation();
     }
+    if (typeof ProvidersView !== 'undefined') {
+      ProvidersView.activeTab = 'blacklisted';
+    }
     app.navigate('providers');
-    setTimeout(() => {
-      if (typeof ProvidersView !== 'undefined' && ProvidersView.switchTab) {
-        ProvidersView.switchTab('blacklisted');
-      }
-    }, 200);
   }
 
   static switchView(mode, selectedHeader = null) {
@@ -352,6 +353,89 @@ class ModelClubView {
     } catch (err) {
       ModalDialog.showNotification(`Skill recalculation error: ${err.message}`, 'error');
     }
+  }
+
+  static openModelCompareModal(modelIds = []) {
+    let ids = Array.isArray(modelIds) && modelIds.length > 0 ? modelIds : [];
+    if (ids.length === 0 && typeof ModelClubHierarchyHelper !== 'undefined') {
+      ids = Array.from(ModelClubHierarchyHelper.selectedModels);
+    }
+    
+    let candidates = [];
+    if (ids.length > 0) {
+      candidates = ids.map(id => this.allModels.find(m => m.id === id || m.modelId === id)).filter(Boolean);
+    }
+    if (candidates.length === 0) {
+      candidates = this.allModels.slice(0, 4);
+    }
+
+    if (candidates.length === 0) {
+      return ModalDialog.showNotification('No models available for comparison.', 'warning');
+    }
+
+    const fmt = typeof FormatHelper !== 'undefined' ? FormatHelper : null;
+
+    const content = `
+      <div style="display:flex; flex-direction:column; gap:10px; font-size:0.78rem; overflow-x:auto;">
+        <div style="background:rgba(6,182,212,0.08); border:1px solid var(--accent-cyan); padding:8px 10px; border-radius:6px;">
+          <strong style="color:var(--accent-cyan);"><i class="fa-solid fa-chart-column"></i> Multi-Model Analytics & Comparison (${candidates.length} Models)</strong>
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Compare speed, tokens, latency, capability specializations, and free tier parameters side-by-side.</div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border-color); background:rgba(0,0,0,0.2);">
+              <th style="padding:6px 8px; color:var(--accent-cyan);">Attribute</th>
+              ${candidates.map(m => `<th style="padding:6px 8px; color:var(--accent-emerald); font-weight:700;">${fmt ? fmt.getModelDisplayName(m) : (m.modelName || m.name || m.id)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Provider</td>
+              ${candidates.map(m => `<td style="padding:5px 8px;"><span class="badge badge-steel" style="font-size:0.65rem;">${m.providerDisplayName || m.providerName || m.providerId || 'Provider'}</span></td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Family</td>
+              ${candidates.map(m => `<td style="padding:5px 8px; color:var(--accent-cyan); font-weight:600;">${m.family || 'N/A'}</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Core Skill</td>
+              ${candidates.map(m => `<td style="padding:5px 8px; color:var(--accent-amber);">${m.coreSkill || 'General'}</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Context Window</td>
+              ${candidates.map(m => `<td style="padding:5px 8px; font-weight:700;">${m.contextWindow ? ((m.contextWindow / 1000).toFixed(0) + 'k tokens') : '128k tokens'}</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Avg Latency</td>
+              ${candidates.map(m => `<td style="padding:5px 8px; color:${(m.latencyMs||200) < 300 ? 'var(--accent-emerald)' : 'var(--accent-amber)'}; font-weight:600;">${m.latencyMs || 200} ms</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Vision / Multimodal</td>
+              ${candidates.map(m => `<td style="padding:5px 8px;">${(m.supportsVision || m.hasVision) ? '<span style="color:var(--accent-cyan);"><i class="fa-solid fa-circle-check"></i> Supported</span>' : '<span style="color:var(--text-muted);">—</span>'}</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Chain-of-Thought</td>
+              ${candidates.map(m => `<td style="padding:5px 8px;">${(m.supportsReasoning || m.hasReasoning) ? '<span style="color:var(--accent-amber);"><i class="fa-solid fa-circle-check"></i> CoT Reasoning</span>' : '<span style="color:var(--text-muted);">—</span>'}</td>`).join('')}
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:5px 8px; font-weight:600; color:var(--text-muted);">Rate Limit Quota</td>
+              ${candidates.map(m => `<td style="padding:5px 8px; font-size:0.7rem; color:var(--text-muted);">${m.freeTierLimit || 'Free Tier Unlimited'}</td>`).join('')}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    ModalDialog.showCustomModal({
+      title: `<i class="fa-solid fa-chart-column" style="color:var(--accent-cyan);"></i> Model Comparison Matrix`,
+      content,
+      confirmText: '<i class="fa-solid fa-layer-group"></i> Create Combo from These Models',
+      onConfirm: () => {
+        const selectedIds = candidates.map(m => m.id);
+        this.openCreateComboStudio(selectedIds, `compare-combo-${Date.now().toString().slice(-4)}`);
+      }
+    });
   }
 
   static async refreshAll() {

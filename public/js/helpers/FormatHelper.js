@@ -11,11 +11,16 @@ class FormatHelper {
     return this.compactProviderName(raw);
   }
 
-  static getModelDisplayName(model = null, fallback = 'Unknown Model') {
+  static getModelDisplayName(model = null, fallback = 'AI Model') {
     if (!model) return fallback;
-    if (typeof model === 'string') return this.sanitizeModelName(model).trim() || fallback;
-    const rawName = model.modelName || model.name || model.displayName || model.modelId || model.id || fallback;
-    return this.sanitizeModelName(String(rawName)).trim() || fallback;
+    if (typeof model === 'string') {
+      const clean = this.sanitizeModelName(model).trim();
+      return clean || model.trim() || fallback;
+    }
+    const rawName = model.displayName || model.modelName || model.name || model.modelId || model.id || '';
+    if (!rawName) return fallback;
+    const clean = this.sanitizeModelName(String(rawName)).trim();
+    return clean || String(rawName).trim() || fallback;
   }
 
   /**

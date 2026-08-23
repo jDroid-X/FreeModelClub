@@ -106,7 +106,10 @@ class ReportsView {
                   <option value="status">Status Code</option>
                   <option value="date">Date</option>
                 </select>
-                <input type="text" id="log-search-input" class="form-control" style="max-width: 250px; font-size: 0.75rem; padding: 4px 8px;" placeholder="Search logs..." onkeyup="ReportsView.filterSearch(this.value)" />
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" id="log-search-input" class="form-control" style="max-width: 250px; font-size: 0.75rem; padding: 4px 26px 4px 8px;" placeholder="Search logs..." value="${this.currentSearchQuery || ''}" onkeyup="ReportsView.filterSearch(this.value)" />
+                  <button type="button" class="btn btn-link btn-xs" style="position: absolute; right: 6px; color: var(--text-muted); padding: 0; display: ${this.currentSearchQuery ? 'block' : 'none'}; cursor: pointer;" id="log-search-clear-btn" onclick="document.getElementById('log-search-input').value=''; this.style.display='none'; ReportsView.filterSearch('');" title="Clear Search"><i class="fa-solid fa-xmark"></i></button>
+                </div>
               </div>
             </div>
 
@@ -128,7 +131,7 @@ class ReportsView {
     // Initialize searchable dropdown for group-by selector
     const groupBySelect = document.getElementById('log-groupby-select');
     if (groupBySelect && typeof SearchableSelect !== 'undefined') {
-      SearchableSelect.init(groupBySelect, { placeholder: '筛选分组...', maxHeight: 250 });
+      SearchableSelect.init(groupBySelect, { placeholder: 'Filter groups...', maxHeight: 250 });
     }
   }
 
@@ -336,6 +339,8 @@ class ReportsView {
 
   static filterSearch(q) {
     this.currentSearchQuery = q;
+    const clearBtn = document.getElementById('log-search-clear-btn');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
     this.renderFilteredLogs();
   }
 
@@ -638,7 +643,7 @@ class ReportsView {
             <!-- Conflict Summary Mini-Card -->
             <div class="glass-panel" style="padding: 12px; background: rgba(0,0,0,0.2); border-left: 3px solid ${conflicts.length > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">
               <div style="font-size:0.78rem;font-weight:700;color:${conflicts.length > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'};margin-bottom:6px;">
-                <i class="fa-solid fa-fa-${conflicts.length > 0 ? 'triangle-exclamation' : 'shield-check'}"></i> Conflict Summary
+                <i class="fa-solid ${conflicts.length > 0 ? 'fa-triangle-exclamation' : 'fa-shield-check'}"></i> Conflict Summary
               </div>
               <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">
                 Total Events: <strong style="color:var(--text-main);">${conflicts.length}</strong>
@@ -1249,44 +1254,42 @@ class ReportsView {
   }
 
   static async testProviderConnection(providerId) {
-    if (typeof ValidationNotifier !== 'undefined') {
-        ValidationNotifier.show("Testing connection...", "info");
+    if (typeof ModalDialog !== 'undefined') {
+      ModalDialog.showNotification('Testing provider connection...', 'info');
     }
-    
+
     try {
-        const res = await fetch(`/api/providers/${providerId}/ping`, { method: 'POST' });
-        const data = await res.json();
-        
-        if (data.success && data.isActive) {
-            if (typeof ValidationNotifier !== 'undefined') ValidationNotifier.show("Connection Successful! Provider is responsive.", "success");
-            else alert("Connection Successful!");
-        } else {
-            if (typeof ValidationNotifier !== 'undefined') ValidationNotifier.show(`Connection Failed: ${data.error || 'Timeout'}`, "error");
-            else alert("Connection Failed.");
-        }
-        
-        // Refresh the drawer status
-        setTimeout(() => this.openProviderDrawer(providerId), 1500);
-        
-    } catch(e) {
-        if (typeof ValidationNotifier !== 'undefined') ValidationNotifier.show("Network error during test.", "error");
+      const res = await fetch(`/api/providers/${providerId}/ping`, { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success && data.isActive) {
+        if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Connection Successful! Provider is responsive.', 'success');
+      } else {
+        if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification(`Connection Failed: ${data.error || 'Timeout'}`, 'error');
+      }
+
+      // Refresh the drawer status
+      setTimeout(() => this.openProviderDrawer(providerId), 1500);
+
+    } catch (e) {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Network error during test.', 'error');
     }
   }
 
   static async toggleProviderStatus(providerId, forceActive) {
     try {
-        await fetch(`/api/providers/${providerId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: forceActive })
-        });
-        if (typeof ValidationNotifier !== 'undefined') {
-            ValidationNotifier.show(`Provider ${forceActive ? 'Activated' : 'Deactivated'}`, "success");
-        }
-        this.openProviderDrawer(providerId);
-        this.loadModelStatus(); // Refresh main tree
-    } catch(e) {
-        if (typeof ValidationNotifier !== 'undefined') ValidationNotifier.show("Update failed.", "error");
+      await fetch(`/api/providers/${providerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: forceActive })
+      });
+      if (typeof ModalDialog !== 'undefined') {
+        ModalDialog.showNotification(`Provider ${forceActive ? 'Activated' : 'Deactivated'}`, 'success');
+      }
+      this.openProviderDrawer(providerId);
+      this.loadModelStatus(); // Refresh main tree
+    } catch (e) {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification('Update failed.', 'error');
     }
   }
 

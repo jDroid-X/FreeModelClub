@@ -108,24 +108,51 @@ class App {
       document.head.appendChild(styleTag);
     }
     
-    if (themeId === 'system-default' || themeId === 'default' || themeId === 'theme-system') {
+    if (!themeId || themeId === 'system-default' || themeId === 'default' || themeId === 'theme-system') {
       styleTag.innerHTML = '';
       return;
     }
     
     try {
-      const res = await fetch(`/api/themes?_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json());
-      if (res && res.themes) {
-        const t = res.themes.find(x => x.id === themeId);
-        if (t && t.variables) {
-          let cssStr = `:root, body.${themeId} {\n`;
-          for (const [k,v] of Object.entries(t.variables)) {
-            cssStr += `  ${k}: ${v} !important;\n`;
-          }
-          cssStr += '}\n';
-          styleTag.innerHTML = cssStr;
-          return;
+      let themeObj = null;
+      try {
+        const res = await fetch(`/api/themes?_t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json());
+        if (res && res.themes) {
+          themeObj = res.themes.find(x => x.id === themeId);
         }
+      } catch (e) {}
+
+      if (!themeObj && typeof SettingsViewHelper !== 'undefined' && SettingsViewHelper.getThemesList) {
+        const builtIn = SettingsViewHelper.getThemesList().find(x => x.id === themeId);
+        if (builtIn) {
+          themeObj = {
+            id: builtIn.id,
+            variables: {
+              '--bg-dark': builtIn.bg,
+              '--bg-card': builtIn.card || builtIn.bg,
+              '--bg-card-hover': builtIn.card || builtIn.bg,
+              '--bg-sidebar': builtIn.sidebar || builtIn.bg,
+              '--primary': builtIn.accent,
+              '--primary-hover': builtIn.accent,
+              '--primary-light': builtIn.accent,
+              '--secondary': builtIn.accent,
+              '--border-color': builtIn.accent + '66',
+              '--border-glow': builtIn.accent,
+              '--accent-cyan': builtIn.accent,
+              '--text-main': builtIn.text || '#ffffff'
+            }
+          };
+        }
+      }
+
+      if (themeObj && themeObj.variables) {
+        let cssStr = `body, body.${themeId}, :root {\n`;
+        for (const [k, v] of Object.entries(themeObj.variables)) {
+          cssStr += `  ${k}: ${v} !important;\n`;
+        }
+        cssStr += '}\n';
+        styleTag.innerHTML = cssStr;
+        return;
       }
       styleTag.innerHTML = '';
     } catch(e) {
@@ -153,6 +180,15 @@ class App {
     try {
       const hintsRes = await ApiService.getScreenHints();
       if (hintsRes && hintsRes.hints) this.screenHints = hintsRes.hints;
+    } catch (e) {}
+
+    // 2.5 Automated Startup Update Check against GitHub Repository
+    try {
+      setTimeout(() => {
+        if (typeof AboutView !== 'undefined' && typeof AboutView.checkForUpdates === 'function') {
+          AboutView.checkForUpdates(true);
+        }
+      }, 1500);
     } catch (e) {}
 
     // 3. Fail-safe provider readiness check (Only redirect if on root landing or playground)
@@ -199,7 +235,11 @@ class App {
     }
     localStorage.setItem('fmc_theme', val);
     await this.injectCustomTheme(val);
-    ModalDialog.showNotification('Theme set to ' + val, 'success');
+    if (typeof NavigationHelper !== 'undefined' && NavigationHelper.bindMenuEvents) {
+      NavigationHelper.bindMenuEvents();
+    }
+    const displayName = val.replace(/^theme-/, '').replace(/-/g, ' ').toUpperCase();
+    ModalDialog.showNotification('Theme set to ' + displayName, 'success');
   }
 
   navigate(viewName, isPopState = false) {

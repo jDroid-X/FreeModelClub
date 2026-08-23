@@ -127,11 +127,11 @@ class LoginView {
     const confirmPwd = document.getElementById('modal-confirm-pwd')?.value || '';
 
     if (!newPwd || newPwd.length < 6) {
-      alert('Password must be at least 6 characters long.');
+      ModalDialog.showNotification('Password must be at least 6 characters long.', 'warning');
       return;
     }
     if (newPwd !== confirmPwd) {
-      alert('Passwords do not match. Please re-enter.');
+      ModalDialog.showNotification('Passwords do not match. Please re-enter.', 'warning');
       return;
     }
 
@@ -141,7 +141,7 @@ class LoginView {
       ModalDialog.showNotification('Master password set successfully!', 'success');
       LoginView.finalizeLogin({ email, role: 'admin', mustChangePassword: false }, isAutoLogin);
     } else {
-      alert(res.message || 'Failed to update password.');
+      ModalDialog.showNotification(res.message || 'Failed to update password.', 'error');
     }
   }
 

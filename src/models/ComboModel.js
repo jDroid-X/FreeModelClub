@@ -28,6 +28,10 @@ class ComboModel {
 
       let changed = false;
       combos.forEach(c => {
+        if (!c.modelsList && (c.models || c.modelIds)) {
+          c.modelsList = c.models || c.modelIds;
+          changed = true;
+        }
         if (Array.isArray(c.modelsList)) {
           const originalLen = c.modelsList.length;
           const filtered = c.modelsList.filter(id => validModelIds.has(id));
@@ -73,6 +77,9 @@ class ComboModel {
   }
 
   static save(combo) {
+    if (!combo.modelsList && (combo.models || combo.modelIds)) {
+      combo.modelsList = combo.models || combo.modelIds;
+    }
     // Ensure no duplicate model IDs in the combo
     if (Array.isArray(combo.modelsList)) {
       const models = db.read(db.files.models) || [];

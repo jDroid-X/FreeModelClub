@@ -60,14 +60,50 @@ class ParametersDrawerView {
     }
   }
 
+  static getStrategyDescription(strategy) {
+    if (typeof LoadBalancingStrategyHelper !== 'undefined') {
+      return LoadBalancingStrategyHelper.getOptimumUseCaseHtml(strategy);
+    }
+    return '🤖 <strong>Dynamic Routing:</strong> Monitors prompt complexity and selects optimal provider model.';
+  }
+
   static renderDrawerHtml(activeSession = {}) {
     const s = activeSession || {};
     const esc = (typeof PlaygroundViewHelper !== 'undefined') ? PlaygroundViewHelper.escapeHtml : (str => str || '');
+    const currStrategy = s.agentStrategy || (typeof localStorage !== 'undefined' ? localStorage.getItem('fmc_active_strategy') : null) || 'Round Robin';
+
+    const strategyOptionsHtml = (typeof LoadBalancingStrategyHelper !== 'undefined') 
+      ? LoadBalancingStrategyHelper.renderOptionsHtml(currStrategy)
+      : '<option value="Round Robin">Round Robin (Equal Weight)</option><option value="Fallback">Fallback (Failover Sequential)</option>';
+
+    const optimumUseCaseHtml = (typeof LoadBalancingStrategyHelper !== 'undefined')
+      ? LoadBalancingStrategyHelper.getOptimumUseCaseHtml(currStrategy)
+      : '<div>Uniform load balancing.</div>';
+
     return `
       <div id="chat-parameters-right-drawer" class="glass-panel" style="width: 0px; min-width: 0px; max-width: 0px; flex-shrink: 0; flex-grow: 0; padding: 0px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; border-left: 0px solid var(--border-color); background: var(--bg-sidebar); height: 100%; margin-bottom: 0; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); opacity: 0; pointer-events: none; z-index: 95;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; min-width: 260px;">
           <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);"><i class="fa-solid fa-sliders"></i> Hyperparameters</span>
           <button class="btn btn-link btn-xs" style="color: var(--text-muted); font-size: 1.1rem; cursor: pointer;" onclick="PlaygroundView.toggleSidebar('right')">&times;</button>
+        </div>
+
+        <!-- Agent Routing Strategy & Input Chat Monitor -->
+        <div style="background: var(--bg-card); border: 1px solid var(--accent-emerald); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--accent-emerald);"><i class="fa-solid fa-robot"></i> Agent Routing Strategy</label>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <button type="button" class="btn btn-secondary btn-xs" style="font-size: 0.62rem; padding: 1px 6px; background: rgba(56,189,248,0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); cursor: pointer;" onclick="ParametersViewModel.showStrategyGuide()" title="View All 13 Algorithms Matrix">
+                <i class="fa-solid fa-circle-question"></i> Guide
+              </button>
+              <span class="badge badge-emerald" style="font-size: 0.6rem;">LIVE MONITOR</span>
+            </div>
+          </div>
+          <select id="select-agent-strategy" class="form-control" style="font-size: 0.72rem; padding: 3px 5px; height: 26px; border-radius: 4px; margin-bottom: 2px; font-weight: 600;" onchange="ParametersViewModel.updateAgentStrategy(this.value)">
+            ${strategyOptionsHtml}
+          </select>
+          <div id="strategy-optimum-usecase" style="font-size: 0.65rem; color: var(--text-muted); background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); line-height: 1.35;">
+            ${optimumUseCaseHtml}
+          </div>
         </div>
 
         <!-- Sliders -->
@@ -123,7 +159,7 @@ class ParametersDrawerView {
             <option value="debugger">11. Root-Cause Diagnostic &amp; Self-Healing Debugger [ROCA]</option>
             <option value="prompt_engineer">12. Prompt Engineering &amp; ROCAS Optimizer [ROCA]</option>
           </select>
-          <textarea id="param-system-prompt" class="form-control" style="font-size: 0.72rem; min-height: 95px; resize: vertical; background: var(--bg-input);" placeholder="Enter custom assistant system prompt (ROCA format: Role, Objective, Context, Actions)..." onchange="PlaygroundView.updateSystemPrompt(this.value)">${esc(s.systemPrompt || '')}</textarea>
+          <textarea id="param-system-prompt" class="form-control" style="font-size: 0.72rem; min-height: 95px; resize: vertical; background: var(--bg-input);" placeholder="Enter custom assistant system prompt (ROCA format: Role, Objective, Context, Actions)..." oninput="PlaygroundView.updateSystemPrompt(this.value)">${esc(s.systemPrompt || '')}</textarea>
         </div>
 
         <!-- Show Working Details Toggle -->

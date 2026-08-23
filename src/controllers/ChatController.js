@@ -55,6 +55,14 @@ class ChatController {
     const summary = AnalyticsService.getDashboardSummary();
     return res.json(summary);
   }
+
+  static getComboSmartAgentTelemetry(req, res) {
+    const ComboSmartAgent = require('../services/ComboSmartAgent');
+    return res.json({
+      success: true,
+      telemetry: ComboSmartAgent.getTelemetry()
+    });
+  }
 }
 
 module.exports = ChatController;

@@ -24,6 +24,7 @@ router.post('/messages', AnthropicTranslationService.handleMessages);
 const PromptOrchestratorService = require('../services/PromptOrchestratorService');
 const ToolExecutionLoopService = require('../services/ToolExecutionLoopService');
 const ProxyEngineService = require('../services/ProxyEngineService');
+const ComboSmartAgent = require('../services/ComboSmartAgent');
 const ProviderModel = require('../models/ProviderModel');
 const AIModel = require('../models/AIModel');
 const ComboModel = require('../models/ComboModel');
@@ -32,28 +33,22 @@ router.post('/chat/completions/agent', async (req, res) => {
   try {
     const { model, messages, agentMode, context, temperature, max_tokens } = req.body || {};
 
-    // Resolve target model and provider (reuse ProxyEngineService resolution logic)
-    let targetModel = AIModel.getById(model);
-    let targetProvider = null;
+    // ── Delegate to ComboSmartAgent (22-Agent Master Orchestrator) ──
+    const { targetModel, targetProvider, strategyUsed, combo, pool, promptIntent } = ComboSmartAgent.resolveTargetCandidate({
+      modelId: model,
+      messages: messages || [],
+      requestedStrategy: req.headers['x-fmc-strategy'] || req.body?.strategy || null
+    });
 
-    // Check combo models
-    const combo = ComboModel.getById(model);
-    if (combo && combo.isActive && combo.modelsList && combo.modelsList.length > 0) {
-      const comboModels = combo.modelsList.map(id => AIModel.getById(id)).filter(m => {
-        if (!m || m.status !== 'Active') return false;
-        const p = ProviderModel.getById(m.providerId, false);
-        return p && p.isActive;
-      });
-      if (comboModels.length > 0) targetModel = comboModels[0];
+    if (strategyUsed) {
+      res.setHeader('X-FMC-Strategy-Used', strategyUsed);
     }
-
-    if (!targetModel) {
-      const activeModels = AIModel.getActiveModels();
-      targetModel = activeModels[0] || { id: model || 'llama-3.3-70b-versatile', modelId: model || 'llama-3.3-70b-versatile', providerId: 'ollama' };
-    }
-
     if (targetModel) {
-      targetProvider = ProviderModel.getById(targetModel.providerId, false) || ProviderModel.getAll()[0] || { id: 'ollama', displayName: 'Ollama / Localhost', baseUrl: 'http://127.0.0.1:11434', isActive: true };
+      res.setHeader('X-FMC-Resolved-Model', targetModel.id || targetModel.modelId || '');
+      res.setHeader('X-FMC-Resolved-Model-Name', targetModel.name || targetModel.modelName || targetModel.modelId || '');
+    }
+    if (targetProvider) {
+      res.setHeader('X-FMC-Resolved-Provider', targetProvider.displayName || targetProvider.id || '');
     }
 
     // Build structured prompt via PromptOrchestratorService
@@ -74,7 +69,13 @@ router.post('/chat/completions/agent', async (req, res) => {
       tools: orchestrated.tools,
       targetModel,
       targetProvider,
-      requestBody: { temperature: temperature || 0.7, max_tokens: max_tokens || 4096 },
+      requestBody: { 
+        temperature: temperature || 0.7, 
+        max_tokens: max_tokens || 4096,
+        comboId: combo ? combo.id : (req.body?.comboId || null),
+        strategyUsed: strategyUsed || 'Round Robin',
+        requestedModel: model
+      },
       metadata: orchestrated.metadata
     });
 
@@ -88,6 +89,7 @@ router.post('/chat/completions/agent', async (req, res) => {
 // FMC Server Telemetry & Stats Endpoints
 router.get('/dashboard/stats', ChatController.getDashboardStats);
 router.get('/header/stats',    ChatController.getHeaderStats);
+router.get('/agents/combo-smart/telemetry', ChatController.getComboSmartAgentTelemetry);
 
 // Device Identity Endpoint (BUG-5 fix)
 router.get('/api/device', DeviceController.getDevice);

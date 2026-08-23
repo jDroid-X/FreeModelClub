@@ -188,11 +188,13 @@ body.theme-platinum {
   --primary: #dde7f1;
   --primary-hover: #c4d5e7;
   --primary-light: #dde7f1;
-  --secondary: #6588dd;
-  --btn-secondary-bg: #6588dd;
-  --btn-secondary-color: #ffffff;
-  --btn-secondary-hover: #5074c8;
-  --item-sub-bg: rgba(101, 136, 221, 0.12);
+  --secondary: #06b6d4;
+  --btn-secondary-bg: #CCEBF2;
+  --btn-secondary-color: #0F172A;
+  --btn-secondary-border: #06B6D4;
+  --btn-secondary-hover: #bfe4ee;
+  --btn-secondary-hover-border: #00bcd4;
+  --item-sub-bg: rgba(6, 182, 212, 0.12);
   --accent-cyan: #0ea5e9;
   --accent-emerald: #14b8a6;
   --accent-amber: #f59e0b;
