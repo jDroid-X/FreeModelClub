@@ -46,8 +46,14 @@ class ProviderService {
         const targetUrl = apiKey ? `${cleanBase}/models?key=${apiKey}` : `${cleanBase}/models`;
         responseData = await this.makeHttpRequest(targetUrl, apiKey);
       } else {
-        const targetPath = baseUrl.endsWith('/models') ? '' : '/models';
-        const fullUrl = `${baseUrl}${targetPath}`;
+        let fullUrl = baseUrl;
+        if (baseUrl.includes('router.bynara.id')) {
+          const cleanBynara = baseUrl.replace(/\/models\/?$/, '').replace(/\/v1\/?$/, '');
+          fullUrl = `${cleanBynara}/v1/models`;
+        } else {
+          const targetPath = baseUrl.endsWith('/models') ? '' : '/models';
+          fullUrl = `${baseUrl}${targetPath}`;
+        }
         responseData = await this.makeHttpRequest(fullUrl, apiKey);
       }
 
@@ -180,6 +186,17 @@ class ProviderService {
         { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B (Groq)' },
         { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
         { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' }
+      ];
+    }
+    if (provider.id === 'bynara' || (provider.baseUrl && provider.baseUrl.includes('bynara'))) {
+      return [
+        { id: 'mimo-v2.5-free', name: 'Bynara MiMo v2.5 Free', family: 'MiMo', coreSkill: 'General Reasoning', contextWindow: 65536, isFree: true },
+        { id: 'mimo-v2.5-pro-free', name: 'Bynara MiMo v2.5 Pro', family: 'MiMo', coreSkill: 'Advanced Logic', contextWindow: 65536, isFree: true },
+        { id: 'claude-sonnet-4.5', name: 'Bynara Claude Sonnet 4.5', family: 'Claude', coreSkill: 'Coding & Analysis', contextWindow: 200000, isFree: true },
+        { id: 'claude-haiku-4.5', name: 'Bynara Claude Haiku 4.5', family: 'Claude', coreSkill: 'Fast Execution', contextWindow: 200000, isFree: true },
+        { id: 'glm-4-flash', name: 'Bynara GLM 4 Flash', family: 'GLM', coreSkill: 'Multilingual Chat', contextWindow: 128000, isFree: true },
+        { id: 'llama-3.3-70b-instruct', name: 'Bynara Llama 3.3 70B', family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072, isFree: true },
+        { id: 'qwen-2.5-coder-32b', name: 'Bynara Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Code Generation', contextWindow: 32768, isFree: true }
       ];
     }
     if (provider.id === 'openrouter' || provider.baseUrl.includes('openrouter.ai')) {

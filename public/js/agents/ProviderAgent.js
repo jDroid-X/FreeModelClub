@@ -350,7 +350,7 @@ class ProviderAgent {
   static applyData(payloadStr) {
     try {
       let p = typeof payloadStr === 'string' ? JSON.parse(decodeURIComponent(payloadStr)) : payloadStr;
-      const checkedCbs = Array.from(document.querySelectorAll('.pa-popup-model-cb:checked')).map(cb => cb.value);
+      const checkedCbs = Array.from(document.querySelectorAll('.pa-model-cb:checked, .pa-popup-model-cb:checked, .popup-model-cb:checked')).map(cb => cb.value);
       if (checkedCbs.length > 0 && Array.isArray(p.models)) {
         p.models = p.models.filter(m => checkedCbs.includes(m.modelId || m.id));
       }

@@ -965,3 +965,21 @@ Modified Files:
   - requirement/registration.txt
 Status: PASS (100% Tested & Verified)
 ================================================================================================
+Date: 2026-08-24 11:33:00
+Requested Change: Bynara Free Models Auto-Selection & Discovery in Fresh System:
+  - Added Bynara AI Router (id: 'bynara', proto: 'Bynara API') to RegistrationViewHelper.getPredefinedProviders().
+  - Added Bynara's 7 verified free models to RegistrationViewHelper.getDefaultModelsForProtocol() and ProviderService.getFallbackFreeModelsForProvider().
+  - Added Bynara API default URL ('https://router.bynara.id/v1') in RegistrationView.getDefaultUrls().
+  - Fixed checkbox class selector in ProviderAgent.js (.pa-model-cb:checked, .pa-popup-model-cb:checked) to stage selected models on 1-click apply.
+  - Normalized Bynara base URL in ProviderService.js to auto-target /v1/models.
+  - Added URL alias mappings ('https://router.bynara.id', 'https://router.bynara.id/models') in ProviderAgentHelper.js and RegistrationView.PROVIDER_ALIASES.
+Target Module: ProviderAgent.js, ProviderAgentHelper.js, ProviderService.js, RegistrationView.js, RegistrationViewHelper.js
+Modified Files:
+  - src/services/ProviderService.js
+  - src/services/ProviderAgentHelper.js
+  - public/js/views/RegistrationViewHelper.js
+  - public/js/views/RegistrationView.js
+  - public/js/agents/ProviderAgent.js
+  - requirement/registration.txt
+Status: PASS (100% Tested & Verified)
+================================================================================================

@@ -10,6 +10,7 @@ class RegistrationViewHelper {
       { id: 'groq', name: 'Groq', proto: 'Groq API', icon: 'fa-bolt', color: 'var(--accent-cyan)' },
       { id: 'openrouter', name: 'OpenRouter', proto: 'OpenRouter Free', icon: 'fa-globe', color: 'var(--accent-emerald)' },
       { id: 'gemini', name: 'Gemini', proto: 'Gemini API', icon: 'fa-atom', color: 'var(--primary-light)' },
+      { id: 'bynara', name: 'Bynara AI Router', proto: 'Bynara API', icon: 'fa-route', color: 'var(--accent-cyan)' },
       { id: 'together', name: 'Together AI', proto: 'Together API', icon: 'fa-handshake', color: 'var(--accent-amber)' },
       { id: 'mistral', name: 'Mistral', proto: 'Mistral API', icon: 'fa-wind', color: 'var(--accent-cyan)' },
       { id: 'ollama', name: 'Ollama Local', proto: 'Ollama Local API', icon: 'fa-server', color: 'var(--accent-emerald)' },
@@ -300,11 +301,7 @@ class RegistrationViewHelper {
   }
 
   // HC-01,06,07,08,09,11: Fallback model catalog — synced with ProviderAgentHelper known DB.
-  // OpenRouter: all 15 live free models (pricing.prompt=0). Groq/Gemini: deprecated models removed.
-  // Ollama: attempts live /api/tags query; falls back to catalog. Unknown protocol: returns [] to
-  // force user to use Search or Provider Agent instead of showing fake model IDs.
   static getDefaultModelsForProtocol(proto) {
-    // HC-09: Ollama — attempt live model discovery from local daemon
     if (proto === 'Ollama Local API') {
       return [
         { id: 'llama3.3:latest', name: 'Ollama Llama 3.3 Local', family: 'Llama', coreSkill: 'Local Private Reasoning', contextWindow: 128000 },
@@ -313,7 +310,6 @@ class RegistrationViewHelper {
         { id: 'mistral:latest', name: 'Ollama Mistral Local', family: 'Mistral', coreSkill: 'Local General Chat', contextWindow: 32768 }
       ];
     }
-    // HC-06: Groq — removed deprecated llama-guard-3-8b and mixtral-8x7b-32768
     if (proto === 'Groq API') {
       return [
         { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', family: 'Llama', coreSkill: 'High-Speed Reasoning & Code', contextWindow: 128000 },
@@ -324,7 +320,6 @@ class RegistrationViewHelper {
         { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B', family: 'DeepSeek', coreSkill: 'Reasoning & Math', contextWindow: 128000 }
       ];
     }
-    // HC-07: Gemini — removed paid gemini-1.5-pro & removed gemini-2.0-flash-thinking-exp
     if (proto === 'Gemini API') {
       return [
         { id: 'gemini-2.5-flash', name: 'Google Gemini 2.5 Flash', family: 'Gemini', coreSkill: 'Fast Multimodal Reasoning', contextWindow: 1048576 },
@@ -333,7 +328,6 @@ class RegistrationViewHelper {
         { id: 'gemini-2.0-flash-exp', name: 'Google Gemini 2.0 Flash Experimental', family: 'Gemini', coreSkill: 'Next-Gen Multimodal Reasoning', contextWindow: 1048576 }
       ];
     }
-    // HC-01: OpenRouter — all 15 verified free models (pricing.prompt=0 & completion=0)
     if (proto === 'OpenRouter Free') {
       return [
         { id: 'inclusionai/ling-3.0-flash:free', name: 'Ling 3.0 Flash (Free)', family: 'MoE', coreSkill: 'Agentic Inference & Token Efficiency', contextWindow: 131072 },
@@ -353,7 +347,6 @@ class RegistrationViewHelper {
         { id: 'openai/gpt-oss-20b:free', name: 'OpenAI: gpt-oss-20b (Free)', family: 'GPT', coreSkill: 'Open-Weight MoE Code', contextWindow: 131072 }
       ];
     }
-    // HC-08: Together AI — expanded from 3 to 5 free models
     if (proto === 'Together API') {
       return [
         { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', name: 'Llama 3.3 70B Instruct Turbo', family: 'Llama', coreSkill: 'Fast Reasoning & Code', contextWindow: 131072 },
@@ -363,123 +356,15 @@ class RegistrationViewHelper {
         { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B Instruct v0.3', family: 'Mistral', coreSkill: 'General Chat', contextWindow: 32768 }
       ];
     }
-    if (proto === 'Mistral API') {
+    if (proto === 'Bynara API' || proto === 'Bynara' || proto === 'Bynara Cloud') {
       return [
-        { id: 'mistral-small-latest', name: 'Mistral Small 24B', family: 'Mistral', coreSkill: 'Multilingual & Code', contextWindow: 32768 },
-        { id: 'codestral-latest', name: 'Codestral 22B', family: 'Mistral', coreSkill: 'Code Completion', contextWindow: 32768 },
-        { id: 'open-mixtral-8x22b', name: 'Mixtral 8x22B MoE', family: 'Mistral', coreSkill: 'High Capacity MoE', contextWindow: 65536 }
-      ];
-    }
-    // HC-11: Unknown protocol — return empty to force user to use Search / Provider Agent
-    return [];
-  }
-
-  // HC-05/HC-13/HC-14: Integration snippets — port, host and model are resolved dynamically.
-  static renderIntegrationDrawerContent(snippets = {}) {
-    // Resolve proxy URL from current browser context so it works on any host/port
-    const proxyPort = (typeof window !== 'undefined' && window.location?.port) ? window.location.port : '12247';
-    const proxyHost = (typeof window !== 'undefined' && window.location?.hostname) ? window.location.hostname : 'localhost';
-    const proxyBaseUrl = `http://${proxyHost}:${proxyPort}`;
-    // HC-16: Use first registered active model name if available, else use generic placeholder
-    let activeModelId = 'llama-3.3-70b-versatile';
-    try {
-      if (typeof window !== 'undefined' && window.app?.state?.models && window.app.state.models.length > 0) {
-        activeModelId = window.app.state.models[0].modelId || activeModelId;
-      }
-    } catch(e) {}
-    const proxyKey = 'fmc-local-key';
-
-    const curlSnippet = snippets.curl?.chatCompletions || `curl -X POST ${proxyBaseUrl}/v1/chat/completions \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer ${proxyKey}" \\
-  -d '{
-    "model": "${activeModelId}",
-    "messages": [{"role": "user", "content": "Hello FMC Proxy!"}]
-  }'`;
-
-    const pythonSnippet = snippets.python?.chatCompletions || `from openai import OpenAI
-
-client = OpenAI(
-    base_url="${proxyBaseUrl}/v1",
-    api_key="${proxyKey}"
-)
-
-response = client.chat.completions.create(
-    model="${activeModelId}",
-    messages=[{"role": "user", "content": "Hello FMC Localhost Proxy!"}]
-)
-
-print(response.choices[0].message.content)`;
-
-    const jsSnippet = `const response = await fetch('${proxyBaseUrl}/v1/chat/completions', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${proxyKey}'
-  },
-  body: JSON.stringify({
-    model: '${activeModelId}',
-    messages: [{ role: 'user', content: 'Hello FMC!' }]
-  })
-});
-const data = await response.json();
-console.log(data);`;
-    if (proto === 'Ollama Local API') {
-      return [
-        { id: 'llama3.3:latest', name: 'Ollama Llama 3.3 Local', family: 'Llama', coreSkill: 'Local Private Reasoning', contextWindow: 128000 },
-        { id: 'qwen2.5-coder:32b', name: 'Ollama Qwen 2.5 Coder Local', family: 'Qwen', coreSkill: 'Local Code Generation', contextWindow: 32768 },
-        { id: 'deepseek-r1:70b', name: 'Ollama DeepSeek R1 70B Local', family: 'DeepSeek', coreSkill: 'Local Math & Logic', contextWindow: 65536 },
-        { id: 'mistral:latest', name: 'Ollama Mistral Local', family: 'Mistral', coreSkill: 'Local General Chat', contextWindow: 32768 }
-      ];
-    }
-    // HC-06: Groq — removed deprecated llama-guard-3-8b and mixtral-8x7b-32768
-    if (proto === 'Groq API') {
-      return [
-        { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', family: 'Llama', coreSkill: 'High-Speed Reasoning & Code', contextWindow: 128000 },
-        { id: 'llama-3.3-70b-specdec', name: 'Meta Llama 3.3 70B Spec Dec', family: 'Llama', coreSkill: 'Speculative Decode Fast Inference', contextWindow: 8192 },
-        { id: 'llama-3.1-8b-instant', name: 'Meta Llama 3.1 8B Instant', family: 'Llama', coreSkill: 'Ultra-Fast General Chat', contextWindow: 128000 },
-        { id: 'qwen-2.5-coder-32b', name: 'Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Full-Stack Code Generation', contextWindow: 32768 },
-        { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B IT', family: 'Gemma', coreSkill: 'General Chat', contextWindow: 8192 },
-        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B', family: 'DeepSeek', coreSkill: 'Reasoning & Math', contextWindow: 128000 }
-      ];
-    }
-    // HC-07: Gemini — removed paid gemini-1.5-pro & removed gemini-2.0-flash-thinking-exp
-    if (proto === 'Gemini API') {
-      return [
-        { id: 'gemini-2.5-flash', name: 'Google Gemini 2.5 Flash', family: 'Gemini', coreSkill: 'Fast Multimodal Reasoning', contextWindow: 1048576 },
-        { id: 'gemini-2.5-flash-lite', name: 'Google Gemini 2.5 Flash Lite', family: 'Gemini', coreSkill: 'Ultra-Light Speed Inference', contextWindow: 1048576 },
-        { id: 'gemini-1.5-flash', name: 'Google Gemini 1.5 Flash', family: 'Gemini', coreSkill: 'Multimodal 1M Context', contextWindow: 1048576 },
-        { id: 'gemini-2.0-flash-exp', name: 'Google Gemini 2.0 Flash Experimental', family: 'Gemini', coreSkill: 'Next-Gen Multimodal Reasoning', contextWindow: 1048576 }
-      ];
-    }
-    // HC-01: OpenRouter — all 15 verified free models (pricing.prompt=0 & completion=0)
-    if (proto === 'OpenRouter Free') {
-      return [
-        { id: 'inclusionai/ling-3.0-flash:free', name: 'Ling 3.0 Flash (Free)', family: 'MoE', coreSkill: 'Agentic Inference & Token Efficiency', contextWindow: 131072 },
-        { id: 'poolside/laguna-s-2.1:free', name: 'Poolside: Laguna S 2.1 (Free)', family: 'Poolside', coreSkill: 'Coding Agent & Terminal Tasks', contextWindow: 131072 },
-        { id: 'poolside/laguna-xs-2.1:free', name: 'Poolside: Laguna XS 2.1 (Free)', family: 'Poolside', coreSkill: 'Coding Agent 33B Compact', contextWindow: 131072 },
-        { id: 'cohere/north-mini-code:free', name: 'Cohere: North Mini Code (Free)', family: 'Cohere', coreSkill: 'Agentic Code Generation', contextWindow: 131072 },
-        { id: 'nvidia/nemotron-3.5-content-safety:free', name: 'NVIDIA: Nemotron 3.5 Safety (Free)', family: 'Nemotron', coreSkill: 'Content Moderation', contextWindow: 32768 },
-        { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'NVIDIA: Nemotron 3 Ultra (Free)', family: 'Nemotron', coreSkill: 'Frontier Reasoning 550B', contextWindow: 131072 },
-        { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', name: 'NVIDIA: Nemotron 3 Nano Omni (Free)', family: 'Nemotron', coreSkill: 'Multimodal Perception', contextWindow: 131072 },
-        { id: 'google/gemma-4-26b-a4b-it:free', name: 'Google: Gemma 4 26B A4B IT (Free)', family: 'Gemma', coreSkill: 'High-Quality MoE', contextWindow: 131072 },
-        { id: 'google/gemma-4-31b-it:free', name: 'Google: Gemma 4 31B (Free)', family: 'Gemma', coreSkill: 'Multimodal 256K Context', contextWindow: 262144 },
-        { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'NVIDIA: Nemotron 3 Super (Free)', family: 'Nemotron', coreSkill: 'Multi-Agent 120B MoE', contextWindow: 131072 },
-        { id: 'openrouter/free', name: 'Free Models Router (OpenRouter)', family: 'Router', coreSkill: 'Auto Random Free Selection', contextWindow: 131072 },
-        { id: 'nvidia/nemotron-3-nano-30b-a3b:free', name: 'NVIDIA: Nemotron 3 Nano 30B (Free)', family: 'Nemotron', coreSkill: 'Lightweight Agentic MoE', contextWindow: 131072 },
-        { id: 'nvidia/nemotron-nano-12b-v2-vl:free', name: 'NVIDIA: Nemotron Nano 12B VL (Free)', family: 'Nemotron', coreSkill: 'Video & Document Intelligence', contextWindow: 131072 },
-        { id: 'nvidia/nemotron-nano-9b-v2:free', name: 'NVIDIA: Nemotron Nano 9B V2 (Free)', family: 'Nemotron', coreSkill: 'Unified Reasoning', contextWindow: 131072 },
-        { id: 'openai/gpt-oss-20b:free', name: 'OpenAI: gpt-oss-20b (Free)', family: 'GPT', coreSkill: 'Open-Weight MoE Code', contextWindow: 131072 }
-      ];
-    }
-    // HC-08: Together AI — expanded from 3 to 5 free models
-    if (proto === 'Together API') {
-      return [
-        { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', name: 'Llama 3.3 70B Instruct Turbo', family: 'Llama', coreSkill: 'Fast Reasoning & Code', contextWindow: 131072 },
-        { id: 'meta-llama/Llama-3.1-405B-Instruct-Turbo', name: 'Llama 3.1 405B Instruct Turbo', family: 'Llama', coreSkill: 'High-Capacity Reasoning', contextWindow: 131072 },
-        { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B Instruct', family: 'Qwen', coreSkill: 'Code Generation', contextWindow: 32768 },
-        { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1 Reasoning', family: 'DeepSeek', coreSkill: 'Chain of Thought Math', contextWindow: 65536 },
-        { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B Instruct v0.3', family: 'Mistral', coreSkill: 'General Chat', contextWindow: 32768 }
+        { id: 'mimo-v2.5-free', name: 'Bynara MiMo v2.5 Free', family: 'MiMo', coreSkill: 'General Reasoning', contextWindow: 65536 },
+        { id: 'mimo-v2.5-pro-free', name: 'Bynara MiMo v2.5 Pro', family: 'MiMo', coreSkill: 'Advanced Logic', contextWindow: 65536 },
+        { id: 'claude-sonnet-4.5', name: 'Bynara Claude Sonnet 4.5', family: 'Claude', coreSkill: 'Coding & Analysis', contextWindow: 200000 },
+        { id: 'claude-haiku-4.5', name: 'Bynara Claude Haiku 4.5', family: 'Claude', coreSkill: 'Fast Execution', contextWindow: 200000 },
+        { id: 'glm-4-flash', name: 'Bynara GLM 4 Flash', family: 'GLM', coreSkill: 'Multilingual Chat', contextWindow: 128000 },
+        { id: 'llama-3.3-70b-instruct', name: 'Bynara Llama 3.3 70B', family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072 },
+        { id: 'qwen-2.5-coder-32b', name: 'Bynara Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Code Generation', contextWindow: 32768 }
       ];
     }
     if (proto === 'Mistral API') {
@@ -489,17 +374,13 @@ console.log(data);`;
         { id: 'open-mixtral-8x22b', name: 'Mixtral 8x22B MoE', family: 'Mistral', coreSkill: 'High Capacity MoE', contextWindow: 65536 }
       ];
     }
-    // HC-11: Unknown protocol — return empty to force user to use Search / Provider Agent
     return [];
   }
 
-  // HC-05/HC-13/HC-14: Integration snippets — port, host and model are resolved dynamically.
   static renderIntegrationDrawerContent(snippets = {}) {
-    // Resolve proxy URL from current browser context so it works on any host/port
     const proxyPort = (typeof window !== 'undefined' && window.location?.port) ? window.location.port : '12247';
     const proxyHost = (typeof window !== 'undefined' && window.location?.hostname) ? window.location.hostname : 'localhost';
     const proxyBaseUrl = `http://${proxyHost}:${proxyPort}`;
-    // HC-16: Use first registered active model name if available, else use generic placeholder
     let activeModelId = 'llama-3.3-70b-versatile';
     try {
       if (typeof window !== 'undefined' && window.app?.state?.models && window.app.state.models.length > 0) {

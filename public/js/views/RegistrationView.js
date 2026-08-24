@@ -22,7 +22,8 @@ class RegistrationView {
     'mistral ai': 'mistral', 'mistralai': 'mistral', 'mistral.ai': 'mistral',
     'deepseek ai': 'deepseek', 'deepseek.com': 'deepseek',
     'nvidia nim': 'nvidia', 'nvidia build': 'nvidia',
-    'ollama local': 'ollama', 'local ollama': 'ollama'
+    'ollama local': 'ollama', 'local ollama': 'ollama',
+    'bynara': 'bynara', 'router bynara': 'bynara', 'router.bynara.id': 'bynara', 'bynara id': 'bynara', 'https://router.bynara.id/models': 'bynara', 'https://router.bynara.id': 'bynara'
   };
 
   // HC-04: Single source of truth for default base URLs.
@@ -31,6 +32,8 @@ class RegistrationView {
       'Groq API': 'https://api.groq.com/openai/v1',
       'OpenRouter Free': 'https://openrouter.ai/api/v1',
       'Gemini API': 'https://generativelanguage.googleapis.com/v1beta',
+      'Bynara API': 'https://router.bynara.id/v1',
+      'Bynara Cloud': 'https://router.bynara.id/v1',
       'Together API': 'https://api.together.xyz/v1',
       'Mistral API': 'https://api.mistral.ai/v1',
       'Ollama Local API': 'http://localhost:11434/v1',
@@ -343,8 +346,23 @@ class RegistrationView {
       }));
       this.fetchedModels = [...this.stagedModels];
     } else {
-      this.stagedModels = [];
-      this.fetchedModels = [];
+      const defModels = this.getDefaultModelsForProtocol(proto);
+      if (defModels && defModels.length > 0) {
+        this.stagedModels = defModels.map(m => ({
+          id: `${idVal}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_'),
+          modelId: m.modelId || m.id,
+          name: m.modelName || m.name || m.id,
+          modelName: m.modelName || m.name || m.id,
+          contextWindow: m.contextWindow || '128k',
+          isFree: true,
+          coreSkill: m.coreSkill || 'General Reasoning',
+          family: m.family || 'General'
+        }));
+        this.fetchedModels = [...this.stagedModels];
+      } else {
+        this.stagedModels = [];
+        this.fetchedModels = [];
+      }
     }
     
     this.renderDiscoveredModelsContainer();
