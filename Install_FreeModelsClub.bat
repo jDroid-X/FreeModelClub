@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 title FreeModelsClub - Installer
 color 0A
 
@@ -42,12 +43,12 @@ set "LOG_FILE=%LOG_DIR%\install.log"
 echo [%date% %time%] Starting installation... > "%LOG_FILE%"
 
 echo.
-echo [██░░░░░░░░] 20%% [STAGE 1/5] Verifying System Architecture ^& OS Environment...
+echo [##........] 20%% [STAGE 1/5] Verifying System Architecture ^& OS Environment...
 echo [OK] Windows Architecture: %PROCESSOR_ARCHITECTURE%
 echo [%date% %time%] OS Architecture %PROCESSOR_ARCHITECTURE% verified. >> "%LOG_FILE%"
 
 echo.
-echo [████░░░░░░] 40%% [STAGE 2/5] Checking Node.js Runtime ^& Engine...
+echo [####......] 40%% [STAGE 2/5] Checking Node.js Runtime ^& Engine...
 node -v >nul 2>&1
 if %errorlevel% neq 0 (
     echo [WARNING] Node.js is not installed or not found in system PATH.
@@ -79,7 +80,7 @@ if %errorlevel% neq 0 (
 
 :: 4.5 Check dependencies (Git)
 echo.
-echo [██████░░░░] 60%% [STAGE 3/5] Checking Git & Repository Configuration...
+echo [######....] 60%% [STAGE 3/5] Checking Git ^& Repository Configuration...
 git --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [WARNING] Git is not installed or not found in system PATH.
@@ -111,7 +112,7 @@ if %errorlevel% neq 0 (
 
 :: 5. Execute deterministic install
 echo.
-echo [████████░░] 80%% [STAGE 4/5] Resolving and Installing NPM Dependencies...
+echo [########..] 80%% [STAGE 4/5] Resolving and Installing NPM Dependencies...
 echo This may take a few minutes. Please wait...
 echo [%date% %time%] Running npm install... >> "%LOG_FILE%"
 
@@ -140,7 +141,7 @@ echo [%date% %time%] Dependencies installed successfully. >> "%LOG_FILE%"
 
 :: 7.5 Create Desktop Shortcut
 echo.
-echo [██████████] 100%% [STAGE 5/5] Provisioning Desktop Shortcut ^& System Launcher...
+echo [##########] 100%% [STAGE 5/5] Provisioning Desktop Shortcut ^& System Launcher...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), 'FreeModelsClub.lnk')); $Shortcut.TargetPath = '%APP_DIR%Launch_FMC.bat'; $Shortcut.WorkingDirectory = '%APP_DIR%'; $Shortcut.Description = 'FreeModelsClub Localhost Smart Chatbot'; $Shortcut.Save();" >nul 2>&1
 echo [OK] Desktop Shortcut 'FreeModelsClub.lnk' created.
 

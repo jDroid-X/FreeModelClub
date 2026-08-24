@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 title FreeModelsClub - Safe Application Updater
 color 0E
 
@@ -24,7 +25,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo [██░░░░░░░░] 20%% [STAGE 1/5] Checking Git Runtime ^& Update Channel...
+echo [##........] 20%% [STAGE 1/5] Checking Git Runtime ^& Update Channel...
 set "USE_GIT=1"
 git --version >nul 2>&1
 if %errorlevel% neq 0 (
@@ -36,7 +37,7 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [████░░░░░░] 40%% [STAGE 2/5] Creating Automated Backup of User Vault ^& Database...
+echo [####......] 40%% [STAGE 2/5] Creating Automated Backup of User Vault ^& Database...
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
 
 set "TIMESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
@@ -52,7 +53,7 @@ if exist "%DATA_DIR%" (
 )
 
 echo.
-echo [██████░░░░] 60%% [STAGE 3/5] Pulling Latest Release from %GITHUB_REPO%...
+echo [######....] 60%% [STAGE 3/5] Pulling Latest Release from %GITHUB_REPO%...
 if "%USE_GIT%"=="1" (
     call git pull origin main
     if errorlevel 1 (
@@ -74,7 +75,7 @@ if "%USE_GIT%"=="1" (
 echo [OK] Codebase updated to latest release.
 
 echo.
-echo [████████░░] 80%% [STAGE 4/5] Synchronizing NPM Package Dependencies...
+echo [########..] 80%% [STAGE 4/5] Synchronizing NPM Package Dependencies...
 call npm install
 if %errorlevel% neq 0 (
     echo [ERROR] Dependency installation failed.
@@ -84,7 +85,7 @@ if %errorlevel% neq 0 (
 echo [OK] Dependencies are up to date.
 
 echo.
-echo [██████████] 100%% [STAGE 5/5] Verifying Installation Integrity...
+echo [##########] 100%% [STAGE 5/5] Verifying Installation Integrity...
 if not exist "%APP_DIR%node_modules" (
     echo [ERROR] Validation failed. 'node_modules' is missing.
     pause

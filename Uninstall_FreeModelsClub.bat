@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 title FreeModelsClub - Complete Application Uninstaller
 color 0C
 
@@ -25,7 +26,7 @@ if /i not "!CONFIRM!"=="Y" (
 
 echo.
 echo =======================================================
-echo  [██░░░░░░░░] 25%% [STEP 1/4] Terminating All Background Services (jDroid-X-FMC)
+echo  [##........] 25%% [STEP 1/4] Terminating All Background Services (jDroid-X-FMC)
 echo =======================================================
 
 echo [INFO] Stopping all FreeModelsClub background processes...
@@ -36,7 +37,7 @@ echo [OK] All background server processes terminated.
 
 echo.
 echo =======================================================
-echo  [████░░░░░░] 50%% [STEP 2/4] Removing Application Packages ^& Binaries
+echo  [####......] 50%% [STEP 2/4] Removing Application Packages ^& Binaries
 echo =======================================================
 
 if exist "%NODE_MODULES%" (
@@ -71,7 +72,7 @@ echo [OK] Runtime buffers and build artifacts purged.
 
 echo.
 echo =======================================================
-echo  [██████░░░░] 75%% [STEP 3/4] Cleaning Shortcuts ^& Shell Integrations
+echo  [######....] 75%% [STEP 3/4] Cleaning Shortcuts ^& Shell Integrations
 echo =======================================================
 
 if exist "%USERPROFILE%\Desktop\FreeModelsClub.lnk" (
@@ -91,7 +92,7 @@ if exist "%ProgramData%\Microsoft\Windows\Start Menu\Programs\FreeModelsClub.lnk
 
 echo.
 echo =======================================================
-echo  [██████████] 100%% [STEP 4/4] User Database ^& Configuration Options
+echo  [##########] 100%% [STEP 4/4] User Database ^& Configuration Options
 echo =======================================================
 set /p KEEP_DATA="Do you want to KEEP your provider API keys and database in 'data/' folder? (Y/N): "
 if /i "!KEEP_DATA!"=="N" (
