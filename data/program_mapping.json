@@ -247,6 +247,108 @@
       "dependencies": [
         "LoadBalancingStrategyHelper"
       ]
+    },
+    {
+      "module": "AboutView",
+      "file": "public/js/views/AboutView.js",
+      "type": "ViewController",
+      "dependencies": [
+        "ModalDialog",
+        "ApiService",
+        "ValidationNotifier"
+      ]
+    },
+    {
+      "module": "SettingsView",
+      "file": "public/js/views/SettingsView.js",
+      "type": "ViewController",
+      "dependencies": [
+        "ModalDialog",
+        "ApiService",
+        "SettingsThemeHelper",
+        "SettingsToolConnectionHelper"
+      ]
+    },
+    {
+      "module": "ReportsView",
+      "file": "public/js/views/ReportsView.js",
+      "type": "ViewController",
+      "dependencies": [
+        "ModalDialog",
+        "ApiService",
+        "ReportsViewHelper"
+      ]
+    },
+    {
+      "module": "SystemInfoController",
+      "file": "src/controllers/SystemInfoController.js",
+      "type": "BackendController",
+      "dependencies": [
+        "DeviceService"
+      ]
+    },
+    {
+      "module": "SelfHealingController",
+      "file": "src/controllers/SelfHealingController.js",
+      "type": "BackendController",
+      "dependencies": [
+        "Database"
+      ]
+    },
+    {
+      "module": "Database",
+      "file": "src/models/Database.js",
+      "type": "DatabaseModel",
+      "dependencies": []
+    },
+    {
+      "module": "ProviderModel",
+      "file": "src/models/ProviderModel.js",
+      "type": "DatabaseModel",
+      "dependencies": [
+        "Database"
+      ]
+    },
+    {
+      "module": "ComboModel",
+      "file": "src/models/ComboModel.js",
+      "type": "DatabaseModel",
+      "dependencies": [
+        "Database"
+      ]
+    },
+    {
+      "module": "SettingsToolConnectionHelper",
+      "file": "public/js/views/SettingsToolConnectionHelper.js",
+      "type": "ViewHelper",
+      "dependencies": [
+        "ApiService",
+        "ModalDialog",
+        "SettingsAgentHelper"
+      ]
+    },
+    {
+      "module": "IntegrationController",
+      "file": "src/controllers/IntegrationController.js",
+      "type": "BackendController",
+      "dependencies": [
+        "CodeSnippetService",
+        "Database"
+      ]
+    },
+    {
+      "module": "ToolIdentificationService",
+      "file": "src/services/ToolIdentificationService.js",
+      "type": "BackendService",
+      "dependencies": []
+    },
+    {
+      "module": "DatabaseSeed",
+      "file": "src/models/DatabaseSeed.js",
+      "type": "DatabaseModel",
+      "dependencies": [
+        "Database"
+      ]
     }
   ]
 }

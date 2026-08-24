@@ -652,7 +652,11 @@ class SettingsView {
   static openRocasModal(agentId) { if (typeof SettingsAgentHelper !== 'undefined' && SettingsAgentHelper.openRocasModal) SettingsAgentHelper.openRocasModal(agentId); }
   static launchAgent(agentId) { if (typeof SettingsAgentHelper !== 'undefined' && SettingsAgentHelper.launchAgent) SettingsAgentHelper.launchAgent(agentId); }
 
-  static renderToolConnectionTab(container) { SettingsToolConnectionHelper.renderTab(container, this.activeCombos || []); }
+  static renderToolConnectionTab(container) {
+    if (typeof SettingsToolConnectionHelper !== 'undefined' && SettingsToolConnectionHelper.renderTab) {
+      SettingsToolConnectionHelper.renderTab(container, this.activeCombos || []);
+    }
+  }
   static onSelectConnectTool(toolId) { if (typeof SettingsToolConnectionHelper !== 'undefined' && SettingsToolConnectionHelper.onSelectConnectTool) SettingsToolConnectionHelper.onSelectConnectTool(toolId); }
   static generateAgentConnection() { if (typeof SettingsToolConnectionHelper !== 'undefined' && SettingsToolConnectionHelper.generateAgentConnection) SettingsToolConnectionHelper.generateAgentConnection(); }
   static autoInjectIdeConfig() { if (typeof SettingsToolConnectionHelper !== 'undefined' && SettingsToolConnectionHelper.autoInjectIdeConfig) SettingsToolConnectionHelper.autoInjectIdeConfig(); }

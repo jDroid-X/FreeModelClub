@@ -286,12 +286,21 @@ class ChatMarkdownRenderer {
         return `<tr>${cells}</tr>`;
       }).join('');
 
-      return `<div class="agv-table-wrap">
-        <div class="agv-table-header">
-          <span class="agv-code-lang">TABLE</span>
-          <button class="agv-code-btn" onclick="ChatMarkdownRenderer.exportTableToCsv('${tableId}')"><i class="fa-solid fa-download"></i> CSV</button>
+      return `<div class="agv-table-wrap" style="margin:3px 0; border:1px solid var(--border-color); border-radius:5px; overflow:hidden; background:rgba(0,0,0,0.12);">
+        <div class="agv-table-header" style="display:flex; justify-content:space-between; align-items:center; padding:2px 8px; background:rgba(0,0,0,0.22); border-bottom:1px solid var(--border-color); min-height:22px;">
+          <span style="font-size:0.68rem; font-weight:700; color:var(--accent-cyan); display:flex; align-items:center; gap:4px; text-transform:uppercase; letter-spacing:0.5px;">
+            <i class="fa-solid fa-table" style="font-size:0.68rem;"></i> TABLE
+          </span>
+          <button class="btn btn-secondary btn-xs" style="padding:1px 6px; font-size:0.65rem; height:18px; line-height:1; display:inline-flex; align-items:center; gap:3px; border-color:rgba(255,255,255,0.12);" onclick="ChatMarkdownRenderer.exportTableToCsv('${tableId}')" title="Download Table as CSV">
+            <i class="fa-solid fa-file-csv" style="color:var(--accent-cyan); font-size:0.7rem;"></i> CSV
+          </button>
         </div>
-        <table id="${tableId}" class="agv-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>
+        <div style="overflow-x:auto; width:100%;">
+          <table id="${tableId}" class="agv-table" style="width:100%; border-collapse:collapse; font-size:0.74rem; text-align:left;">
+            <thead><tr>${headers}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
       </div>`;
     });
   }

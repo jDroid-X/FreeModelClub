@@ -99,13 +99,14 @@ class ProviderModel {
 
     // 1. Try resolving by explicit Provider ID
     if (providerId) {
-      const stored = providers.find(p => p.id === providerId || (p.displayName && p.displayName.toLowerCase().includes(providerId.toLowerCase())));
+      const stored = providers.find(p => p.id === providerId || (p.displayName && p.displayName.toLowerCase() === providerId.toLowerCase()));
       if (stored && stored.apiKey) {
         const dec = CryptoVault.decrypt(stored.apiKey);
         if (dec && !/^\*+$/.test(dec) && dec !== '********' && !dec.includes('...')) {
           return dec;
         }
       }
+      return '';
     }
 
     // 2. Try resolving by Target Base URL domain matching
@@ -129,19 +130,23 @@ class ProviderModel {
           }
         }
       } catch (e) {}
-    }
-
-    // 3. Fallback: Return first active provider's unmasked key
-    for (const p of providers) {
-      if (p.apiKey && p.isActive && !p.isArchived) {
-        const dec = CryptoVault.decrypt(p.apiKey);
-        if (dec && !/^\*+$/.test(dec) && dec !== '********' && !dec.includes('...')) {
-          return dec;
-        }
-      }
+      return '';
     }
 
     return incomingKey || '';
+  }
+
+  static getRealApiKey(providerId) {
+    if (!providerId) return '';
+    const providers = db.read(db.files.providers);
+    const stored = providers.find(p => p.id === providerId || (p.displayName && p.displayName.toLowerCase() === providerId.toLowerCase()));
+    if (stored && stored.apiKey) {
+      const dec = CryptoVault.decrypt(stored.apiKey);
+      if (dec && !/^\*+$/.test(dec) && dec !== '********' && !dec.includes('...')) {
+        return dec;
+      }
+    }
+    return '';
   }
 
   static hasActiveProviders() {
@@ -193,20 +198,40 @@ class ProviderModel {
 
     const encryptedKey = CryptoVault.encrypt(rawApiKey);
 
+    const existing = existingIndex >= 0 ? providers[existingIndex] : {};
+    const finalId = incomingId || `${cleanDisplayName.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}`;
+    
+    // Auto-resolve dynamic metadata (docsUrl, limits, daily allowances) via ProviderMetadataService
+    const ProviderMetadataService = require('../services/ProviderMetadataService');
+    const meta = ProviderMetadataService.getMetadata(finalId, rawBaseUrl, cleanDisplayName);
+
     const newProvider = {
-      id: incomingId || `${cleanDisplayName.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}`,
+      ...existing,
+      ...providerData,
+      id: finalId,
       displayName: cleanDisplayName,
-      protocol: providerData.protocol || 'OpenAI Compatible',
+      protocol: providerData.protocol || existing.protocol || 'OpenAI Compatible',
       baseUrl: rawBaseUrl,
       apiKey: encryptedKey,
-      isActive: providerData.isActive !== undefined ? providerData.isActive : true,
-      freeOnly: providerData.freeOnly !== undefined ? providerData.freeOnly : true,
-      docsUrl: providerData.docsUrl || '',
-      registeredAt: new Date().toISOString()
+      isActive: providerData.isActive !== undefined ? providerData.isActive : (existing.isActive !== undefined ? existing.isActive : true),
+      freeOnly: providerData.freeOnly !== undefined ? providerData.freeOnly : (existing.freeOnly !== undefined ? existing.freeOnly : true),
+      docsUrl: providerData.docsUrl || existing.docsUrl || meta.docsUrl || '',
+      freeTierLimit: providerData.freeTierLimit || providerData.freeTierQuota || existing.freeTierLimit || existing.freeTierQuota || meta.freeTierLimit || 'Free Tier / Standard',
+      rateLimitRPM: providerData.rateLimitRPM !== undefined ? providerData.rateLimitRPM : (existing.rateLimitRPM !== undefined ? existing.rateLimitRPM : (meta.rateLimitRPM || 30)),
+      rateLimitRPD: providerData.rateLimitRPD !== undefined ? providerData.rateLimitRPD : (existing.rateLimitRPD !== undefined ? existing.rateLimitRPD : (meta.rateLimitRPD || 1000)),
+      rateLimitTPM: providerData.rateLimitTPM !== undefined ? providerData.rateLimitTPM : (existing.rateLimitTPM !== undefined ? existing.rateLimitTPM : (meta.rateLimitTPM || 50000)),
+      rateLimitTPD: providerData.rateLimitTPD !== undefined ? providerData.rateLimitTPD : (existing.rateLimitTPD !== undefined ? existing.rateLimitTPD : (meta.rateLimitTPD || 500000)),
+      hardTokenLimit: providerData.hardTokenLimit !== undefined ? providerData.hardTokenLimit : (existing.hardTokenLimit !== undefined ? existing.hardTokenLimit : (meta.hardTokenLimit || 0)),
+      rateLimitASH: providerData.rateLimitASH !== undefined ? providerData.rateLimitASH : (existing.rateLimitASH !== undefined ? existing.rateLimitASH : 0),
+      rateLimitASD: providerData.rateLimitASD !== undefined ? providerData.rateLimitASD : (existing.rateLimitASD !== undefined ? existing.rateLimitASD : 0),
+      keyPrefix: providerData.keyPrefix || existing.keyPrefix || '',
+      description: providerData.description || existing.description || '',
+      registeredAt: existing.registeredAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     if (existingIndex >= 0) {
-      providers[existingIndex] = { ...providers[existingIndex], ...newProvider };
+      providers[existingIndex] = newProvider;
     } else {
       providers.push(newProvider);
     }

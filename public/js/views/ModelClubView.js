@@ -13,8 +13,32 @@ class ModelClubView {
   static currentViewMode = 'hierarchy';
   static selectedHeader = null;
   static expandedBranches = { combos: true, skills: false, family: false, providers: false, blacklisted: false };
+  static _hasRegisteredStoreListeners = false;
 
   static async render(container) {
+    if (!ModelClubView._hasRegisteredStoreListeners) {
+      ModelClubView._hasRegisteredStoreListeners = true;
+      if (window.AppStore) {
+        window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+          if (window.app && window.app.currentView === 'model-club') {
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+            if (c) ModelClubView.render(c);
+          }
+        });
+        window.AppStore.on('MODELS_MUTATED', () => {
+          if (window.app && window.app.currentView === 'model-club') {
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+            if (c) ModelClubView.render(c);
+          }
+        });
+      }
+      window.addEventListener('fmc_data_changed', () => {
+        if (window.app && window.app.currentView === 'model-club') {
+          const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+          if (c) ModelClubView.render(c);
+        }
+      });
+    }
     container.innerHTML = `
       <div class="glass-panel">
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -53,12 +77,15 @@ class ModelClubView {
       const [combosRes, modelsRes, provsRes] = await Promise.all([
         ApiService.getCombos(), ApiService.getModels(), ApiService.getAllProviders()
       ]);
-      this.combos = Array.isArray(combosRes) ? combosRes : (combosRes.combos || []);
-      this.allProviders = provsRes.providers || [];
-      const modelArray = (modelsRes && modelsRes.models) ? modelsRes.models : (Array.isArray(modelsRes) ? modelsRes : []);
+      this.combos = (Array.isArray(combosRes) ? combosRes : (combosRes.combos || [])).filter(c => c.isActive !== false);
+      const rawProvs = provsRes.providers || [];
+      this.allProviders = rawProvs.filter(p => p.isActive && !p.isArchived && p.displayName && p.displayName !== 'Unnamed Provider' && p.baseUrl);
+      const activeProvIds = new Set(this.allProviders.map(p => p.id));
+      const rawModels = (modelsRes && modelsRes.models) ? modelsRes.models : (Array.isArray(modelsRes) ? modelsRes : []);
+      const activeModelArray = rawModels.filter(m => m.isActive !== false && activeProvIds.has(m.providerId));
 
       if (typeof TaxonomyHelper !== 'undefined') {
-        this._cachedPyramid = TaxonomyHelper.buildPyramid(modelArray, this.allProviders, this.combos);
+        this._cachedPyramid = TaxonomyHelper.buildPyramid(activeModelArray, this.allProviders, this.combos);
         this.allModels = this._cachedPyramid.models;
         this.skillGroups = this._cachedPyramid.skillGroups;
         this.familyGroups = this._cachedPyramid.familyGroups;
@@ -116,6 +143,14 @@ class ModelClubView {
     }
   }
 
+  static filterByProvider(providerId) {
+    if (!providerId) return;
+    this.expandedBranches.providers = true;
+    this.switchView('providers', providerId);
+    const searchInput = document.getElementById('model-club-search');
+    if (searchInput) searchInput.value = '';
+  }
+
   static filterView() {
     const q = document.getElementById('model-club-search')?.value || '';
     if (typeof ModelClubHierarchyHelper !== 'undefined') {
@@ -126,6 +161,14 @@ class ModelClubView {
   static openCreateComboModal(ids = [], name = '') { this.openCreateComboStudio(ids, name); }
   static openCreateComboStudio(ids = [], name = '') {
     if (typeof ModelClubComboStudioHelper !== 'undefined') ModelClubComboStudioHelper.initStudio(null, ids, name);
+    this.switchView('create-combo');
+  }
+  static openComboStudio(targetCombo = null, ids = [], name = '') {
+    if (targetCombo && typeof targetCombo === 'object') {
+      if (typeof ModelClubComboStudioHelper !== 'undefined') ModelClubComboStudioHelper.initStudio(targetCombo);
+    } else {
+      if (typeof ModelClubComboStudioHelper !== 'undefined') ModelClubComboStudioHelper.initStudio(null, ids, name);
+    }
     this.switchView('create-combo');
   }
 

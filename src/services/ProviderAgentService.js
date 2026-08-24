@@ -68,15 +68,19 @@ class ProviderAgentService {
           return isProviderActive && !isLocal;
         });
 
-        // 1. Prefer live high-speed Groq LPU models (Qwen 3.6, GPT-OSS 120B, Compound)
-        const groqModel = suitable.find(m => m.providerId === 'groq' && (m.modelId.includes('qwen') || m.modelId.includes('gpt-oss') || m.modelId.includes('compound')));
-        if (groqModel) return groqModel;
+        // 1. Prefer ChatGPT / OpenAI (GPT-4o, GPT-4o Mini)
+        const openaiModel = suitable.find(m => m.providerId === 'openai' && (m.modelId.includes('gpt-4o') || m.modelId.includes('gpt-4')));
+        if (openaiModel) return openaiModel;
 
-        // 2. Next prefer live Google Gemini 3.6 Flash
-        const geminiModel = suitable.find(m => m.providerId === 'gemini' && (m.modelId.includes('3.6') || m.modelId.includes('flash')));
+        // 2. Next prefer Google Gemini (Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 1.5 Flash)
+        const geminiModel = suitable.find(m => m.providerId === 'gemini' && (m.modelId.includes('flash') || m.modelId.includes('gemini')));
         if (geminiModel) return geminiModel;
 
-        // 3. Next find model with Coding/Reasoning coreSkill
+        // 3. Next prefer live high-speed Groq LPU models (Llama 3.3, Qwen 2.5 Coder)
+        const groqModel = suitable.find(m => m.providerId === 'groq' && (m.modelId.includes('llama-3.3') || m.modelId.includes('qwen') || m.modelId.includes('compound')));
+        if (groqModel) return groqModel;
+
+        // 4. Next find model with Coding/Reasoning coreSkill
         const codingModel = suitable.find(m =>
           (m.coreSkill && (m.coreSkill.includes('Coding') || m.coreSkill.includes('Reasoning'))) ||
           (m.modelId && (m.modelId.includes('coder') || m.modelId.includes('gemini') || m.modelId.includes('qwen')))
@@ -89,7 +93,7 @@ class ProviderAgentService {
     return null;
   }
 
-  static async lookupProvider(query, forceLive = false) {
+  static async lookupProvider(query, forceLive = true, options = {}) {
     if (!query || typeof query !== 'string') {
       return { success: false, error: 'Query parameter is required' };
     }
@@ -155,46 +159,58 @@ class ProviderAgentService {
       }
     }
 
-    // STEP 1: Fast-Path — Return Verified Catalog Instantly (< 5ms) unless forceLive is explicitly requested
-    if (known && !forceLive) {
-      return {
-        success: true,
-        found: true,
-        matchType: 'Built-in Provider Registry (Verified Catalog)',
-        agentModelUsed: this.getActiveModelConnectedName(),
-        provider: known
-      };
+    // Check if explicitly selected provider has a missing or unlinked API key
+    if (options && options.providerId) {
+      const prov = ProviderModel.getById(options.providerId, false);
+      if (prov) {
+        const realKey = ProviderModel.resolveRealApiKey(prov.id, prov.apiKey);
+        if (!realKey || realKey.startsWith('****') || realKey === 'ollama-local') {
+          return {
+            success: false,
+            found: false,
+            error: `No API Key linked for ${prov.displayName || prov.id}. Please configure your API key in Providers or select an active provider.`,
+            unlinked: true,
+            providerName: prov.displayName || prov.id
+          };
+        }
+      }
     }
 
-    // STEP 2: Execute Live AI Online Search & Extraction for Unlisted / Custom Providers or on forced refresh
-    const dynamicAiResult = await this.performOnlineAiSearch(query);
+    // STEP 1: Mandatory Live AI Online Search & Extraction (Rule 11 — Never bypass live search)
+    const dynamicAiResult = await this.performOnlineAiSearch(query, options);
 
     if (dynamicAiResult && dynamicAiResult.found && dynamicAiResult.provider) {
       const liveP = dynamicAiResult.provider;
-      // Compare & Merge Live Results with History Catalog to ensure robust specs
-      if (known && Array.isArray(known.models)) {
-        const mergedModels = [...(liveP.models || [])];
-        known.models.forEach(km => {
-          if (!mergedModels.some(lm => (lm.modelId || lm.id) === (km.modelId || km.id))) {
-            mergedModels.push(km);
-          }
-        });
-        liveP.models = mergedModels;
+      // Compare & Merge Live Results with Catalog to ensure 100% robust specs & valid DNS endpoints
+      if (known) {
+        if (known.baseUrl) liveP.baseUrl = known.baseUrl;
+        if (known.protocol) liveP.protocol = known.protocol;
+        if (known.apiKeyUrl) liveP.apiKeyUrl = known.apiKeyUrl;
+        if (known.keyPrefix) liveP.keyPrefix = known.keyPrefix;
+        if (known.displayName) liveP.displayName = known.displayName;
+        if (Array.isArray(known.models)) {
+          const mergedModels = [...(liveP.models || [])];
+          known.models.forEach(km => {
+            if (!mergedModels.some(lm => (lm.modelId || lm.id) === (km.modelId || km.id))) {
+              mergedModels.push(km);
+            }
+          });
+          liveP.models = mergedModels;
+        }
         liveP.freeTierQuota = liveP.freeTierQuota || known.freeTierQuota;
         liveP.apiKeyHelp = liveP.apiKeyHelp || known.apiKeyHelp;
-        liveP.apiKeyUrl = liveP.apiKeyUrl || known.apiKeyUrl;
       }
 
       return {
         success: true,
         found: true,
         matchType: 'Live Online Search & Verified Specs Extraction',
-        agentModelUsed: this.getActiveModelConnectedName(),
+        agentModelUsed: dynamicAiResult.agentModelUsed || this.getActiveModelConnectedName(),
         provider: liveP
       };
     }
 
-    // Fallback to Known Catalog if Live Search failed to produce results
+    // STEP 2: Fallback to Known Catalog if Live Search failed to produce results
     if (known) {
       return {
         success: true,
@@ -214,47 +230,62 @@ class ProviderAgentService {
     };
   }
 
-  static async performOnlineAiSearch(query) {
-    let model = this.getActiveCodingModel();
-    if (!model) return null;
+  static async performOnlineAiSearch(query, options = {}) {
+    let model = null;
+    let provider = null;
 
-    // Load‑balancing selection across live active models
-    const activePool = AIModel.getActiveModels().filter(m => {
-      const p = ProviderModel.getById(m.providerId, false);
-      return p && p.isActive && m.modelId && !m.modelId.includes('ollama');
-    });
-    const candidateModels = activePool.length > 0 ? activePool : (ModelCatalog.models || []);
-    const loadConfig = require('../config/LoadBalancingConfig.json');
-    const strategy = loadConfig.strategy || 'fallback';
-    // Get a sorted list of candidates (skill & token aware)
-    const sortedCandidates = ModelSelectionService.getSortedCandidates(candidateModels, ['Coding', 'Reasoning'], model.maxTokens || 8192);
-    const selectedModel = ModelLoadBalancer.select(sortedCandidates, strategy);
-    if (selectedModel) {
-      const selProvider = ProviderModel.getById(selectedModel.providerId, false);
-      if (selProvider && selProvider.isActive) {
-        model = selectedModel;
+    if (options.providerId && options.modelId) {
+      provider = ProviderModel.getById(options.providerId, false);
+      if (provider && provider.isActive) {
+        model = {
+          modelId: options.modelId,
+          providerId: options.providerId,
+          maxTokens: 8192
+        };
       }
     }
-    ComboAgentLogger.log(`LoadBalancer (${strategy}) selected model: ${model ? model.modelId : 'none'}`);
 
-    // Update provider based on the effective model
-    const provider = ProviderModel.getById(model.providerId, false);
-    if (!provider || !provider.isActive) return null;
+    if (!model || !provider) {
+      model = this.getActiveCodingModel();
+      if (model) provider = ProviderModel.getById(model.providerId, false);
+    }
+
+    if (!model || !provider) {
+      // Fallback: look for ANY active provider with a valid key
+      const allActive = ProviderModel.getActiveProviders();
+      for (const p of allActive) {
+        const realKey = ProviderModel.resolveRealApiKey(p.id, p.apiKey);
+        if (realKey && !realKey.startsWith('****') && realKey !== 'ollama-local') {
+          provider = p;
+          const models = AIModel.getByProvider(p.id) || [];
+          model = models[0] || { modelId: 'gpt-4o', providerId: p.id, maxTokens: 8192 };
+          break;
+        }
+      }
+    }
+
+    if (!model || !provider || !provider.isActive) return null;
 
     return new Promise(async (resolve) => {
       const apiKey = ProviderModel.resolveRealApiKey(provider.id, provider.apiKey);
       let targetBaseUrl = provider.baseUrl.replace(/\/+$/, '');
       const isGeminiNative = (provider.protocol === 'Gemini API' || targetBaseUrl.includes('googleapis.com')) && !targetBaseUrl.includes('/openai');
       
+      let modelIdToUse = model.modelId || 'gpt-4o-mini';
+      if (isGeminiNative) {
+        if (!modelIdToUse.startsWith('gemini-') || modelIdToUse === 'gemini-2.0-flash' || modelIdToUse === 'gemini-2.0-flash-exp') {
+          modelIdToUse = 'gemini-1.5-flash';
+        }
+      }
+
       let endpointUrl = isGeminiNative
-        ? `${targetBaseUrl}/models/${model.modelId}:generateContent?key=${apiKey}`
+        ? `${targetBaseUrl}/models/${modelIdToUse}:generateContent?key=${apiKey}`
         : `${targetBaseUrl}/chat/completions`;
 
-      // Execute Real-Time Background Web Search
+      // Execute Real-Time Background Web Search via Perplexity AI / Attached Engine
       let webContext = '';
       try {
-        const cleanQ = query.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-        const searchResult = await AntigravityEngine.executeWebSearch(`"${query}" AI models API OR site:router.${cleanQ}.id models`);
+        const searchResult = await AntigravityEngine.executeWebSearch(`Official API base URL documentation and free model IDs for AI provider "${query}"`);
         if (searchResult && searchResult.success && searchResult.results) {
           webContext = searchResult.results.map(r => r.snippet).join('\n');
         }
@@ -341,6 +372,11 @@ Output Format:
         res.on('end', () => {
           try {
             const data = JSON.parse(body);
+            if (data?.error) {
+              const errMsg = data.error.message || JSON.stringify(data.error);
+              console.warn('Provider Agent LLM API Notice:', errMsg);
+              return resolve({ found: false, error: errMsg });
+            }
             let content = '';
             if (isGeminiNative) {
               content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -369,6 +405,10 @@ Output Format:
             }
             if (startIndex !== -1 && endIndex !== -1) {
               content = content.substring(startIndex, endIndex + 1);
+            }
+
+            if (!content || !content.startsWith('{')) {
+              return resolve({ found: false, error: 'Failed to extract structured JSON from LLM response' });
             }
 
             const p = JSON.parse(content);

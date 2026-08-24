@@ -32,6 +32,16 @@ class ModelLoadBalancer {
   }
 
   /**
+   * Invalidates and flushes active round-robin counters and last-known-good cache
+   * when providers, models, or combo memberships mutate.
+   */
+  refreshActivePool() {
+    this.rrCounters = {};
+    this.lkgpModelId = null;
+    return true;
+  }
+
+  /**
    * Choose a model according to the configured strategy.
    * @param {Array<Object>} models - Candidate models (already filtered for token budget & skills).
    * @param {string} strategy - Strategy name (case-insensitive & space-flexible).

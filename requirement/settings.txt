@@ -1,4 +1,44 @@
 ================================================================================
+[2026-08-23 14:50:00] ROCAS PERPLEXITY & MULTI-TIER BACKUP ENGINE INTEGRATION
+================================================================================
+Target Screen       : SettingsView.js (Agents tab), SettingsAgentHelper.js, SettingsAgentEngineRocasDb.js
+User Chat Request   : "memos with Perplexity AI Search and Frontier Attached Model Engine. ( we can use Chatgpt or Gemini as backup also)"
+Status              : PASS (100% Tested & Verified)
+Changes Applied     :
+	- Multi-Tier Search & Extraction Architecture:
+		* Primary Search: Perplexity AI Search (`sonar`, `sonar-pro`) via `api.perplexity.ai`.
+		* Frontier Attached Model Engine: GPT-4o (OpenAI Flagship) / Gemini 2.5 Flash / Groq Llama 3.3 70B.
+		* Multi-Tier Automated Backups: ChatGPT (OpenAI GPT-4o / GPT-4o-mini) and Google Gemini (Gemini 2.5 Flash / 1.5 Flash) configured as non-blocking automated fallbacks if Perplexity encounters rate limits.
+	- Codebase Updates:
+		* Updated `SettingsAgentEngineRocasDb.js` and `SettingsAgentHelper.js` with full Multi-Tier backup specifications.
+		* Updated `jDroidXToolExecutionEngine.js` `executeWebSearch` to execute Tier 1 (Perplexity) -> Tier 2 Backup (ChatGPT) -> Tier 3 Backup (Gemini) -> Tier 4 Base (Catalog Grounding).
+		* Prioritized OpenAI ChatGPT & Google Gemini in `ProviderAgentService.js` `getActiveCodingModel()`.
+Files Modified      :
+	- public/js/views/SettingsAgentEngineRocasDb.js
+	- public/js/views/SettingsAgentHelper.js
+	- src/services/jDroidXToolExecutionEngine.js
+	- src/services/ProviderAgentService.js
+	- requirement/settings.txt
+
+================================================================================
+[2026-08-23 13:19:00] PROVIDER AGENT COMPREHENSIVE ROCAS MEMO & MODEL RE-ASSIGNMENT
+================================================================================
+Target Screen       : SettingsView.js (Agents tab), SettingsAgentHelper.js, SettingsAgentEngineRocasDb.js
+User Chat Request   : "add and update -- Provider Agent — Comprehensive ROCAS Memo as per new development. Re-Assign Model for Provider Agent - always use the default system model mention in - Comprehensive ROCAS Memo"
+Status              : PASS (100% Tested & Verified)
+Changes Applied     :
+	- Comprehensive ROCAS Memo Updated:
+		* Updated `provider_agent` specifications in both `SettingsAgentEngineRocasDb.js` and `SettingsAgentHelper.js` with 5-stage discovery workflow, Rule 11 live web search constraints, strict schema normalization, and unlinked key protection.
+		* Updated `systemSpecs` to explicitly declare: 'Default System Model: GPT-4o (OpenAI Flagship) / Gemini 2.5 Flash (Google Cloud) / Groq Llama 3.3 70B Versatile.'
+	- Default System Model Re-Assignment:
+		* Enhanced `SettingsAgentHelper.openAttachModelModal('provider_agent')` to automatically inspect available providers (Gemini, OpenAI, Groq) and pre-select the default system model mentioned in the Comprehensive ROCAS Memo (Gemini 2.5 Flash / GPT-4o / Llama 3.3 70B).
+		* Implemented `SettingsAgentHelper.onModalProviderChange(val, preferredModelId)` with dynamic attached model population, automatic preferred model matching, and fallback handling.
+Files Modified      :
+	- public/js/views/SettingsAgentEngineRocasDb.js
+	- public/js/views/SettingsAgentHelper.js
+	- requirement/settings.txt
+
+================================================================================
 [2026-08-21 23:48:00] AESTHETIC THEMES DYNAMIC SHADE TRANSFORMATION BUG FIX
 ================================================================================
 Target Screen       : app.js, data/themes.json & SettingsView.js
@@ -530,10 +570,13 @@ Target Module: SettingsUiUxHelper.js, app.js, index.html, components.css
 Modified Files: public/index.html, public/css/components.css, public/js/views/SettingsUiUxHelper.js, public/js/app.js
 Status: PASS
 ================================================================================
-Date: 2026-08-19 22:25:00
-Requested Change: In Theme Edit Screen in Background / Global Theme section, add Icon Color (--icon-color) and Mouse Hover Color (--icon-hover-color) customization controls with real-time dynamic preview card, hover listener tests, auto-palette generator integration, and CSS theme token binding.
-Target Module: SettingsThemeHelper.js, themes.css, components.css, themes.json
-Modified Files: public/js/views/SettingsThemeHelper.js, public/css/themes.css, public/css/components.css, data/themes.json
+Date: 2026-08-23 17:42:00
+Requested Change: Interactive Step-by-Step Line Graph Workflow Wizard:
+  - Added 5-Step Connected Line Graph Stepper Workflow (`1. Select Tool` -> `2. Model Source` -> `3. Proxy & Key` -> `4. Auto-Inject / Sync` -> `5. Test & Verify`).
+  - Added interactive field forms for each step (tool selector, custom path detector, combo/provider dropdown, protocol formatter, client API key, live editable snippet, and 1-click ping test).
+  - Added Mode Switcher toggle (`[📈 Step-by-Step Line Graph]` / `[⚡ 2-Column Mode]`) and linear navigation (`[Previous Step]` / `[Next Step]`).
+Target Module: SettingsToolConnectionHelper.js, SettingsView.js
+Modified Files: public/js/views/SettingsToolConnectionHelper.js, requirement/settings.txt
 Status: PASS
 ================================================================================
 

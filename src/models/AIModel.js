@@ -70,23 +70,54 @@ class AIModel {
     });
 
     modelsList.forEach((newM) => {
-      const compositeKey = `${newM.providerId}_${newM.modelId}`;
-      const targetId = existingMap.has(newM.id) ? newM.id : compositeKeyMap.get(compositeKey);
+      const modelSlug = newM.modelId || newM.id || 'model';
+      let family = newM.family;
+      let headFamilyId = newM.headFamilyId;
+      let coreSkill = newM.coreSkill;
+      let skillCategoryId = newM.skillCategoryId;
+      let contextWindow = newM.contextWindow;
+      let latencyMs = newM.latencyMs;
+
+      try {
+        const ModelFamilyService = require('../services/ModelFamilyService');
+        const auto = ModelFamilyService.classifyModel(modelSlug);
+        if (!family || family === 'Custom' || family === 'General') family = auto.family;
+        if (!headFamilyId) headFamilyId = auto.headFamilyId;
+        if (!coreSkill || coreSkill === 'General Text' || coreSkill === 'General Reasoning' || coreSkill === 'General') coreSkill = auto.coreSkill;
+        if (!skillCategoryId) skillCategoryId = auto.skillCategoryId;
+        if (!contextWindow) contextWindow = auto.contextWindow;
+        if (!latencyMs) latencyMs = auto.defaultLatencyMs;
+      } catch (e) {}
+
+      const sanitizedModel = {
+        ...newM,
+        family: family || 'Custom',
+        headFamilyId: headFamilyId || 'other',
+        coreSkill: coreSkill || 'General Text',
+        skillCategoryId: skillCategoryId || 'general',
+        contextWindow: contextWindow || 128000,
+        latencyMs: latencyMs || 200,
+        isFree: newM.isFree !== false,
+        status: newM.status || 'Active'
+      };
+
+      const compositeKey = `${sanitizedModel.providerId}_${sanitizedModel.modelId}`;
+      const targetId = existingMap.has(sanitizedModel.id) ? sanitizedModel.id : compositeKeyMap.get(compositeKey);
 
       if (targetId && existingMap.has(targetId)) {
         // Merge without overwriting accumulated token counters
         const prev = existingMap.get(targetId);
         existingMap.set(targetId, {
           ...prev,
-          ...newM,
+          ...sanitizedModel,
           id: targetId,
           totalPromptTokens: prev.totalPromptTokens || 0,
           totalCompletionTokens: prev.totalCompletionTokens || 0,
           requestCount: prev.requestCount || 0
         });
       } else {
-        existingMap.set(newM.id, newM);
-        compositeKeyMap.set(compositeKey, newM.id);
+        existingMap.set(sanitizedModel.id, sanitizedModel);
+        compositeKeyMap.set(compositeKey, sanitizedModel.id);
       }
     });
 

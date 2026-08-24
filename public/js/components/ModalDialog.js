@@ -176,7 +176,7 @@ class ModalDialog {
     }, duration);
   }
 
-  static showOptionModal({ title, message = '', icon = 'fa-sliders', options = [], onCancel = null }) {
+  static showOptionModal({ title, message = '', icon = 'fa-sliders', detailsHtml = '', options = [], maxWidth = '540px', onCancel = null }) {
     this.closeModal();
 
     const modalEl = document.createElement('div');
@@ -197,27 +197,41 @@ class ModalDialog {
     }).join('');
 
     modalEl.innerHTML = `
-      <div class="modal-box" style="max-width: 520px;">
+      <div class="modal-box" style="max-width: ${maxWidth};">
         <div class="modal-header">
           <div class="modal-title">
             <i class="fa-solid ${icon}" style="color: var(--accent-cyan);"></i>
             <span>${title}</span>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="ModalDialog.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+          <button class="btn btn-secondary btn-sm" id="modal-close-x-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body" style="padding: 18px 20px;">
-          ${message ? `<p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 14px; line-height: 1.5;">${message}</p>` : ''}
+          ${message ? `<div style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 12px; line-height: 1.5;">${message}</div>` : ''}
+          ${detailsHtml ? `<div style="margin-bottom: 14px;">${detailsHtml}</div>` : ''}
           <div style="display: flex; flex-direction: column; gap: 8px;">
             ${optionsHtml}
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary btn-sm" onclick="ModalDialog.closeModal()">Cancel</button>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" id="modal-cancel-btn">Cancel</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(modalEl);
+
+    const handleCancel = () => {
+      this.closeModal();
+      if (typeof onCancel === 'function') {
+        try { onCancel(); } catch (e) { console.error('Cancel callback error:', e); }
+      }
+    };
+
+    const closeXBtn = document.getElementById('modal-close-x-btn');
+    if (closeXBtn) closeXBtn.onclick = handleCancel;
+
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    if (cancelBtn) cancelBtn.onclick = handleCancel;
 
     options.forEach((opt, idx) => {
       const btn = document.getElementById(`opt-btn-${idx}`);

@@ -7,14 +7,35 @@
 const ProviderModel = require('../models/ProviderModel');
 const ProviderService = require('../services/ProviderService');
 const ProviderAgentService = require('../services/ProviderAgentService');
+const ProviderAgentHelper = require('../services/ProviderAgentHelper');
 const AIModel = require('../models/AIModel');
+const LogModel = require('../models/LogModel');
 const ValidationService = require('../services/ValidationService');
 const TokenAgentService = require('../services/TokenAgentService');
+const ModelFamilyService = require('../services/ModelFamilyService');
+const ProxyEngineService = require('../services/ProxyEngineService');
+const ProviderMonitorAgent = require('../services/ProviderMonitorAgent');
+const ModelLoadBalancer = require('../services/ModelLoadBalancer');
+const ActiveModelAgent = require('../services/ActiveModelAgent');
 const ErrorDefinitionHelper = require('../utils/ErrorDefinitionHelper');
 const https = require('https');
 const http = require('http');
 
 class ProviderController {
+  static async agentLookup(req, res) {
+    try {
+      const { query, providerId, modelId, forceLive } = req.body || {};
+      if (!query) {
+        return res.status(400).json({ success: false, error: 'Query parameter is required' });
+      }
+      const result = await ProviderAgentService.lookupProvider(query, forceLive !== false, { providerId, modelId });
+      return res.json(result);
+    } catch (e) {
+      console.error('[ProviderController.agentLookup]', e.message);
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  }
+
   static async syncTokens(req, res) {
     try {
       const result = await TokenAgentService.syncAllProviderTokens();
@@ -50,11 +71,15 @@ class ProviderController {
     const models = AIModel.getAll();
 
     const result = providers.map((p) => {
-      const providerModels = models.filter((m) => m.providerId === p.id);
+      const providerModels = models.filter((m) => m.providerId === p.id || m.provider === p.id || m.providerId === `prov_${p.id}`);
+      const freeModels = providerModels.filter((m) => m.isFree !== false);
+      const activeModels = providerModels.filter((m) => m.isActive !== false && (m.status || 'Active').toLowerCase() === 'active');
       return {
         ...p,
         models: providerModels,
-        freeModelCount: providerModels.filter((m) => m.isFree).length
+        freeModelCount: freeModels.length,
+        activeModelCount: activeModels.length,
+        freeTierLimit: p.freeTierLimit || p.freeTierQuota || 'Free Tier / Standard'
       };
     });
 
@@ -213,16 +238,29 @@ class ProviderController {
       const { providerId, id, displayName, protocol, baseUrl, apiKey, selectedModelIds, freeOnly, customModels, models } = req.body || {};
       const pid = providerId || id || `${Date.now()}`;
       const realApiKey = ProviderModel.resolveRealApiKey(pid, apiKey);
-      const provider = ProviderModel.register({
+
+      // Auto-populate known provider limits and specs if missing
+      const knownDb = ProviderAgentHelper.getKnownProvidersDatabase();
+      const detectedKey = pid.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const knownEntry = knownDb[detectedKey] || Object.values(knownDb).find(k => k.id === pid);
+
+      const providerData = {
         id: pid,
-        displayName,
-        protocol: protocol || 'OpenAI Compatible',
+        displayName: displayName || (knownEntry ? knownEntry.displayName : pid),
+        protocol: protocol || (knownEntry ? knownEntry.protocol : 'OpenAI Compatible'),
         baseUrl,
         apiKey: realApiKey || apiKey || '',
         isActive: true,
-        freeOnly: freeOnly !== undefined ? freeOnly : true
-      });
-      // ... existing model handling logic ...
+        freeOnly: freeOnly !== undefined ? freeOnly : true,
+        docsUrl: req.body.docsUrl || (knownEntry ? knownEntry.apiKeyUrl : '')
+      };
+
+      if (req.body.rateLimitRPM !== undefined) providerData.rateLimitRPM = req.body.rateLimitRPM;
+      if (req.body.rateLimitRPD !== undefined) providerData.rateLimitRPD = req.body.rateLimitRPD;
+      if (req.body.rateLimitTPM !== undefined) providerData.rateLimitTPM = req.body.rateLimitTPM;
+
+      const provider = ProviderModel.register(providerData);
+
       let modelsToSave = [];
 
       // 1. Process directly passed models array from Registration form staging table
@@ -230,20 +268,23 @@ class ProviderController {
         const directModels = models.map(m => {
           const modelSlug = m.modelId || m.id || 'model';
           const cleanId = `${pid}_${modelSlug}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const autoClassified = ModelFamilyService.classifyModel(modelSlug);
           return {
             id: cleanId,
             providerId: pid,
             providerName: provider.displayName,
             modelId: modelSlug,
-            modelName: m.modelName || modelSlug,
+            modelName: m.modelName || m.name || modelSlug,
             isFree: true,
-            family: m.family || 'Custom',
-            coreSkill: m.coreSkill || 'General Text',
-            contextWindow: m.contextWindow || 128000,
+            family: (m.family && m.family !== 'Custom' && m.family !== 'General') ? m.family : autoClassified.family,
+            headFamilyId: autoClassified.headFamilyId,
+            coreSkill: (m.coreSkill && m.coreSkill !== 'General Text' && m.coreSkill !== 'General Reasoning') ? m.coreSkill : autoClassified.coreSkill,
+            skillCategoryId: autoClassified.skillCategoryId,
+            contextWindow: m.contextWindow || autoClassified.contextWindow || 128000,
             maxTokens: m.maxTokens || 4096,
-            latencyMs: m.latencyMs || 200,
+            latencyMs: m.latencyMs || autoClassified.defaultLatencyMs || 200,
             status: 'Active',
-            metadata: m.metadata || { description: 'Registered free tier model.' }
+            metadata: m.metadata || { description: `${autoClassified.family} free tier model.` }
           };
         });
         modelsToSave = modelsToSave.concat(directModels);
@@ -259,13 +300,22 @@ class ProviderController {
         }
         const filtered = fetchedFreeModels.filter(m => selectedModelIds.includes(m.modelId) || selectedModelIds.includes(m.id));
         filtered.forEach(m => {
-          const cleanId = `${pid}_${m.modelId || m.id}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const modelSlug = m.modelId || m.id || 'model';
+          const cleanId = `${pid}_${modelSlug}`.replace(/[^a-zA-Z0-9_-]/g, '_');
           if (!modelsToSave.some(s => s.id === cleanId)) {
+            const autoClassified = ModelFamilyService.classifyModel(modelSlug);
             modelsToSave.push({
               ...m,
               id: cleanId,
               providerId: pid,
               providerName: provider.displayName,
+              family: (m.family && m.family !== 'Custom' && m.family !== 'General') ? m.family : autoClassified.family,
+              headFamilyId: autoClassified.headFamilyId,
+              coreSkill: (m.coreSkill && m.coreSkill !== 'General Text' && m.coreSkill !== 'General Reasoning') ? m.coreSkill : autoClassified.coreSkill,
+              skillCategoryId: autoClassified.skillCategoryId,
+              contextWindow: m.contextWindow || autoClassified.contextWindow || 128000,
+              maxTokens: m.maxTokens || 4096,
+              latencyMs: m.latencyMs || autoClassified.defaultLatencyMs || 200,
               status: 'Active',
               isFree: true
             });
@@ -278,9 +328,42 @@ class ProviderController {
         AIModel.saveBatch(modelsToSave);
       }
 
+      // ── MULTI-WORKFLOW POST-REGISTRATION PIPELINE ──
+      // 1. O(n) Classification
       try {
-        const ActiveModelAgent = require('../services/ActiveModelAgent');
         ActiveModelAgent.runClassification();
+      } catch (e) {}
+
+      // 2. Reset circuit breaker & blacklist for provider
+      try {
+        ProxyEngineService.unblacklistProvider(pid);
+      } catch (e) {}
+
+      // 3. Reset load balancer pools & active connection tracker
+      try {
+        if (typeof ModelLoadBalancer.refreshActivePool === 'function') {
+          ModelLoadBalancer.refreshActivePool();
+        }
+      } catch (e) {}
+
+      // 4. Token limit sync (non-blocking)
+      try {
+        TokenAgentService.syncProviderTokenLimit(pid).catch(() => {});
+      } catch (e) {}
+
+      // 5. Trigger live health audit (non-blocking)
+      try {
+        ProviderMonitorAgent.runAudit(true).catch(() => {});
+      } catch (e) {}
+
+      // 6. Record System Audit Log
+      try {
+        LogModel.recordSystemLog(
+          'PROVIDER_LIFECYCLE',
+          'SUCCESS',
+          `Provider '${provider.displayName}' (${pid}) registered successfully with ${modelsToSave.length} models.`,
+          { providerId: pid, modelsCount: modelsToSave.length, protocol: provider.protocol }
+        );
       } catch (e) {}
 
       const responsePayload = {
@@ -331,6 +414,7 @@ class ProviderController {
       const modelsToSave = models.map(m => {
         const modelSlug = m.modelId || m.id || 'model';
         const cleanId = `${id}_${modelSlug}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const autoClassified = ModelFamilyService.classifyModel(modelSlug);
         return {
           id: cleanId,
           providerId: id,
@@ -338,13 +422,15 @@ class ProviderController {
           modelId: modelSlug,
           modelName: m.modelName || modelSlug,
           isFree: true,
-          family: m.family || 'Custom',
-          coreSkill: m.coreSkill || 'General Text',
-          contextWindow: m.contextWindow || 128000,
+          family: (m.family && m.family !== 'Custom' && m.family !== 'General') ? m.family : autoClassified.family,
+          headFamilyId: autoClassified.headFamilyId,
+          coreSkill: (m.coreSkill && m.coreSkill !== 'General Text' && m.coreSkill !== 'General Reasoning') ? m.coreSkill : autoClassified.coreSkill,
+          skillCategoryId: autoClassified.skillCategoryId,
+          contextWindow: m.contextWindow || autoClassified.contextWindow || 128000,
           maxTokens: m.maxTokens || 4096,
-          latencyMs: m.latencyMs || 200,
+          latencyMs: m.latencyMs || autoClassified.defaultLatencyMs || 200,
           status: 'Active',
-          metadata: m.metadata || { description: 'Updated free tier model.' }
+          metadata: m.metadata || { description: `${autoClassified.family} free tier model.` }
         };
       });
       // Upsert logic: Preserve existing model states (tokensConsumed, combo links) when editing provider
@@ -365,9 +451,28 @@ class ProviderController {
       db.write(db.files.models, nonProviderModels.concat(mergedModelsToSave));
     }
 
+    // ── MULTI-WORKFLOW POST-UPDATE PIPELINE ──
     try {
-      const ActiveModelAgent = require('../services/ActiveModelAgent');
       ActiveModelAgent.runClassification();
+    } catch (e) {}
+    try {
+      ProxyEngineService.unblacklistProvider(id);
+    } catch (e) {}
+    try {
+      if (typeof ModelLoadBalancer.refreshActivePool === 'function') {
+        ModelLoadBalancer.refreshActivePool();
+      }
+    } catch (e) {}
+    try {
+      ProviderMonitorAgent.runAudit(true).catch(() => {});
+    } catch (e) {}
+    try {
+      LogModel.recordSystemLog(
+        'PROVIDER_LIFECYCLE',
+        'INFO',
+        `Provider '${updated.displayName}' (${id}) updated successfully.`,
+        { providerId: id, changes: Object.keys(body) }
+      );
     } catch (e) {}
 
     return res.json({ success: true, provider: ProviderModel.getById(id, true) });
@@ -377,8 +482,21 @@ class ProviderController {
     const { id } = req.params;
     ProviderModel.archive(id);
     try {
-      const ActiveModelAgent = require('../services/ActiveModelAgent');
       ActiveModelAgent.runClassification();
+    } catch (e) {}
+    try {
+      ProxyEngineService.unblacklistProvider(id);
+    } catch (e) {}
+    try {
+      ProviderMonitorAgent.runAudit(true).catch(() => {});
+    } catch (e) {}
+    try {
+      LogModel.recordSystemLog(
+        'PROVIDER_LIFECYCLE',
+        'INFO',
+        `Provider (${id}) moved to archive.`,
+        { providerId: id }
+      );
     } catch (e) {}
     return res.json({ success: true, message: 'Provider moved to Archive Folder in System page' });
   }
@@ -395,8 +513,21 @@ class ProviderController {
       return res.status(404).json({ success: false, message: 'Provider not found in archive' });
     }
     try {
-      const ActiveModelAgent = require('../services/ActiveModelAgent');
       ActiveModelAgent.runClassification();
+    } catch (e) {}
+    try {
+      ProxyEngineService.unblacklistProvider(id);
+    } catch (e) {}
+    try {
+      ProviderMonitorAgent.runAudit(true).catch(() => {});
+    } catch (e) {}
+    try {
+      LogModel.recordSystemLog(
+        'PROVIDER_LIFECYCLE',
+        'SUCCESS',
+        `Provider (${id}) restored from archive.`,
+        { providerId: id }
+      );
     } catch (e) {}
     return res.json({ success: true, message: 'Provider restored from Archive Folder' });
   }
@@ -405,16 +536,29 @@ class ProviderController {
     const { id } = req.params;
     ProviderModel.permanentDelete(id);
     try {
-      const ActiveModelAgent = require('../services/ActiveModelAgent');
       ActiveModelAgent.runClassification();
+    } catch (e) {}
+    try {
+      ProxyEngineService.unblacklistProvider(id);
+    } catch (e) {}
+    try {
+      ProviderMonitorAgent.runAudit(true).catch(() => {});
+    } catch (e) {}
+    try {
+      LogModel.recordSystemLog(
+        'PROVIDER_LIFECYCLE',
+        'WARN',
+        `Provider (${id}) permanently purged.`,
+        { providerId: id }
+      );
     } catch (e) {}
     return res.json({ success: true, message: 'Provider permanently purged' });
   }
 
   static async agentLookup(req, res) {
-    const { query } = req.body || {};
+    const { query, providerId, modelId, forceLive } = req.body || {};
     try {
-      const result = await ProviderAgentService.lookupProvider(query);
+      const result = await ProviderAgentService.lookupProvider(query, forceLive, { providerId, modelId });
       return res.json({
         success: true,
         ...result
@@ -427,6 +571,11 @@ class ProviderController {
     }
   }
 
+  static async getApiKey(req, res) {
+    const { id } = req.params;
+    const realKey = ProviderModel.getRealApiKey(id);
+    return res.json({ success: true, apiKey: realKey || '' });
+  }
 
   static async syncLimits(req, res) {
     try {
@@ -436,16 +585,36 @@ class ProviderController {
       const provider = providers.find(p => p.id === id);
       if (!provider) return res.status(404).json({ success: false, message: 'Provider not found' });
 
-      let limits = { rpm: 100, rpd: 5000, tpm: 200000, tpd: 2000000, ash: 0, asd: 0 };
+      const pid = (id || '').toLowerCase();
+      const pName = (provider.displayName || '').toLowerCase();
+      const pBase = (provider.baseUrl || '').toLowerCase();
 
-      // Scraping logic if Groq
-      if ((provider.baseUrl || '').includes('groq.com') || (provider.displayName || '').toLowerCase().includes('groq')) {
-        try {
-          // Based on live Groq limits logic (hard-coded for reliability per user approval constraint)
-          limits = { rpm: 30, rpd: 14400, tpm: 70000, tpd: 500000, ash: 7200, asd: 28800 };
-        } catch(e) {
-          console.error('Failed to parse Groq limits', e);
-        }
+      let limits = { rpm: 30, rpd: 1000, tpm: 60000, tpd: 500000, ash: 0, asd: 0 };
+
+      if (pid === 'gemini' || pName.includes('gemini') || pBase.includes('googleapis.com')) {
+        limits = { rpm: 15, rpd: 1500, tpm: 1000000, tpd: 5000000, ash: 0, asd: 0 };
+      } else if (pid === 'groq' || pName.includes('groq') || pBase.includes('groq.com')) {
+        limits = { rpm: 30, rpd: 14400, tpm: 70000, tpd: 500000, ash: 7200, asd: 28800 };
+      } else if (pid === 'cerebras' || pName.includes('cerebras') || pBase.includes('cerebras.ai')) {
+        limits = { rpm: 30, rpd: 14400, tpm: 60000, tpd: 500000, ash: 0, asd: 0 };
+      } else if (pid === 'openrouter' || pName.includes('openrouter') || pBase.includes('openrouter.ai')) {
+        limits = { rpm: 20, rpd: 200, tpm: 40000, tpd: 200000, ash: 0, asd: 0 };
+      } else if (pid === 'openai' || pName.includes('openai') || pBase.includes('openai.com')) {
+        limits = { rpm: 60, rpd: 10000, tpm: 200000, tpd: 2000000, ash: 0, asd: 0 };
+      } else if (pid === 'sambanova' || pName.includes('sambanova') || pBase.includes('sambanova.ai')) {
+        limits = { rpm: 10, rpd: 500, tpm: 30000, tpd: 100000, ash: 0, asd: 0 };
+      } else if (pid === 'deepseek' || pName.includes('deepseek') || pBase.includes('deepseek.com')) {
+        limits = { rpm: 60, rpd: 5000, tpm: 100000, tpd: 1000000, ash: 0, asd: 0 };
+      } else if (pid === 'mistral' || pName.includes('mistral') || pBase.includes('mistral.ai')) {
+        limits = { rpm: 10, rpd: 1000, tpm: 40000, tpd: 200000, ash: 0, asd: 0 };
+      } else if (pid === 'nvidia' || pName.includes('nvidia') || pBase.includes('nvidia.com')) {
+        limits = { rpm: 40, rpd: 2000, tpm: 60000, tpd: 500000, ash: 0, asd: 0 };
+      } else if (pid === 'together' || pName.includes('together') || pBase.includes('together.ai') || pBase.includes('together.xyz')) {
+        limits = { rpm: 10, rpd: 1000, tpm: 30000, tpd: 200000, ash: 0, asd: 0 };
+      } else if (pid === 'bynara' || pName.includes('bynara') || pBase.includes('bynara')) {
+        limits = { rpm: 60, rpd: 5000, tpm: 100000, tpd: 1000000, ash: 0, asd: 0 };
+      } else if (pid === 'ollama' || pName.includes('ollama') || pBase.includes('11434')) {
+        limits = { rpm: 0, rpd: 0, tpm: 0, tpd: 0, ash: 0, asd: 0 };
       }
 
       const updateData = {
@@ -478,19 +647,39 @@ class ProviderController {
       if (!responded) { responded = true; return res.status(status).json(body); }
     };
     try {
-      const parsedUrl = new URL(baseUrl.replace(/\\+$/,'') + '/models');
-      const transport = parsedUrl.protocol === 'https:' ? https : http;
+      const cleanBase = baseUrl.replace(/\/+$/, '');
+      const lowerBase = cleanBase.toLowerCase();
+      const isOllama = lowerBase.includes('localhost:11434') || lowerBase.includes('127.0.0.1:11434') || (provider.protocol && provider.protocol.toLowerCase().includes('ollama'));
+      const isGeminiNative = lowerBase.includes('googleapis.com') && !lowerBase.includes('/openai');
       const apiKey = ProviderModel.resolveRealApiKey(id, provider.apiKey, baseUrl);
+
+      let targetPingUrl = cleanBase.endsWith('/models') ? cleanBase : `${cleanBase}/models`;
+      if (isOllama) targetPingUrl = `${cleanBase}/api/tags`;
+      if (isGeminiNative) targetPingUrl = `${cleanBase}/models?key=${apiKey}`;
+
+      const parsedUrl = new URL(targetPingUrl);
+      const transport = parsedUrl.protocol === 'https:' ? https : http;
+      const headers = {
+        'User-Agent': 'FreeModelsClub-Ping/1.0',
+        'Accept': 'application/json'
+      };
+      if (apiKey && apiKey !== 'ollama-local') {
+        if (isGeminiNative) {
+          headers['x-goog-api-key'] = apiKey;
+        } else if (lowerBase.includes('anthropic.com')) {
+          headers['x-api-key'] = apiKey;
+          headers['anthropic-version'] = '2023-06-01';
+        } else if (!isOllama) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+      }
+
       const reqObj = transport.get({
         hostname: parsedUrl.hostname,
         port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
         path: parsedUrl.pathname + parsedUrl.search,
         method: 'GET',
-        headers: {
-          'User-Agent': 'FreeModelsClub-Ping/1.0',
-          'Accept': 'application/json',
-          ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
-        },
+        headers,
         timeout: 6000
       }, (probeRes) => {
         probeRes.on('data', () => {});

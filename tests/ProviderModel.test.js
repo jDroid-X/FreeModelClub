@@ -86,3 +86,58 @@ describe('ProviderModel — Key Resolution', () => {
     expect(resolved).toBe(realKey);
   });
 });
+
+describe('ProviderModel & AIModel — Metadata Retention & Auto-Classification', () => {
+  it('should preserve all rate limits and metadata fields in register()', () => {
+    const testProviderData = {
+      id: 'test_meta_provider_unit',
+      displayName: 'Test Meta Provider',
+      protocol: 'OpenAI Compatible',
+      baseUrl: 'https://api.testprovider.ai/v1',
+      apiKey: 'sk-test-meta-secret-12345',
+      rateLimitRPM: 120,
+      rateLimitRPD: 5000,
+      rateLimitTPM: 100000,
+      freeTierLimit: '500k Tokens / Day',
+      keyPrefix: 'sk-test-',
+      docsUrl: 'https://docs.testprovider.ai'
+    };
+
+    const registered = ProviderModel.register(testProviderData);
+    expect(registered).toBeDefined();
+    expect(registered.id).toBe('test_meta_provider_unit');
+    expect(registered.rateLimitRPM).toBe(120);
+    expect(registered.rateLimitRPD).toBe(5000);
+    expect(registered.rateLimitTPM).toBe(100000);
+    expect(registered.freeTierLimit).toBe('500k Tokens / Day');
+    expect(registered.keyPrefix).toBe('sk-test-');
+    expect(registered.docsUrl).toBe('https://docs.testprovider.ai');
+
+    // Clean up test provider
+    ProviderModel.delete('test_meta_provider_unit');
+  });
+
+  it('should auto-classify family and coreSkill when saving models via AIModel.saveBatch', () => {
+    const AIModel = require('../src/models/AIModel');
+    const sampleModels = [
+      {
+        id: 'test_meta_provider_unit_llama_3_3',
+        modelId: 'llama-3.3-70b-versatile',
+        providerId: 'test_meta_provider_unit'
+      }
+    ];
+
+    const saved = AIModel.saveBatch(sampleModels);
+    const target = saved.find(m => m.id === 'test_meta_provider_unit_llama_3_3');
+    expect(target).toBeDefined();
+    expect(target.family).toBe('Llama Family');
+    expect(target.headFamilyId).toBe('llama');
+    expect(target.coreSkill).toBeDefined();
+    expect(target.contextWindow).toBeGreaterThan(0);
+
+    // Clean up test model from DB
+    const allModels = db.read(db.files.models).filter(m => m.id !== 'test_meta_provider_unit_llama_3_3');
+    db.write(db.files.models, allModels);
+  });
+});
+

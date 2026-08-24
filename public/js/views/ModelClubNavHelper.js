@@ -6,10 +6,11 @@
 
 class ModelClubNavHelper {
   static renderNavTreeHtml(combos, allProviders, familyGroups, skillGroups, currentViewMode, selectedHeader, expandedBranches) {
+    const activeProvs = (allProviders || []).filter(p => p.isActive && !p.isArchived && p.displayName && p.displayName !== 'Unnamed Provider' && p.baseUrl);
     const jdroidx = (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroidxyz'))
       || (combos || []).find(c => c.name && c.name.toLowerCase().includes('jdroid'))
       || { name: 'jDroidxyz-combo-agent', id: 'combo_1785085494991_5mmp0' };
-    const modelClubCombos = (combos || []).filter(c => c.id !== jdroidx.id && c.name !== jdroidx.name);
+    const modelClubCombos = (combos || []).filter(c => c.id !== jdroidx.id && c.name !== jdroidx.name && c.isActive !== false);
 
     return `
       <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem;">
@@ -64,11 +65,11 @@ class ModelClubNavHelper {
         <!-- Active Providers Branch -->
         <div style="display: flex; flex-direction: column; gap: 2px;">
           <button class="btn btn-secondary btn-xs" style="justify-content: space-between; text-align: left; ${currentViewMode === 'providers' ? 'border-color: var(--primary-light); font-weight: 700;' : ''}" onclick="ModelClubView.toggleBranch('providers')">
-            <span><i class="fa-solid fa-server" style="color: var(--primary-light); margin-right: 6px;"></i> Active Providers (${(allProviders||[]).length})</span>
+            <span><i class="fa-solid fa-server" style="color: var(--primary-light); margin-right: 6px;"></i> Active Providers (${(activeProvs).length})</span>
             <i class="fa-solid ${expandedBranches.providers ? 'fa-chevron-down' : 'fa-chevron-right'}" style="font-size: 0.65rem;"></i>
           </button>
           ${expandedBranches.providers ? `<div style="display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 1px dashed var(--border-color); margin-left: 6px; max-height: 120px; overflow-y: auto;">
-            ${(allProviders||[]).map(p => `<button class="btn btn-secondary btn-xs" style="justify-content: flex-start; padding: 2px 6px; font-size: 0.7rem; border: none; background: transparent; color: ${selectedHeader === p.id ? 'var(--primary-light)' : 'var(--text-muted)'}; text-align: left;" onclick="ModelClubView.switchView('providers', '${encodeURIComponent(p.id)}')">• ${p.displayName || p.id}</button>`).join('')}
+            ${(activeProvs).map(p => `<button class="btn btn-secondary btn-xs" style="justify-content: flex-start; padding: 2px 6px; font-size: 0.7rem; border: none; background: transparent; color: ${selectedHeader === p.id ? 'var(--primary-light)' : 'var(--text-muted)'}; text-align: left;" onclick="ModelClubView.switchView('providers', '${encodeURIComponent(p.id)}')">• ${p.displayName || p.id}</button>`).join('')}
           </div>` : ''}
         </div>
 

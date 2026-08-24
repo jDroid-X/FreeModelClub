@@ -4,6 +4,23 @@
 ================================================================================
 
 --------------------------------------------------------------------------------
+[2026-08-23 14:00:00] | Providers Live Metadata Reflection & Reactive Event Bus Integration
+--------------------------------------------------------------------------------
+Change Request   : Deep-dive audit: ensure newly registered providers and complete metadata (RPM, RPD, TPM, key prefix, docs url) reflect live on Providers cards and matrix without hard reload.
+Target Screen    : Providers View, ProvidersView.js
+Modified Files   : 
+  - public/js/views/ProvidersView.js
+  - src/models/ProviderModel.js
+  - src/controllers/ProviderController.js
+  - requirement/providers.txt
+Description      :
+  1. Live Store Event Listeners: Subscribed ProvidersView to AppStore (PROVIDER_STATE_CHANGED, MODELS_MUTATED) and fmc_data_changed to re-render in place upon changes.
+  2. Detailed Metadata Badges: Displayed live RPM/RPD rate limits, total vs free model counts, and key prefixes on provider cards.
+  3. Seamless API Mapping: Integrated ProviderController.getAll() with enriched activeModelCount and resolved quotas.
+Status           : PASS (100% Tested & Verified)
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
 [2026-08-21 14:10:00] | Providers Filter Implementation & Search Clear Button
 --------------------------------------------------------------------------------
 Change Request   : Deep-dive audit on Providers screen, fix filterList bug, add 1-click search clear.
@@ -222,11 +239,75 @@ Files Modified:
 	- requirement/providers.txt
 =========================================================
 ================================================================================
-Date: 2026-08-21 13:49:00
-Requested Change: Provider Agent Human-In-The-Loop Deep-Dive & Due Diligence. Enabled cross-view auto-navigation in RegistrationView.applyProviderData() and RegistrationView.applyAgentProviderData() so that triggering Provider Agent from any screen (ProvidersView, SettingsView, ROCAS Memo) seamlessly routes to /registration and stages discovered free models without throwing DOM null references. Added direct Provider Agent button to ProvidersView.js header and verified live API endpoint /api/providers/agent-lookup.
-Target Screen: Providers View, Registration View, ProviderAgent.js, ProviderAgentService.js
-Modified Files: public/js/views/ProvidersView.js, public/js/views/RegistrationView.js, public/js/agents/ProviderAgent.js, src/services/ProviderAgentService.js, requirement/providers.txt
+Date: 2026-08-23 13:16:00
+Requested Change: Provider Agent Live Web & AI Search Engine Attached Model Engine Integration & Unlinked Key Protection.
+Target Screen: Provider Agent Popup Modal, Registration View, Providers View
 Status: PASS
+
+Change Description:
+1. Added 'PROVIDER / COMBO:' and 'TARGET ATTACHED MODEL ENGINE:' dropdowns to Provider Agent popup modal (ProviderAgent.js), dynamically populating available providers, combos, and models with default support for GPT-4o and Gemini 2.5 Flash.
+2. Built dynamic unlinked API Key warning badge and error recovery notice in ProviderAgent.js.
+3. Implemented ProviderController.agentLookup backend handler in src/controllers/ProviderController.js.
+4. Refactored ProviderAgentService.lookupProvider and performOnlineAiSearch to enforce Rule 11 (mandatory live DuckDuckGo web scraping + LLM extraction) and route search requests through the attached model engine.
+5. Upgraded ApiService.lookupProviderAgent in public/js/services/api.js to accept object payloads with providerId and modelId.
+
+Modified Files:
+- public/js/agents/ProviderAgent.js
+- src/controllers/ProviderController.js
+- src/services/ProviderAgentService.js
+- public/js/services/api.js
+- requirement/providers.txt
+================================================================================
+Date: 2026-08-23 15:30:00
+Requested Change: Provider Card Action Buttons Relative Filter Navigation, Decrypted Real Key Copy/Edit, and Token Quota / Rate Limits Modal Dynamic Specs.
+Target Screen: Providers View, Model Club View, Reports View, Playground View
+Status: PASS
+
+Change Description:
+1. Provider Card Action Icons Relative Navigation:
+   - Layer Group (Model Club): Navigates to /model-club with ModelClubView.filterByProvider(providerId) pre-filtering models for the selected provider.
+   - Bar Chart (Reports): Navigates to /reports with ReportsView.filterByProvider(providerId) pre-filtering diagnostic logs for the selected provider.
+   - Play (Playground): Navigates to /playground with PlaygroundView.selectProvider(providerId) selecting the active provider and its primary model.
+   - Context Tooltips: Standardized all 10 card action button tooltips with dynamic provider display names.
+2. Real Decrypted Key Management:
+   - Fixed ProviderModel.resolveRealApiKey to eliminate cross-provider key inheritance and prevent fallback cross-pollination.
+   - Implemented ProviderModel.getRealApiKey and GET /api/providers/:id/key endpoint.
+   - Updated ProvidersView.copyProviderKey and ApiService.getProviderApiKey to fetch and copy the true decrypted API key.
+   - Enhanced ProvidersView.promptEditApiKey to pre-fill the modal with the provider's actual unmasked key.
+3. Configure Token Quota & Rate Limits Modal (Image 2 Fixes):
+   - Modal Title: Updated to dynamically include the provider name: 'Configure Token Quota & Rate Limits — [Provider Name]'.
+   - Official Docs URL: Replaced hardcoded Groq URL with provider-specific rate limits docs link (Gemini, Groq, OpenRouter, OpenAI, Cerebras, SambaNova, DeepSeek, Mistral, NVIDIA, Together, Bynara, Ollama).
+   - Non-Zero Intelligent Defaults: Auto-populated realistic rate limit defaults (RPM, RPD, TPM, TPD, ASH, ASD) from provider profiles and official specs.
+   - Dynamic Auto-Sync: Wired Auto-Sync button to ProviderController.syncLimits and ApiService.syncProviderLimits for live rate limits profile retrieval.
+
+Modified Files:
+- public/js/views/ProvidersView.js
+- public/js/views/ModelClubView.js
+- public/js/views/ReportsView.js
+- public/js/views/PlaygroundView.js
+- public/js/services/api.js
+- src/models/ProviderModel.js
+- src/controllers/ProviderController.js
+- src/routes/providerRoutes.js
+- requirement/providers.txt
+================================================================================
+Date: 2026-08-23 15:33:00
+Requested Change: Fix missing sidebar in Providers section due to root container #app overwrite.
+Target Screen: Providers View, Main SPA Layout Shell
+Status: PASS
+
+Change Description:
+1. Root Container Isolation:
+   - Discovered that multiple methods in ProvidersView (`switchTab`, `setMatrixSort`, `wakeUpAllProviders`, `updateBlacklistSleepDuration`, `promptEditApiKey`, `configureQuota`) were calling `render(document.getElementById('app'))`.
+   - Since `#app` is the outer container hosting `<aside class="sidebar">`, `<header class="top-header-bar">`, and `<div id="page-view-content">`, passing `#app` directly wiped out the sidebar and top navigation.
+2. Architecture Standard Implementation:
+   - Added `ProvidersView.getContainer()` returning `#page-view-content` (or `#main-content`).
+   - Added `ProvidersView.refresh()` to cleanly re-hydrate only the inner page content pane without destroying the sidebar or header shell.
+   - Refactored all internal re-renders in `ProvidersView` to use `ProvidersView.refresh()`.
+
+Modified Files:
+- public/js/views/ProvidersView.js
+- requirement/providers.txt
 ================================================================================
 
 

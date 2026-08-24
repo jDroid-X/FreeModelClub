@@ -872,12 +872,32 @@ class RegistrationView {
       return;
     }
 
+    const desc = document.getElementById('reg-prov-desc')?.value || '';
+    const keyPrefix = document.getElementById('reg-prov-key-prefix')?.value || '';
+    const keyHelp = document.getElementById('reg-prov-key-help')?.value || '';
+    const keyUrl = document.getElementById('reg-prov-key-url')?.value || '';
+    const rpm = document.getElementById('reg-prov-rpm')?.value || '';
+    const rpd = document.getElementById('reg-prov-rpd')?.value || '';
+    const tpm = document.getElementById('reg-prov-tpm')?.value || '';
+    const tpd = document.getElementById('reg-prov-tpd')?.value || '';
+    const quota = document.getElementById('reg-prov-quota')?.value || '';
+
     const payload = {
       id,
       displayName: name,
       protocol: proto,
       baseUrl: url,
       apiKey: key,
+      description: desc,
+      keyPrefix,
+      apiKeyHelp: keyHelp,
+      apiKeyUrl: keyUrl,
+      rateLimitRPM: rpm ? parseInt(rpm, 10) : undefined,
+      rateLimitRPD: rpd ? parseInt(rpd, 10) : undefined,
+      rateLimitTPM: tpm ? parseInt(tpm, 10) : undefined,
+      rateLimitTPD: tpd ? parseInt(tpd, 10) : undefined,
+      freeTierQuota: quota,
+      freeTierLimit: quota,
       isActive: true,
       models: this.stagedModels
     };
@@ -901,16 +921,72 @@ class RegistrationView {
       }
 
       if (res && (res.success || res.status === 'success' || res.provider)) {
+        sessionStorage.removeItem('fmc_draft_models');
         ModalDialog.showNotification(`Provider '${name}' registered successfully with ${this.stagedModels.length} models!`, 'success');
-        if (window.AppStore && window.AppStore.emit) {
-          window.AppStore.emit('PROVIDER_STATE_CHANGED');
-          window.AppStore.emit('MODELS_MUTATED');
+
+        // Optimistically update local provider and model cache for instant left-rail hydration
+        const existingProvIdx = this.providersList.findIndex(p => p.id === id);
+        const registeredProv = res.provider || payload;
+        if (existingProvIdx >= 0) {
+          this.providersList[existingProvIdx] = { ...this.providersList[existingProvIdx], ...registeredProv, isActive: true };
+        } else {
+          this.providersList.push({ ...registeredProv, isActive: true });
         }
+
+        const freeCount = (this.stagedModels || []).filter(m => m.isFree !== false).length;
+        const totalCount = (this.stagedModels || []).length;
+        const topModels = (this.stagedModels || []).slice(0, 8);
+        const remainingCount = totalCount - topModels.length;
+
+        if (window.AppStore && window.AppStore.emit) {
+          window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId: id, providerName: name });
+          window.AppStore.emit('MODELS_MUTATED', { providerId: id, count: totalCount });
+          window.AppStore.emit('PLAYGROUND_SESSION_READY', { 
+            providerId: id, 
+            providerName: name, 
+            modelId: this.stagedModels[0]?.id || this.stagedModels[0]?.modelId 
+          });
+        }
+
+        const modelsListHtml = topModels.map(m => `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; font-size: 0.72rem; border-left: 2px solid var(--accent-cyan);">
+            <span style="font-family: monospace; color: var(--text-main); font-weight: 600;">${m.id || m.modelId}</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span class="badge badge-cyan" style="font-size: 0.6rem; padding: 1px 4px;">${m.family || 'Model'}</span>
+              <span class="badge badge-emerald" style="font-size: 0.6rem; padding: 1px 4px;">${m.coreSkill || 'General'}</span>
+              <span style="color: var(--text-muted); font-size: 0.62rem;">${m.contextWindow ? (m.contextWindow >= 1000 ? Math.round(m.contextWindow/1000) + 'k' : m.contextWindow) : '32k'}</span>
+            </div>
+          </div>
+        `).join('');
+
+        const detailsHtml = `
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Telemetry Badges Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span class="badge badge-indigo" style="font-size: 0.68rem;"><i class="fa-solid fa-code-fork"></i> ${proto}</span>
+                <span class="badge badge-emerald" style="font-size: 0.68rem;"><i class="fa-solid fa-gift"></i> ${freeCount} Free / ${totalCount} Total</span>
+              </div>
+              <span style="font-size: 0.7rem; color: var(--accent-cyan); font-family: monospace;">Base: ${url.replace(/^https?:\/\//, '').substring(0, 32)}</span>
+            </div>
+
+            <!-- Staged Models Preview List Box -->
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">
+              Registered Model Catalog (${totalCount} Models):
+            </div>
+            <div style="max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px;">
+              ${modelsListHtml}
+              ${remainingCount > 0 ? `<div style="text-align: center; color: var(--text-muted); font-size: 0.68rem; padding: 2px;">+ ${remainingCount} more active models ready in Catalog</div>` : ''}
+            </div>
+          </div>
+        `;
 
         ModalDialog.showOptionModal({
           title: `Provider Registered: ${name}`,
-          message: `Successfully registered provider <strong>${name}</strong> with ${this.stagedModels.length} active models. What would you like to do next?`,
+          message: `Successfully registered provider <strong>${name}</strong> with ${totalCount} active models. What would you like to do next?`,
           icon: 'fa-circle-check',
+          detailsHtml: detailsHtml,
+          maxWidth: '560px',
           options: [
             {
               id: 'go_providers',
@@ -918,8 +994,25 @@ class RegistrationView {
               type: 'secondary',
               icon: 'fa-network-wired',
               action: () => {
-                // View only — navigate to providers panel
-                app.navigate('providers');
+                if (window.AppStore && window.AppStore.emit) {
+                  window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId: id, providerName: name });
+                  window.AppStore.emit('MODELS_MUTATED', { providerId: id, count: totalCount });
+                }
+                if (window.ProvidersView && typeof window.ProvidersView.focusProvider === 'function') {
+                  if (window.app && window.app.navigate) window.app.navigate('providers');
+                  setTimeout(() => window.ProvidersView.focusProvider(id), 200);
+                } else if (window.app && window.app.navigate) {
+                  window.app.navigate('providers');
+                  setTimeout(() => {
+                    const card = document.getElementById(`provider-card-${id}`);
+                    if (card) {
+                      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      card.style.boxShadow = '0 0 20px var(--accent-cyan)';
+                      card.style.borderColor = 'var(--accent-cyan)';
+                      setTimeout(() => { card.style.boxShadow = ''; card.style.borderColor = ''; }, 2500);
+                    }
+                  }, 300);
+                }
               }
             },
             {
@@ -928,12 +1021,27 @@ class RegistrationView {
               type: 'primary',
               icon: 'fa-comments',
               action: () => {
-                // Auto-save View activity: refresh providers state before navigating
-                if (window.AppStore && window.AppStore.emit) {
-                  window.AppStore.emit('PROVIDER_STATE_CHANGED');
-                  window.AppStore.emit('MODELS_MUTATED');
+                const targetModelId = this.stagedModels[0]?.id || this.stagedModels[0]?.modelId || '';
+                if (window.PlaygroundView) {
+                  window.PlaygroundView._pendingSessionPreset = { providerId: id, modelId: targetModelId };
                 }
-                app.navigate('playground');
+                if (window.AppStore && window.AppStore.emit) {
+                  window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId: id, providerName: name });
+                  window.AppStore.emit('MODELS_MUTATED', { providerId: id, count: totalCount });
+                  window.AppStore.emit('PLAYGROUND_SESSION_READY', { 
+                    providerId: id, 
+                    providerName: name, 
+                    modelId: targetModelId 
+                  });
+                }
+                if (window.app && window.app.navigate) {
+                  window.app.navigate('playground');
+                }
+                setTimeout(() => {
+                  if (typeof ModalDialog !== 'undefined') {
+                    ModalDialog.showNotification(`Playground active with ${name} (${targetModelId || 'Default Model'})`, 'success');
+                  }
+                }, 400);
               }
             },
             {
@@ -943,21 +1051,54 @@ class RegistrationView {
               isRecommended: true,
               icon: 'fa-wand-magic-sparkles',
               action: () => {
-                // Auto-save View + Start activities: refresh state + preload playground session
                 if (window.AppStore && window.AppStore.emit) {
-                  window.AppStore.emit('PROVIDER_STATE_CHANGED');
-                  window.AppStore.emit('MODELS_MUTATED');
+                  window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId: id, providerName: name });
+                  window.AppStore.emit('MODELS_MUTATED', { providerId: id, count: totalCount });
                   window.AppStore.emit('PLAYGROUND_SESSION_READY', { providerId: id, providerName: name });
                 }
-                app.navigate('model-club');
+                const stagedModelIds = (this.stagedModels || []).map(m => m.id || `${id}_${m.modelId}`);
+                const defaultComboName = `${id.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}-combo`;
+                if (window.app && window.app.navigate) {
+                  window.app.navigate('model-club');
+                }
                 setTimeout(() => {
-                  if (window.ModelClubView && window.ModelClubView.openComboStudio) {
-                    window.ModelClubView.openComboStudio(null, (this.stagedModels || []).map(m => m.id), `${id}-fast-combo`);
+                  if (window.ModelClubView) {
+                    if (typeof window.ModelClubView.openCreateComboStudio === 'function') {
+                      window.ModelClubView.openCreateComboStudio(stagedModelIds, defaultComboName);
+                    } else if (typeof window.ModelClubView.openComboStudio === 'function') {
+                      window.ModelClubView.openComboStudio(null, stagedModelIds, defaultComboName);
+                    }
                   }
                 }, 300);
               }
+            },
+            {
+              id: 'register_another',
+              label: 'Register Another AI Provider',
+              type: 'secondary',
+              icon: 'fa-plus',
+              action: () => {
+                RegistrationView.resetRegistrationForm();
+                if (typeof ModalDialog !== 'undefined') {
+                  ModalDialog.showNotification('Registration form reset. Ready for new provider.', 'info');
+                }
+              }
+            },
+            {
+              id: 'export_json',
+              label: 'Export Configuration (.json)',
+              type: 'secondary',
+              icon: 'fa-file-export',
+              action: () => {
+                RegistrationView.exportProviderJson(payload, this.stagedModels || []);
+              }
             }
-          ]
+          ],
+          onCancel: () => {
+            if (typeof ModalDialog !== 'undefined') {
+              ModalDialog.showNotification(`Provider ${name} registered. Ready for next operation.`, 'info');
+            }
+          }
         });
       } else {
         ModalDialog.showNotification(`Registration Failed: ${res?.message || res?.error || 'Error saving provider.'}`, 'error');
@@ -969,6 +1110,49 @@ class RegistrationView {
         saveBtn.disabled = false;
       }
       ModalDialog.showNotification(`Registration Error: ${err.message}`, 'error');
+    }
+  }
+
+  static resetRegistrationForm() {
+    this.stagedModels = [];
+    const fields = [
+      'reg-prov-id', 'reg-prov-name', 'reg-prov-desc', 'reg-prov-url',
+      'reg-prov-protocol', 'reg-prov-key', 'reg-prov-key-help', 'reg-prov-key-url',
+      'reg-prov-key-prefix', 'reg-prov-rpm', 'reg-prov-rpd', 'reg-prov-tpm', 'reg-prov-tpd', 'reg-prov-quota'
+    ];
+    fields.forEach(fId => {
+      const el = document.getElementById(fId);
+      if (el) {
+        if (fId === 'reg-prov-protocol') el.value = 'OpenAI Compatible';
+        else if (fId === 'reg-prov-rpm') el.value = '60';
+        else if (fId === 'reg-prov-quota') el.value = 'Free Tier (Zero Cost)';
+        else el.value = '';
+      }
+    });
+    this.renderStagedModels();
+    sessionStorage.removeItem('fmc_draft_models');
+    
+    // Focus search input
+    const paInput = document.getElementById('pa-search-input');
+    if (paInput) paInput.focus();
+  }
+
+  static exportProviderJson(providerData, models = []) {
+    const exportObj = {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      provider: providerData,
+      models: models
+    };
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(providerData.id || 'provider').toLowerCase()}-registration-export.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (typeof ModalDialog !== 'undefined') {
+      ModalDialog.showNotification(`Exported configuration for '${providerData.displayName || providerData.name || providerData.id}'`, 'success');
     }
   }
 

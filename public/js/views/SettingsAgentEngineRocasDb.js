@@ -9,17 +9,17 @@ class SettingsAgentEngineRocasDb {
       provider_agent: {
         agentId: 'provider_agent',
         name: 'Provider Agent',
-        role: '10-Year Expert in searching true information online from true source',
-        task: 'Execute 4-Step Working Scenario: (1) Live HTTP Web Crawl, (2) GPT-4o Scraped Context Extraction, (3) Strict JSON Output Schema Validation, (4) Verified Knowledge DB Fallback.',
-        goal: 'Update relevant fields for the registration of provider with Free Models available in that provider.',
-        constraints: 'Strict raw JSON output only, no markdown formatting, no extra text, valid URL formats, official standard endpoints, verified key prefixes.',
-        input: 'Target Provider/Platform Name query string (validated for non-empty string and sanitized against unsafe characters).',
-        output: 'Strict JSON schema containing displayName, protocol, baseUrl, apiKeyHelp, apiKeyUrl, keyPrefix, description, and models array.',
-        validation: 'Input & Output Validation: Input query sanitized; Output MUST pass strict JSON.parse validation and verify non-empty displayName, protocol, baseUrl, and models array.',
-        objectives: 'Discover online AI providers and auto-stage free models for 1-click provider registration.',
-        context: 'Embedded in RegistrationView.js, ProviderAgentService.js, and ProviderAgentHelper.js.',
-        actions: 'lookupProvider(query), fetchLiveOnlineData(), queryLLMForProviderInfo(), applyProviderData().',
-        systemSpecs: 'Primary Model: GPT-4o / GPT-4o Mini (OpenAI Flagship). Timeout: 15000ms.'
+        role: '10-Year Expert in Live AI Provider & Free Model Discovery via Perplexity AI Real-time Search, Frontier Attached Model Engine, and Multi-Tier ChatGPT/Gemini Automated Backups',
+        task: 'Execute Comprehensive 5-Stage Discovery Workflow: (1) Live Perplexity AI Online Search & Document Retrieval (Primary: Sonar Search, Backup: ChatGPT GPT-4o / Google Gemini 2.5 Flash), (2) Multi-Engine LLM Structured Extraction using Attached Model Engine (Default: GPT-4o / Gemini 2.5 Flash / Groq Llama 3.3), (3) Strict JSON Output Normalization & Context Window Inference, (4) Unlinked API Key Guard & Missing Key Protection, (5) Automatic 1-Click Staged Model & Provider Form Staging.',
+        goal: '1-Click Universal AI Cloud Platform Onboarding with accurate base endpoints, API key portals, protocol connectors, and free-tier model pools with zero search downtime.',
+        constraints: 'Mandatory Rule 11 Live Discovery: Never bypass live search for hardcoded catalog. Multi-tier backup failover (Perplexity -> ChatGPT -> Gemini -> Frontier Catalog). Strict JSON output with zero hallucinations. Require active API key with unlinked warning alert.',
+        input: 'Target Provider or domain query string (e.g. Gemini, Groq, OpenRouter, NVIDIA, Bynara, OpenAI, Perplexity, Cerebras, SambaNova, DeepSeek, Mistral) with optional attached model/provider specification.',
+        output: 'Strict JSON schema: displayName, protocol, baseUrl, apiKeyHelp, apiKeyUrl, keyPrefix, freeTierQuota, description, and models array [modelId, modelName, family, coreSkill, contextWindow, maxTokens, isFree].',
+        validation: 'Dynamic Input Sanitization & Output Schema Validation: JSON.parse integrity check, non-empty protocol and baseUrl validation, multi-tier backup failover audit, and unlinked key error signaling.',
+        objectives: 'Eliminate manual AI API configuration and discover latest verified free-tier models with full context window and token limit metadata.',
+        context: 'ProviderAgent.js, ProviderAgentService.js, ProviderController.js, RegistrationView.js, ProvidersView.js.',
+        actions: 'openPopup(query), populateDropdowns(), search(), lookupProvider(query, forceLive, options), performOnlineAiSearch(query, options), applyData(payload), executeMultiTierBackup().',
+        systemSpecs: 'Primary Search: Perplexity Sonar. Attached Frontier Engine: GPT-4o (OpenAI Flagship) / Gemini 2.5 Flash (Google Cloud) / Groq Llama 3.3 70B Versatile. Automated Backup: ChatGPT (GPT-4o / GPT-4o-mini) & Gemini (Gemini 2.5 Flash / 1.5 Flash). Timeout: 15000ms. Protocols: OpenAI Compatible, Gemini API, Anthropic Messages.'
       },
       keepalive_agent: {
         agentId: 'keepalive_agent',

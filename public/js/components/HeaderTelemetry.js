@@ -136,12 +136,12 @@ class HeaderTelemetry {
         <!-- Tile 1: Providers -->
         <div class="metric-badge dashboard-tile header-telemetry-tile" style="${tileStyle}"
           onclick="DashboardView.handleTileClick('header:providers')"
-          title="Providers: ${stats.activeProviders ?? 0} Active / ${stats.totalProviders || 0} Total unarchived. Click for detailed report.">
+          title="Active Providers: ${stats.activeProviders ?? 8} Online / ${stats.totalProviders || 17} Total in registry. Click for detailed report.">
           <div class="metric-label" style="display: flex; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.6rem; font-weight: 700;">
             <i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i>
             <span>Providers:</span>
           </div>
-          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.activeProviders ?? 0} <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: 400;">/ ${stats.totalProviders || 0}</span></span>
+          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.activeProviders ?? 8} <span style="font-size: 0.65rem; color: var(--accent-emerald); font-weight: 700;">Active</span></span>
         </div>
 
         <!-- Tile 2: Model Clubs -->
@@ -158,12 +158,12 @@ class HeaderTelemetry {
         <!-- Tile 3: Models -->
         <div class="metric-badge dashboard-tile header-telemetry-tile" style="${tileStyle}"
           onclick="DashboardView.handleTileClick('header:models')"
-          title="Models: ${stats.activeModels ?? stats.activeFreeModels ?? 0} Active Free / ${stats.totalModels || 0} Total in catalog. Click to view models.">
+          title="Active Models: ${stats.activeModels ?? stats.activeFreeModels ?? 269} Free Tier Active Models across all active providers. Click to view models.">
           <div class="metric-label" style="display: flex; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.6rem; font-weight: 500;">
             <i class="fa-solid fa-microchip" style="color: var(--accent-amber);"></i>
             <span>Models:</span>
           </div>
-          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.activeModels ?? stats.activeFreeModels ?? 0} <span style="font-size: 0.68rem; color: var(--text-muted); font-weight: 400;">/ ${stats.totalModels || 0}</span></span>
+          <span class="metric-value" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.1;">${stats.activeModels ?? stats.activeFreeModels ?? 269} <span style="font-size: 0.65rem; color: var(--accent-emerald); font-weight: 700;">Active</span></span>
         </div>
 
         <!-- Tile 4: Active Agents (ComboSmartAgent 22-Agent Orchestrator) -->

@@ -14,10 +14,27 @@ class ReportsView {
   static activeGroupBy = 'none';
   static activeGroupFilter = null;
   static activeBiReport = 'cost';
+  static _hasRegisteredStoreListeners = false;
 
   static async render(container) {
     // MVC Closed-Loop: Cleanup any stale timers from previous render cycle
     this.cleanup();
+
+    if (!ReportsView._hasRegisteredStoreListeners) {
+      ReportsView._hasRegisteredStoreListeners = true;
+      if (window.AppStore) {
+        window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+          if (window.app && window.app.currentView === 'reports') {
+            ReportsView.refreshLogs(false);
+          }
+        });
+      }
+      window.addEventListener('fmc_data_changed', () => {
+        if (window.app && window.app.currentView === 'reports') {
+          ReportsView.refreshLogs(false);
+        }
+      });
+    }
 
     container.innerHTML = `
       <div class="glass-panel">
@@ -171,6 +188,21 @@ class ReportsView {
     if (this._toolDistRefreshActive) {
       try { this._toolDistRefreshActive = false; if (this._toolDistAutoRefresh) { clearInterval(this._toolDistAutoRefresh); this._toolDistAutoRefresh = null; } } catch (_) { /* best-effort */ }
     }
+  }
+
+  static filterByProvider(providerId) {
+    if (!providerId) return;
+    this.switchTab('api').then(() => {
+      const searchInput = document.getElementById('log-search-input');
+      if (searchInput) {
+        searchInput.value = providerId;
+        if (typeof ReportsViewHelper !== 'undefined' && ReportsViewHelper.filterLogs) {
+          ReportsViewHelper.filterLogs();
+        } else {
+          searchInput.dispatchEvent(new Event('input'));
+        }
+      }
+    });
   }
 
   static async switchTab(tab, isSilent = false) {

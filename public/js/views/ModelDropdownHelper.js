@@ -76,16 +76,14 @@ class ModelDropdownHelper {
       html += '</optgroup>';
     }
     
-    if (providers.length > 0) {
+    const activeProviders = (providers || []).filter(p => p.isActive && !p.isArchived && p.displayName && p.displayName !== 'Unnamed Provider');
+    if (activeProviders.length > 0) {
       // Sort providers with Google Gemini as #1 first preference, followed by active status
-      const sortedProviders = [...providers].sort((a, b) => {
+      const sortedProviders = [...activeProviders].sort((a, b) => {
         const isGeminiA = (a.id === 'gemini' || a.id === 'prov_gemini' || ((a.displayName || '').toLowerCase().includes('gemini')));
         const isGeminiB = (b.id === 'gemini' || b.id === 'prov_gemini' || ((b.displayName || '').toLowerCase().includes('gemini')));
         if (isGeminiA && !isGeminiB) return -1;
         if (!isGeminiA && isGeminiB) return 1;
-
-        if (a.isActive && !b.isActive) return -1;
-        if (!a.isActive && b.isActive) return 1;
         return 0;
       });
 
@@ -97,7 +95,7 @@ class ModelDropdownHelper {
         
         let countHtml = '';
         if (allModels && allModels.length > 0) {
-           const activeCount = allModels.filter(m => m.providerId === val || m.providerId === `prov_${val}` || val === `prov_${m.providerId}` || (m.provider && m.provider === val)).length;
+           const activeCount = allModels.filter(m => m.isActive !== false && (m.providerId === val || m.providerId === `prov_${val}` || val === `prov_${m.providerId}` || (m.provider && m.provider === val))).length;
            if (activeCount > 0) countHtml = ` (${activeCount})`;
         }
         return `<option value="${val}" ${selected}>${name}${countHtml}</option>`;
@@ -128,7 +126,7 @@ class ModelDropdownHelper {
       filteredModels = [{ id: providerId, modelName: `⚡ Auto-Route: ${comboName}`, providerName: 'Combo Dynamic Router' }];
       if (comboObj && Array.isArray(comboObj.modelsList || comboObj.models)) {
         const memberIds = comboObj.modelsList || comboObj.models;
-        const memberModels = allModels.filter(m => memberIds.includes(m.id) || memberIds.includes(m.modelId));
+        const memberModels = (allModels || []).filter(m => m.isActive !== false && (memberIds.includes(m.id) || memberIds.includes(m.modelId)));
         if (memberModels.length > 0) {
           // Sort member models by highest/latest on top
           memberModels.sort((a, b) => ModelDropdownHelper.rankModelTier(b) - ModelDropdownHelper.rankModelTier(a));
@@ -136,8 +134,9 @@ class ModelDropdownHelper {
         }
       }
     } else {
-      // Filter models that strictly belong to the selected provider
-      filteredModels = allModels.filter(m => {
+      // Filter models that strictly belong to the selected provider and are active
+      filteredModels = (allModels || []).filter(m => {
+        if (m.isActive === false) return false;
         if (m.providerId === providerId || (m.provider && m.provider === providerId)) return true;
         if (providerId && (m.providerId === `prov_${providerId}` || providerId === `prov_${m.providerId}`)) return true;
         return false;

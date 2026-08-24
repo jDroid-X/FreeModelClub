@@ -11,59 +11,113 @@ class ToolIdentificationService {
    * Each entry: { displayName, icon (FontAwesome), color (hex), patterns (regex fragments) }
    */
   static KNOWN_TOOLS = {
-    'IDE-Tool-1': {
-      displayName: 'IDE Tool 1',
-      icon: 'fa-brands fa-vs-code',
+    'vscode': {
+      displayName: 'VS Code',
+      icon: 'fa-solid fa-code',
       color: '#007ACC',
       patterns: ['vscode', 'copilot', 'github-copilot', 'visual-studio-code', 'ide-tool-1']
     },
-    'Desktop-App-1': {
-      displayName: 'Desktop App 1',
-      icon: 'fa-solid fa-robot',
-      color: '#D97706',
-      patterns: ['claude-desktop', 'claude_desktop', 'anthropic-client', 'desktop-app-1']
-    },
-    'IDE-Tool-2': {
-      displayName: 'IDE Tool 2',
+    'cursor': {
+      displayName: 'Cursor IDE',
       icon: 'fa-solid fa-i-cursor',
       color: '#7C3AED',
       patterns: ['cursor', 'anysphere', 'cursor-ide', 'ide-tool-2']
     },
-    'CLI-Agent-1': {
-      displayName: 'CLI Agent 1',
+    'windsurf': {
+      displayName: 'Windsurf IDE',
+      icon: 'fa-solid fa-water',
+      color: '#F97316',
+      patterns: ['windsurf', 'codeium']
+    },
+    'cline': {
+      displayName: 'Cline',
       icon: 'fa-solid fa-terminal',
-      color: '#10B981',
+      color: '#3B82F6',
       patterns: ['cline', 'saoudrizwan', 'cline-vscode', 'cli-agent-1']
     },
-    'Generic-Client-1': {
-      displayName: 'Generic Client 1',
+    'zencode': {
+      displayName: 'ZenCode',
+      icon: 'fa-solid fa-brain',
+      color: '#8B5CF6',
+      patterns: ['zencode', 'zen-code']
+    },
+    'pearai': {
+      displayName: 'PearAI',
+      icon: 'fa-solid fa-leaf',
+      color: '#14B8A6',
+      patterns: ['pearai', 'pear-ai']
+    },
+    'codex': {
+      displayName: 'Codex CLI',
+      icon: 'fa-solid fa-microchip',
+      color: '#10B981',
+      patterns: ['codex', 'openai-codex', 'llm-agent-1']
+    },
+    'openclaw': {
+      displayName: 'OpenClaw',
       icon: 'fa-solid fa-hand-fist',
       color: '#EF4444',
       patterns: ['openclaw', 'open-claw', 'generic-client-1']
     },
-    'Web-Agent-1': {
-      displayName: 'Web Agent 1',
-      icon: 'fa-solid fa-microchip',
+    'ollama': {
+      displayName: 'Ollama Proxy',
+      icon: 'fa-solid fa-cube',
       color: '#F59E0B',
-      patterns: ['kilo', 'kilocode', 'kilo-code', 'web-agent-1']
+      patterns: ['ollama', 'ollama-bridge']
     },
-    'Router-Client': {
-      displayName: 'Router Client',
+    'curl': {
+      displayName: 'Terminal / cURL',
+      icon: 'fa-solid fa-terminal',
+      color: '#6B7280',
+      patterns: ['curl/', 'wget', 'httpie']
+    },
+    'claude': {
+      displayName: 'Claude Desktop',
+      icon: 'fa-solid fa-message',
+      color: '#D97706',
+      patterns: ['claude-desktop', 'claude_desktop', 'anthropic-client', 'desktop-app-1']
+    },
+    'jan': {
+      displayName: 'Jan.ai',
+      icon: 'fa-solid fa-robot',
+      color: '#F43F5E',
+      patterns: ['jan', 'jan-ai', 'jan.ai']
+    },
+    'anythingllm': {
+      displayName: 'AnythingLLM',
+      icon: 'fa-solid fa-database',
+      color: '#A855F7',
+      patterns: ['anythingllm', 'anything-llm']
+    },
+    'openwebui': {
+      displayName: 'Open WebUI',
+      icon: 'fa-solid fa-globe',
+      color: '#E2E8F0',
+      patterns: ['openwebui', 'open-webui', 'ollama-webui']
+    },
+    'openrouter': {
+      displayName: 'OpenRouter Bridge',
       icon: 'fa-solid fa-route',
       color: '#6366F1',
       patterns: ['openrouter', 'router-client']
     },
-    'LLM-Agent-1': {
-      displayName: 'LLM Agent 1',
-      icon: 'fa-solid fa-code',
-      color: '#10B981',
-      patterns: ['codex', 'openai-codex', 'llm-agent-1']
+    'lovable': {
+      displayName: 'Lovable',
+      icon: 'fa-solid fa-heart',
+      color: '#EF4444',
+      patterns: ['lovable', 'lovable-dev']
     },
-    'MCP-Client': {
-      displayName: 'MCP Client',
-      icon: 'fa-solid fa-plug',
+    'bolt': {
+      displayName: 'Bolt.new',
+      icon: 'fa-solid fa-bolt',
+      color: '#EAB308',
+      patterns: ['bolt.new', 'bolt-new', 'stackblitz']
+    },
+    'mcp': {
+      displayName: 'MCP Server',
+      icon: 'fa-solid fa-network-wired',
       color: '#8B5CF6',
-      patterns: ['mcp', 'model-context-protocol']
+      patterns: ['mcp', 'model-context-protocol', 'mcp-server', 'mcp-client']
     },
     'Web-Dashboard': {
       displayName: 'Web Dashboard',
@@ -75,13 +129,7 @@ class ToolIdentificationService {
       displayName: 'API Tester',
       icon: 'fa-solid fa-paper-plane',
       color: '#FF6C37',
-      patterns: ['postman', 'api-tester']
-    },
-    'curl': {
-      displayName: 'cURL / Terminal',
-      icon: 'fa-solid fa-terminal',
-      color: '#6B7280',
-      patterns: ['curl/', 'wget']
+      patterns: ['postman', 'api-tester', 'insomnia']
     }
   };
 
@@ -176,30 +224,54 @@ class ToolIdentificationService {
    * (e.g. "VS Code Copilot" → "VSCode-Copilot")
    */
   static TOOL_ALIASES = {
-    'vs-code-copilot': 'IDE-Tool-1',
-    'vscode-copilot': 'IDE-Tool-1',
-    'vs-code': 'IDE-Tool-1',
-    'visual-studio-code': 'IDE-Tool-1',
-    'github-copilot': 'IDE-Tool-1',
-    'claude-desktop': 'Desktop-App-1',
-    'claude_desktop': 'Desktop-App-1',
-    'anthropic-client': 'Desktop-App-1',
-    'cursor-ide': 'IDE-Tool-2',
-    'cline-vscode': 'CLI-Agent-1',
-    'kilo-code': 'Web-Agent-1',
-    'kilocode': 'Web-Agent-1',
-    'open-claw': 'Generic-Client-1',
-    'openrouter': 'Router-Client',
-    'codex': 'LLM-Agent-1',
-    'openai-codex': 'LLM-Agent-1',
-    'mcp-client': 'MCP-Client',
-    'model-context-protocol': 'MCP-Client',
+    'vs-code-copilot': 'vscode',
+    'vscode-copilot': 'vscode',
+    'vs-code': 'vscode',
+    'visual-studio-code': 'vscode',
+    'github-copilot': 'vscode',
+    'cursor-ide': 'cursor',
+    'cursor': 'cursor',
+    'windsurf-ide': 'windsurf',
+    'windsurf': 'windsurf',
+    'cline-vscode': 'cline',
+    'cline': 'cline',
+    'zencode': 'zencode',
+    'zen-code': 'zencode',
+    'pearai': 'pearai',
+    'pear-ai': 'pearai',
+    'codex-cli': 'codex',
+    'codex': 'codex',
+    'openai-codex': 'codex',
+    'open-claw': 'openclaw',
+    'openclaw': 'openclaw',
+    'ollama-proxy': 'ollama',
+    'ollama': 'ollama',
+    'curl': 'curl',
+    'wget': 'curl',
+    'terminal-curl': 'curl',
+    'claude-desktop': 'claude',
+    'claude_desktop': 'claude',
+    'anthropic-client': 'claude',
+    'jan-ai': 'jan',
+    'jan': 'jan',
+    'anythingllm': 'anythingllm',
+    'anything-llm': 'anythingllm',
+    'openwebui': 'openwebui',
+    'open-webui': 'openwebui',
+    'openrouter-bridge': 'openrouter',
+    'openrouter': 'openrouter',
+    'lovable': 'lovable',
+    'bolt-new': 'bolt',
+    'bolt': 'bolt',
+    'mcp-server': 'mcp',
+    'mcp-client': 'mcp',
+    'mcp': 'mcp',
+    'model-context-protocol': 'mcp',
     'fmc-dashboard': 'Web-Dashboard',
     'free-models-club': 'Web-Dashboard',
     'fmc-ui': 'Web-Dashboard',
     'postman': 'API-Tester',
-    'curl': 'curl',
-    'wget': 'curl'
+    'api-tester': 'API-Tester'
   };
 
   /**

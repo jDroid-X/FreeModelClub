@@ -1,6 +1,6 @@
 /**
  * ProgramMappingAgent.js
- * Purpose: Master 3D Program Mapping Matrix & Multi-Thread Closed-Loop Feedback Auditor (< 150 lines).
+ * Purpose: Master 3D Program Mapping Matrix & Multi-Thread Closed-Loop Feedback Auditor.
  *          Scans modules across 3 Dimensions: [View Layer <-> Service/Controller Layer <-> Model/Database Schema]
  *          and validates parallel multi-thread branch convergence & closed-loop feedback integrity.
  */
@@ -15,11 +15,11 @@ class ProgramMappingAgent {
 
   static loadProgramMapping() {
     const filePath = this.getMappingPath();
-    if (!fs.existsSync(filePath)) return { version: '1.0.3', program_mappings: [] };
+    if (!fs.existsSync(filePath)) return { version: '1.0.4', program_mappings: [] };
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     } catch (e) {
-      return { version: '1.0.3', program_mappings: [] };
+      return { version: '1.0.4', program_mappings: [] };
     }
   }
 
@@ -31,36 +31,93 @@ class ProgramMappingAgent {
       dimension1_Views: [],
       dimension2_Controllers: [],
       dimension3_ModelsDB: [],
+      nodes: [],
       violations: [],
-      closedLoopFeedbackSecured: true
+      closedLoopFeedbackSecured: true,
+      timestamp: new Date().toISOString()
     };
 
     (mapping.program_mappings || []).forEach(m => {
       report.totalMapped++;
       const fullPath = path.join(rootDir, m.file);
-      if (!fs.existsSync(fullPath)) {
-        report.violations.push({ file: m.file, issue: 'Missing File' });
-        return;
+      const exists = fs.existsSync(fullPath);
+      let lineCount = 0;
+      let fileSize = 0;
+      let syntaxValid = true;
+      let syntaxError = null;
+
+      if (!exists) {
+        report.violations.push({ module: m.module, file: m.file, issue: 'Missing File on Disk' });
+      } else {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        lineCount = content.split('\n').length;
+        fileSize = Buffer.byteLength(content, 'utf8');
+
+        // File-type appropriate syntax verification
+        if (m.file.endsWith('.json')) {
+          try {
+            JSON.parse(content);
+          } catch (err) {
+            syntaxValid = false;
+            syntaxError = err.message;
+            report.violations.push({ module: m.module, file: m.file, issue: `JSON Syntax Error: ${err.message}` });
+          }
+        } else if (m.file.endsWith('.js')) {
+          try {
+            new Function(content);
+          } catch (err) {
+            // Check if error is top-level return or module syntax
+            if (!err.message.includes('return') && !err.message.includes('export') && !err.message.includes('import')) {
+              syntaxValid = false;
+              syntaxError = err.message;
+              report.violations.push({ module: m.module, file: m.file, issue: `JS Syntax Error: ${err.message}` });
+            }
+          }
+        }
+
+        // PonyTail Line Budget Rule
+        const maxLines = m.type === 'ViewController' ? 1800 : (m.type === 'DatabaseSchema' ? 1500 : 750);
+        if (lineCount > maxLines) {
+          report.violations.push({
+            module: m.module,
+            file: m.file,
+            issue: `Line Count Exceeded (${lineCount} lines > ${maxLines} budget)`
+          });
+        }
       }
 
-      const content = fs.readFileSync(fullPath, 'utf8');
-      const lines = content.split('\n').length;
-      const maxLines = m.type === 'ViewController' ? 1800 : 750;
-      if (lines > maxLines) {
-        report.violations.push({ file: m.file, issue: `Line Count Exceeded (${lines} lines > ${maxLines} max)` });
+      // Determine dimension grouping
+      let dim = 2;
+      let dimLabel = 'Dimension 2: Execution Agent / Controller';
+      if (m.type === 'ViewController' || m.type === 'ViewHelper') {
+        dim = 1;
+        dimLabel = 'Dimension 1: View Controller & UI';
+        report.dimension1_Views.push(m.module);
+      } else if (m.type === 'DatabaseModel' || m.type === 'DatabaseSchema' || m.type === 'Schema') {
+        dim = 3;
+        dimLabel = 'Dimension 3: Database & Schema Vault';
+        report.dimension3_ModelsDB.push(m.module);
+      } else {
+        report.dimension2_Controllers.push(m.module);
       }
 
-      try {
-        new Function(content);
-      } catch (err) {
-        report.violations.push({ file: m.file, issue: `Syntax Error: ${err.message}` });
-      }
-
-      if (m.type === 'ViewController') report.dimension1_Views.push(m.module);
-      else if (m.type === 'ViewHelper' || m.type === 'BackendController' || m.type === 'BackendService' || m.type === 'SystemAgent') report.dimension2_Controllers.push(m.module);
-      else report.dimension3_ModelsDB.push(m.module);
+      report.nodes.push({
+        module: m.module,
+        file: m.file,
+        type: m.type || 'Service',
+        dimension: dim,
+        dimensionLabel: dimLabel,
+        dependencies: m.dependencies || [],
+        exists,
+        lineCount,
+        fileSize,
+        syntaxValid,
+        syntaxError,
+        status: exists && syntaxValid ? 'HEALTHY' : 'NEEDS_ATTENTION'
+      });
     });
 
+    report.closedLoopFeedbackSecured = report.violations.length === 0;
     return report;
   }
 
@@ -89,3 +146,4 @@ class ProgramMappingAgent {
 }
 
 module.exports = ProgramMappingAgent;
+

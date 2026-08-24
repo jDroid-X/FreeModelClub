@@ -10,8 +10,66 @@ class ProvidersView {
   static activeTab = 'active'; // 'active', 'inactive', 'blacklisted'
   static matrixSortCol = 'status'; // default sort column
   static matrixSortDesc = false; // default sort direction
+  static _hasRegisteredStoreListeners = false;
+
+  static getContainer() {
+    return document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+  }
+
+  static refresh() {
+    const c = this.getContainer();
+    if (c) {
+      this.render(c);
+    } else if (window.app && window.app.renderView) {
+      window.app.renderView('providers');
+    }
+  }
+
+  static async focusProvider(providerId) {
+    this.activeTab = 'active';
+    const c = this.getContainer();
+    if (c) {
+      await this.render(c);
+      setTimeout(() => {
+        const card = document.getElementById(`provider-card-${providerId}`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.boxShadow = '0 0 20px var(--accent-cyan)';
+          card.style.borderColor = 'var(--accent-cyan)';
+          setTimeout(() => {
+            card.style.boxShadow = '';
+            card.style.borderColor = '';
+          }, 2500);
+        }
+      }, 150);
+    }
+  }
 
   static async render(container) {
+    if (!ProvidersView._hasRegisteredStoreListeners) {
+      ProvidersView._hasRegisteredStoreListeners = true;
+      if (window.AppStore) {
+        window.AppStore.on('PROVIDER_STATE_CHANGED', () => {
+          if (window.app && window.app.currentView === 'providers') {
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+            if (c) ProvidersView.render(c);
+          }
+        });
+        window.AppStore.on('MODELS_MUTATED', () => {
+          if (window.app && window.app.currentView === 'providers') {
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+            if (c) ProvidersView.render(c);
+          }
+        });
+      }
+      window.addEventListener('fmc_data_changed', () => {
+        if (window.app && window.app.currentView === 'providers') {
+          const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
+          if (c) ProvidersView.render(c);
+        }
+      });
+    }
+
     const [res, blacklistedRes] = await Promise.all([
       ApiService.getAllProviders(),
       ApiService.getBlacklistedProviders().catch(() => ({ blacklisted: [], sleepMinutes: 30 }))
@@ -145,7 +203,7 @@ class ProvidersView {
                   const blacklistedInfo = blacklistedMap.get(p.id);
 
                   return `
-                    <div class="glass-panel" style="margin-bottom: 0; background: var(--bg-card); border: 1px solid ${blacklistedInfo ? 'var(--accent-rose)' : 'var(--border-color)'}; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="glass-panel provider-action-card" id="provider-card-${p.id}" style="margin-bottom: 0; background: var(--bg-card); border: 1px solid ${blacklistedInfo ? 'var(--accent-rose)' : 'var(--border-color)'}; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
                       <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                           <div>
@@ -168,7 +226,7 @@ class ProvidersView {
                             <i class="fa-solid fa-pen-to-square" style="margin-left: 6px; cursor: pointer; color: var(--accent-cyan);" title="Edit Base URL" onclick="ProvidersView.promptEditBaseUrl('${p.id}', '${p.baseUrl}')"></i>
                           </div>
                           <div style="display: flex; justify-content: space-between; margin-top: 4px; flex-wrap: wrap; gap: 4px;">
-                            <div><strong>Models:</strong> <span class="badge badge-indigo" style="font-size: 0.65rem; padding: 1px 4px;">${p.freeModelCount || 0} Models</span></div>
+                            <div><strong>Models:</strong> <span class="badge badge-indigo" style="font-size: 0.65rem; padding: 1px 4px;">${p.freeModelCount || 0} Free / ${p.activeModelCount || (p.models ? p.models.length : 0)} Total</span></div>
                             <div><strong>Limits:</strong> <span style="color: var(--accent-emerald); font-weight: 600;">${p.freeTierLimit || (p.hardTokenLimit ? p.hardTokenLimit + ' Tokens' : 'Unlimited')}</span></div>
                             ${(() => {
                               const con = p.tokensConsumed || 0;
@@ -180,6 +238,10 @@ class ProvidersView {
                               else if (p.quotaAlertEnabled !== false && limit > 0 && con >= limit * 0.8) icon = '<i class="fa-solid fa-bell" style="color: var(--accent-amber);"></i> ';
                               return `<div><strong>Tokens:</strong> ${icon}<span style="color: #3b82f6; font-weight: 700;">${fmtCon}</span> / <span style="color: var(--accent-emerald); font-weight: 600;">${fmtAvl}</span></div>`;
                             })()}
+                          </div>
+                          <div style="display: flex; justify-content: space-between; margin-top: 2px; flex-wrap: wrap; gap: 4px; font-size: 0.72rem;">
+                            <div><strong>Rate Limit:</strong> <span class="badge badge-indigo" style="font-size: 0.62rem; padding: 1px 4px;">${p.rateLimitRPM || 30} RPM</span> <span class="badge badge-cyan" style="font-size: 0.62rem; padding: 1px 4px;">${p.rateLimitRPD || 1000} RPD</span></div>
+                            ${p.keyPrefix ? `<div><strong>Prefix:</strong> <code style="color: var(--accent-cyan); font-size: 0.7rem;">${p.keyPrefix}</code></div>` : ''}
                           </div>
                         </div>
                       </div>
@@ -196,15 +258,15 @@ class ProvidersView {
                         
                         <!-- Right side: Standard Action Icons -->
                         <div style="display: flex; gap: 14px; font-size: 1.1rem; align-items: center;">
-                          <i class="fa-solid fa-layer-group" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="View Associated Models" onclick="app.navigate('model-club');"></i>
-                          <i class="fa-solid fa-chart-simple" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Telemetry / Tokens" onclick="app.navigate('reports');"></i>
-                          <i class="fa-solid fa-play" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Test Ping Connection" onclick="ProvidersView.testPing('${p.id}');"></i>
-                          <i class="fa-solid fa-key" style="color: var(--accent-amber); cursor: pointer; transition: color 0.2s;" title="Add / Update API Key" onclick="ProvidersView.promptEditApiKey('${p.id}')"></i>
-                          <i class="fa-regular fa-copy" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Copy API Key" onclick="ProvidersView.copyProviderKey('${p.id}')"></i>
-                          <i class="fa-solid fa-sliders" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Configure Quota & Alerts" onclick="ProvidersView.configureQuota('${p.id}')"></i>
-                          <i class="fa-solid fa-globe" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Open Developer Portal" onclick="ProvidersView.openProviderModels('${p.baseUrl || ''}', '${p.docsUrl || ''}', '${(p.displayName || p.id).replace(/'/g, "\\\'")}')"></i>
-                          <i class="fa-solid fa-pen-to-square" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Edit Provider" onclick="app.navigate('registration'); setTimeout(() => RegistrationView.selectFromPane('${p.protocol}', '${p.id}'), 200);"></i>
-                          <i class="fa-solid fa-trash-can" style="color: var(--accent-rose); cursor: pointer; transition: color 0.2s;" title="Delete Provider" onclick="ProvidersView.deleteProvider('${p.id}');"></i>
+                          <i class="fa-solid fa-layer-group" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="View & Filter Models for ${p.displayName || p.id}" onclick="app.navigate('model-club'); setTimeout(() => { if (window.ModelClubView && window.ModelClubView.filterByProvider) window.ModelClubView.filterByProvider('${p.id}'); }, 250);"></i>
+                          <i class="fa-solid fa-chart-simple" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Provider Diagnostics & Telemetry (${p.displayName || p.id})" onclick="app.navigate('reports'); setTimeout(() => { if (window.ReportsView && window.ReportsView.filterByProvider) window.ReportsView.filterByProvider('${p.id}'); }, 250);"></i>
+                          <i class="fa-solid fa-play" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Launch in Playground (${p.displayName || p.id})" onclick="app.navigate('playground'); setTimeout(() => { if (window.PlaygroundView && window.PlaygroundView.selectProvider) window.PlaygroundView.selectProvider('${p.id}'); }, 250);"></i>
+                          <i class="fa-solid fa-key" style="color: var(--accent-amber); cursor: pointer; transition: color 0.2s;" title="Add / Update API Key (${p.displayName || p.id})" onclick="ProvidersView.promptEditApiKey('${p.id}')"></i>
+                          <i class="fa-regular fa-copy" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Copy Decrypted API Key (${p.displayName || p.id})" onclick="ProvidersView.copyProviderKey('${p.id}')"></i>
+                          <i class="fa-solid fa-sliders" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Configure Token Quota & Rate Limits (${p.displayName || p.id})" onclick="ProvidersView.configureQuota('${p.id}')"></i>
+                          <i class="fa-solid fa-globe" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Open Official Portal (${p.displayName || p.id})" onclick="ProvidersView.openProviderModels('${p.baseUrl || ''}', '${p.docsUrl || ''}', '${(p.displayName || p.id).replace(/'/g, "\\\'")}')"></i>
+                          <i class="fa-solid fa-pen-to-square" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Edit Provider & Staged Models (${p.displayName || p.id})" onclick="app.navigate('registration'); setTimeout(() => { if (window.RegistrationView && window.RegistrationView.selectFromPane) RegistrationView.selectFromPane('${p.protocol}', '${p.id}'); }, 200);"></i>
+                          <i class="fa-solid fa-trash-can" style="color: var(--accent-rose); cursor: pointer; transition: color 0.2s;" title="Delete / Archive Provider (${p.displayName || p.id})" onclick="ProvidersView.deleteProvider('${p.id}');"></i>
                         </div>
                       </div>
                     </div>
@@ -216,12 +278,48 @@ class ProvidersView {
           </div>
         </div>
       </div>
+
+      <!-- Backdrop Overlay for Provider Quota Slide-Out Drawer -->
+      <div id="provider-quota-drawer-backdrop" onclick="ProvidersView.closeQuotaDrawer()"
+        style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:99998;transition:opacity 0.3s ease;"></div>
+
+      <!-- Right Slide-Out Provider Quota & Rate Limits Drawer -->
+      <div id="provider-quota-drawer" class="glass-panel" 
+        style="position:fixed;top:0;right:-520px;width:480px;max-width:94vw;height:100vh;z-index:99999;background:var(--bg-card);border-left:2px solid var(--accent-cyan);box-shadow:-12px 0 35px rgba(0,0,0,0.6);transition:right 0.35s cubic-bezier(0.4, 0, 0.2, 1);padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;box-sizing:border-box;">
+      </div>
     `;
   }
 
   static switchTab(tabName) {
     this.activeTab = tabName;
-    this.render(document.getElementById('app'));
+    this.refresh();
+  }
+
+  static openProviderModels(baseUrl, docsUrl, displayName = 'Provider') {
+    let targetUrl = docsUrl;
+    if (!targetUrl) {
+      const lower = (displayName + ' ' + baseUrl).toLowerCase();
+      if (lower.includes('opencode')) targetUrl = 'https://opencode.ai/docs/zen/';
+      else if (lower.includes('bynara')) targetUrl = 'https://router.bynara.id/docs';
+      else if (lower.includes('nvidia')) targetUrl = 'https://docs.api.nvidia.com/nim/reference/limits';
+      else if (lower.includes('groq')) targetUrl = 'https://console.groq.com/docs/rate-limits';
+      else if (lower.includes('gemini') || lower.includes('google')) targetUrl = 'https://ai.google.dev/gemini-api/docs/rate-limits';
+      else if (lower.includes('openrouter')) targetUrl = 'https://openrouter.ai/docs/limits';
+      else if (lower.includes('openai')) targetUrl = 'https://platform.openai.com/docs/guides/rate-limits';
+      else if (lower.includes('ollama')) targetUrl = 'https://ollama.com';
+      else if (lower.includes('cerebras')) targetUrl = 'https://inference-docs.cerebras.ai/rate-limits';
+      else if (lower.includes('sambanova')) targetUrl = 'https://community.sambanova.ai/t/rate-limits/';
+      else if (lower.includes('together')) targetUrl = 'https://docs.together.ai/docs/rate-limits';
+      else if (lower.includes('mistral')) targetUrl = 'https://docs.mistral.ai/deployment/limits/';
+      else if (lower.includes('deepseek')) targetUrl = 'https://api-docs.deepseek.com/quick_start/rate_limit';
+      else if (lower.includes('agentrouter')) targetUrl = 'https://agentrouter.org/docs/index.html';
+      else if (baseUrl) targetUrl = baseUrl.replace(/\/v1\/?$/, '');
+    }
+    if (targetUrl) {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification(`No portal/docs URL configured for ${displayName}`, 'info');
+    }
   }
 
   static setMatrixSort(col) {
@@ -231,7 +329,7 @@ class ProvidersView {
       this.matrixSortCol = col;
       this.matrixSortDesc = false;
     }
-    this.render(document.getElementById('app'));
+    this.refresh();
   }
 
   static renderMatrix(allProviders) {
@@ -343,8 +441,7 @@ class ProvidersView {
     const res = await ApiService.unblacklistAllProviders();
     if (res.success) {
       ModalDialog.showNotification('All providers woken up from sleep mode!', 'success');
-      const appContainer = document.getElementById('app');
-      if (appContainer) this.render(appContainer);
+      this.refresh();
     }
   }
 
@@ -352,7 +449,7 @@ class ProvidersView {
     const res = await ApiService.setBlacklistSleepMinutes(mins);
     if (res.success) {
       ModalDialog.showNotification(`Blacklist Sleep Duration set to ${mins} minutes!`, 'success');
-      this.render(document.getElementById('app'));
+      this.refresh();
     }
   }
 
@@ -366,15 +463,22 @@ class ProvidersView {
       const res = await ApiService.getAllProviders();
       const allProviders = res.providers || [];
       const provider = allProviders.find(p => p.id === providerId);
-      if (provider && provider.apiKey) {
-        await navigator.clipboard.writeText(provider.apiKey);
-        ModalDialog.showNotification('API Key copied to clipboard', 'success');
+      const displayName = provider ? (provider.displayName || provider.id) : providerId;
+
+      // Fetch decrypted real key securely from backend
+      const keyRes = await ApiService.getProviderApiKey(providerId);
+      const realKey = keyRes && keyRes.apiKey ? keyRes.apiKey : '';
+
+      if (realKey && realKey !== '********' && !realKey.includes('...')) {
+        await navigator.clipboard.writeText(realKey);
+        ModalDialog.showNotification(`API Key for '${displayName}' copied to clipboard!`, 'success');
       } else {
-        ModalDialog.showNotification('API Key not found or empty', 'warning');
+        ModalDialog.showNotification(`No active API key configured for '${displayName}'. Click Key icon to set key.`, 'warning');
+        setTimeout(() => ProvidersView.promptEditApiKey(providerId), 400);
       }
     } catch (e) {
       console.error("[ProvidersView] Failed to copy API key:", e);
-      ModalDialog.showNotification('Failed to copy API key', 'error');
+      ModalDialog.showNotification(`Failed to copy API key: ${e.message}`, 'error');
     }
   }
 
@@ -568,7 +672,18 @@ class ProvidersView {
     if (!provider) return ModalDialog.showNotification('Provider not found', 'error');
 
     const displayName = provider.displayName || provider.id;
-    const portalUrl = provider.docsUrl || (provider.id === 'gemini' ? 'https://aistudio.google.com/app/apikey' : (provider.id === 'groq' ? 'https://console.groq.com/keys' : 'https://openrouter.ai/keys'));
+    const portalUrl = provider.docsUrl || (provider.id === 'gemini' ? 'https://aistudio.google.com/app/apikey' : (provider.id === 'groq' ? 'https://console.groq.com/keys' : (provider.id === 'openai' ? 'https://platform.openai.com/api-keys' : 'https://openrouter.ai/keys')));
+
+    // Fetch actual real API key if not supplied
+    let currentActualKey = prefillKey;
+    if (!currentActualKey) {
+      try {
+        const keyRes = await ApiService.getProviderApiKey(providerId);
+        if (keyRes && keyRes.apiKey && keyRes.apiKey !== '********') {
+          currentActualKey = keyRes.apiKey;
+        }
+      } catch (e) {}
+    }
 
     ModalDialog.showCustomModal({
       title: `<i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> ${fromPingFailure ? 'Authentication Required (HTTP 401): ' : ''}Update API Key for ${displayName}`,
@@ -586,7 +701,7 @@ class ProvidersView {
           <div class="form-group">
             <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">API Key / Secret Token</label>
             <div style="position: relative;">
-              <input type="password" id="modal-prov-key-input" class="form-control" placeholder="Enter API key..." value="${prefillKey}" style="padding-right: 36px; width: 100%; box-sizing: border-box;" />
+              <input type="password" id="modal-prov-key-input" class="form-control" placeholder="Enter API key..." value="${currentActualKey}" style="padding-right: 36px; width: 100%; box-sizing: border-box;" />
               <i class="fa-solid fa-eye" id="modal-toggle-key-eye" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-dim);" onclick="const k = document.getElementById('modal-prov-key-input'); k.type = k.type === 'password' ? 'text' : 'password'; this.className = k.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';"></i>
             </div>
           </div>
@@ -613,8 +728,8 @@ class ProvidersView {
             if (window.AppStore && window.AppStore.emit) {
               window.AppStore.emit('PROVIDER_STATE_CHANGED', { providerId });
             }
-            if (typeof ProvidersView !== 'undefined' && ProvidersView.render) {
-              ProvidersView.render(document.getElementById('app'));
+            if (typeof ProvidersView !== 'undefined' && ProvidersView.refresh) {
+              ProvidersView.refresh();
             }
             setTimeout(() => ProvidersView.testPing(providerId), 300);
           } else {
@@ -682,166 +797,254 @@ class ProvidersView {
     }
   }
 
+  static closeQuotaDrawer() {
+    const drawer = document.getElementById('provider-quota-drawer');
+    const backdrop = document.getElementById('provider-quota-drawer-backdrop');
+    if (drawer) drawer.style.right = '-520px';
+    if (backdrop) backdrop.style.display = 'none';
+  }
+
   static async configureQuota(providerId) {
+    let drawer = document.getElementById('provider-quota-drawer');
+    let backdrop = document.getElementById('provider-quota-drawer-backdrop');
+    
+    // Ensure drawer elements exist in DOM
+    if (!drawer) {
+      backdrop = document.createElement('div');
+      backdrop.id = 'provider-quota-drawer-backdrop';
+      backdrop.onclick = () => ProvidersView.closeQuotaDrawer();
+      backdrop.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:99998;transition:opacity 0.3s ease;';
+      document.body.appendChild(backdrop);
+
+      drawer = document.createElement('div');
+      drawer.id = 'provider-quota-drawer';
+      drawer.className = 'glass-panel';
+      drawer.style.cssText = 'position:fixed;top:0;right:-520px;width:480px;max-width:94vw;height:100vh;z-index:99999;background:var(--bg-card);border-left:2px solid var(--accent-cyan);box-shadow:-12px 0 35px rgba(0,0,0,0.6);transition:right 0.35s cubic-bezier(0.4, 0, 0.2, 1);padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;box-sizing:border-box;';
+      document.body.appendChild(drawer);
+    }
+
     const res = await ApiService.getAllProviders();
-    const provider = res.providers.find(p => p.id === providerId);
+    const provider = (res.providers || []).find(p => p.id === providerId);
     if (!provider) return;
+
+    const displayName = provider.displayName || provider.id;
+    const pid = (provider.id || '').toLowerCase();
+    const pName = (provider.displayName || '').toLowerCase();
+    const pBase = (provider.baseUrl || '').toLowerCase();
+
+    // Determine official Rate Limits Documentation URL based on provider
+    let rateDocsUrl = provider.docsUrl || provider.apiKeyUrl || '';
+    if (pid === 'opencode' || pName.includes('opencode') || pBase.includes('opencode.ai')) {
+      rateDocsUrl = 'https://opencode.ai/docs/zen/';
+    } else if (pid === 'bynara' || pName.includes('bynara') || pBase.includes('bynara')) {
+      rateDocsUrl = 'https://router.bynara.id/docs';
+    } else if (pid === 'nvidia' || pName.includes('nvidia') || pBase.includes('nvidia.com')) {
+      rateDocsUrl = 'https://docs.api.nvidia.com/nim/reference/limits';
+    } else if (pid === 'gemini' || pName.includes('gemini') || pBase.includes('googleapis.com')) {
+      rateDocsUrl = 'https://ai.google.dev/gemini-api/docs/rate-limits';
+    } else if (pid === 'groq' || pName.includes('groq') || pBase.includes('groq.com')) {
+      rateDocsUrl = 'https://console.groq.com/docs/rate-limits';
+    } else if (pid === 'cerebras' || pName.includes('cerebras') || pBase.includes('cerebras.ai')) {
+      rateDocsUrl = 'https://inference-docs.cerebras.ai/rate-limits';
+    } else if (pid === 'openrouter' || pName.includes('openrouter') || pBase.includes('openrouter.ai')) {
+      rateDocsUrl = 'https://openrouter.ai/docs/limits';
+    } else if (pid === 'openai' || pName.includes('openai') || pBase.includes('openai.com')) {
+      rateDocsUrl = 'https://platform.openai.com/docs/guides/rate-limits';
+    } else if (pid === 'sambanova' || pName.includes('sambanova') || pBase.includes('sambanova.ai')) {
+      rateDocsUrl = 'https://community.sambanova.ai/t/rate-limits/';
+    } else if (pid === 'deepseek' || pName.includes('deepseek') || pBase.includes('deepseek.com')) {
+      rateDocsUrl = 'https://api-docs.deepseek.com/quick_start/rate_limit';
+    } else if (pid === 'mistral' || pName.includes('mistral') || pBase.includes('mistral.ai')) {
+      rateDocsUrl = 'https://docs.mistral.ai/deployment/limits/';
+    } else if (pid === 'together' || pName.includes('together') || pBase.includes('together.ai')) {
+      rateDocsUrl = 'https://docs.together.ai/docs/rate-limits';
+    } else if (!rateDocsUrl) {
+      rateDocsUrl = 'https://console.groq.com/docs/rate-limits';
+    }
+
+    // Default rate limit fallbacks if unset
+    let defaultRpm = 30, defaultRpd = 1000, defaultTpm = 60000, defaultTpd = 500000, defaultAsh = 0, defaultAsd = 0;
+    if (pid === 'gemini' || pName.includes('gemini')) {
+      defaultRpm = 15; defaultRpd = 1500; defaultTpm = 1000000; defaultTpd = 5000000;
+    } else if (pid === 'groq' || pName.includes('groq')) {
+      defaultRpm = 30; defaultRpd = 14400; defaultTpm = 70000; defaultTpd = 500000; defaultAsh = 7200; defaultAsd = 28800;
+    } else if (pid === 'cerebras' || pName.includes('cerebras')) {
+      defaultRpm = 30; defaultRpd = 14400; defaultTpm = 60000; defaultTpd = 500000;
+    } else if (pid === 'openrouter' || pName.includes('openrouter')) {
+      defaultRpm = 200; defaultRpd = 20000; defaultTpm = 200000; defaultTpd = 2000000;
+    } else if (pid === 'openai' || pName.includes('openai')) {
+      defaultRpm = 3; defaultRpd = 200; defaultTpm = 40000; defaultTpd = 200000;
+    } else if (pid === 'sambanova' || pName.includes('sambanova')) {
+      defaultRpm = 30; defaultRpd = 1000; defaultTpm = 60000; defaultTpd = 500000;
+    } else if (pid === 'deepseek' || pName.includes('deepseek')) {
+      defaultRpm = 60; defaultRpd = 5000; defaultTpm = 100000; defaultTpd = 1000000;
+    } else if (pid === 'mistral' || pName.includes('mistral')) {
+      defaultRpm = 60; defaultRpd = 5000; defaultTpm = 500000; defaultTpd = 2000000;
+    } else if (pid === 'nvidia' || pName.includes('nvidia')) {
+      defaultRpm = 30; defaultRpd = 1000; defaultTpm = 50000; defaultTpd = 500000;
+    } else if (pid === 'together' || pName.includes('together')) {
+      defaultRpm = 60; defaultRpd = 5000; defaultTpm = 60000; defaultTpd = 500000;
+    } else if (pid === 'bynara' || pName.includes('bynara')) {
+      defaultRpm = 60; defaultRpd = 5000; defaultTpm = 100000; defaultTpd = 1000000;
+    } else if (pid === 'opencode' || pName.includes('opencode')) {
+      defaultRpm = 60; defaultRpd = 5000; defaultTpm = 100000; defaultTpd = 1000000;
+    } else if (pid === 'ollama' || pName.includes('ollama')) {
+      defaultRpm = 0; defaultRpd = 0; defaultTpm = 0; defaultTpd = 0;
+    }
 
     const limit = provider.hardTokenLimit || 0;
     const action = provider.quotaExceedAction || 'fallback';
     const alert = provider.quotaAlertEnabled !== false;
     
-    // Rate limits
-    const rpm = provider.rateLimitRPM || 0;
-    const rpd = provider.rateLimitRPD || 0;
-    const tpm = provider.rateLimitTPM || 0;
-    const tpd = provider.rateLimitTPD || 0;
-    const ash = provider.rateLimitASH || 0;
-    const asd = provider.rateLimitASD || 0;
+    // Rate limits with intelligent defaults
+    const rpm = provider.rateLimitRPM !== undefined && provider.rateLimitRPM !== null && provider.rateLimitRPM !== 0 ? provider.rateLimitRPM : defaultRpm;
+    const rpd = provider.rateLimitRPD !== undefined && provider.rateLimitRPD !== null && provider.rateLimitRPD !== 0 ? provider.rateLimitRPD : defaultRpd;
+    const tpm = provider.rateLimitTPM !== undefined && provider.rateLimitTPM !== null && provider.rateLimitTPM !== 0 ? provider.rateLimitTPM : defaultTpm;
+    const tpd = provider.rateLimitTPD !== undefined && provider.rateLimitTPD !== null && provider.rateLimitTPD !== 0 ? provider.rateLimitTPD : defaultTpd;
+    const ash = provider.rateLimitASH !== undefined && provider.rateLimitASH !== null ? provider.rateLimitASH : defaultAsh;
+    const asd = provider.rateLimitASD !== undefined && provider.rateLimitASD !== null ? provider.rateLimitASD : defaultAsd;
 
-    ModalDialog.showModal({
-      title: 'Configure Token Quota & Rate Limits',
-      icon: 'fa-sliders',
-      body: `
-        <div style="display: flex; flex-direction: column; gap: 16px; text-align: left;">
+    drawer.innerHTML = `
+      <!-- Drawer Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(6,182,212,0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); font-size: 1.1rem;">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Configure Token Quota & Limits</div>
+            <div style="font-size: 0.72rem; color: var(--accent-cyan); font-weight: 600;">${displayName} <span style="color: var(--text-muted); font-weight: 400;">(${provider.id})</span></div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-xs" onclick="ProvidersView.closeQuotaDrawer()" style="padding: 4px 8px;" title="Close Drawer">
+          <i class="fa-solid fa-xmark" style="font-size: 0.9rem;"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div style="display: flex; flex-direction: column; gap: 16px; flex: 1;">
+        <!-- Rate Limits Card -->
+        <div style="background: rgba(0,0,0,0.18); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-gauge-high"></i> Provider Rate Limits
+            </div>
+            <button class="btn btn-secondary btn-xs" onclick="ProvidersView.syncLimits('${provider.id}')" title="Sync limits via System Agent" style="font-size: 0.7rem; padding: 2px 7px;">
+              <i class="fa-solid fa-rotate"></i> Auto-Sync
+            </button>
+          </div>
           
-          <div style="background: rgba(0,0,0,0.15); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent-cyan);"><i class="fa-solid fa-gauge-high"></i> Provider Rate Limits</div>
-              <button class="btn btn-secondary btn-xs" onclick="ProvidersView.syncLimits('${provider.id}')" title="Sync limits via System Agent"><i class="fa-solid fa-rotate"></i> Auto-Sync</button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">RPM (Req / Min)</label>
+              <input type="number" id="quota-rpm" class="input-modern" value="${rpm}" min="0" max="100000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
             </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">RPM (Requests / Min)</label>
-                <input type="number" id="quota-rpm" class="input-modern" value="${rpm}" min="0" max="1000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">RPD (Requests / Day)</label>
-                <input type="number" id="quota-rpd" class="input-modern" value="${rpd}" min="0" max="100000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">TPM (Tokens / Min)</label>
-                <input type="number" id="quota-tpm" class="input-modern" value="${tpm}" min="0" max="1000000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">TPD (Tokens / Day)</label>
-                <input type="number" id="quota-tpd" class="input-modern" value="${tpd}" min="0" max="10000000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">ASH (Audio Sec / Hour)</label>
-                <input type="number" id="quota-ash" class="input-modern" value="${ash}" min="0" max="50000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
-              <div>
-                <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px;">ASD (Audio Sec / Day)</label>
-                <input type="number" id="quota-asd" class="input-modern" value="${asd}" min="0" max="200000" style="width: 100%; font-size: 0.85rem;" />
-              </div>
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">RPD (Req / Day)</label>
+              <input type="number" id="quota-rpd" class="input-modern" value="${rpd}" min="0" max="10000000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
             </div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 12px; display: flex; justify-content: space-between;">
-              <span><i class="fa-solid fa-circle-info"></i> (0 = Unlimited). Values strictly enforced.</span>
-              <a href="https://console.groq.com/docs/rate-limits" target="_blank" style="color: var(--accent-cyan); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Docs</a>
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">TPM (Tokens / Min)</label>
+              <input type="number" id="quota-tpm" class="input-modern" value="${tpm}" min="0" max="50000000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">TPD (Tokens / Day)</label>
+              <input type="number" id="quota-tpd" class="input-modern" value="${tpd}" min="0" max="1000000000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">ASH (Audio Sec / Hr)</label>
+              <input type="number" id="quota-ash" class="input-modern" value="${ash}" min="0" max="1000000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px;">ASD (Audio Sec / Day)</label>
+              <input type="number" id="quota-asd" class="input-modern" value="${asd}" min="0" max="10000000" style="width: 100%; font-size: 0.82rem; padding: 5px 8px;" />
             </div>
           </div>
 
+          <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fa-solid fa-circle-info"></i> 0 = Unlimited</span>
+            <a href="${rateDocsUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline; font-weight: 600; font-size: 0.72rem;">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Official Rate Limits Docs
+            </a>
+          </div>
+        </div>
+
+        <!-- Token Quota Policy Card -->
+        <div style="background: rgba(0,0,0,0.18); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
           <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px;">Hard Token Limit (0 = Unlimited)</label>
-            <input type="number" id="quota-limit" class="input-modern" value="${limit}" min="0" style="width: 100%;" />
+            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Hard Token Limit (0 = Unlimited)</label>
+            <input type="number" id="quota-limit" class="input-modern" value="${limit}" min="0" style="width: 100%; font-size: 0.85rem;" />
+            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">Daily token cap enforced across all models under this provider.</div>
           </div>
           <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px;">Action on Limit Exceeded</label>
-            <select id="quota-action" class="input-modern" style="width: 100%;">
+            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Action on Limit Exceeded</label>
+            <select id="quota-action" class="input-modern" style="width: 100%; font-size: 0.82rem;">
               <option value="block" ${action === 'block' ? 'selected' : ''}>Block Request (429 Quota Exceeded)</option>
               <option value="fallback" ${action === 'fallback' ? 'selected' : ''}>Auto-Fallback to Next Free Provider</option>
             </select>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-            <input type="checkbox" id="quota-alert" ${alert ? 'checked' : ''} />
-            <label for="quota-alert" style="font-size: 0.8rem; color: var(--text-main); cursor: pointer;">Enable 80% Usage UI Alert Warning</label>
+            <input type="checkbox" id="quota-alert" ${alert ? 'checked' : ''} style="cursor: pointer;" />
+            <label for="quota-alert" style="font-size: 0.75rem; color: var(--text-main); cursor: pointer;">Enable 80% Usage UI Alert Warning</label>
           </div>
         </div>
-      `,
-      cancelText: 'Cancel',
-      confirmText: 'Save Configuration',
-      onConfirm: async () => {
-        const valLimit = parseInt(document.getElementById('quota-limit').value, 10);
-        const valRpm = parseInt(document.getElementById('quota-rpm').value, 10) || 0;
-        const valRpd = parseInt(document.getElementById('quota-rpd').value, 10) || 0;
-        const valTpm = parseInt(document.getElementById('quota-tpm').value, 10) || 0;
-        const valTpd = parseInt(document.getElementById('quota-tpd').value, 10) || 0;
-        const valAsh = parseInt(document.getElementById('quota-ash').value, 10) || 0;
-        const valAsd = parseInt(document.getElementById('quota-asd').value, 10) || 0;
+      </div>
 
-        // Validation for min/max limits
-        const rpmMax = parseInt(document.getElementById('quota-rpm').max, 10);
-        const rpdMax = parseInt(document.getElementById('quota-rpd').max, 10);
-        const tpmMax = parseInt(document.getElementById('quota-tpm').max, 10);
-        const tpdMax = parseInt(document.getElementById('quota-tpd').max, 10);
-        const ashMax = parseInt(document.getElementById('quota-ash').max, 10);
-        const asdMax = parseInt(document.getElementById('quota-asd').max, 10);
+      <!-- Drawer Footer Action Buttons -->
+      <div style="display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-color); margin-top: auto;">
+        <button class="btn btn-primary" style="flex: 2; justify-content: center; font-size: 0.82rem;" onclick="ProvidersView.saveQuota('${provider.id}')">
+          <i class="fa-solid fa-check"></i> Save Configuration
+        </button>
+        <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.82rem;" onclick="ProvidersView.closeQuotaDrawer()">
+          Cancel
+        </button>
+      </div>
+    `;
 
-        if (valRpm < 0 || valRpm > rpmMax || valRpd < 0 || valRpd > rpdMax || valTpm < 0 || valTpm > tpmMax || valTpd < 0 || valTpd > tpdMax || valAsh < 0 || valAsh > ashMax || valAsd < 0 || valAsd > asdMax) {
-          if (typeof ValidationNotifier !== 'undefined') {
-            ValidationNotifier.showOptionPopup({
-              title: 'Rate Limits Exceeded Boundaries',
-              message: 'One or more of your rate limits exceeds the maximum allowed by the system configuration. Would you like to reset them to 0 (unlimited)?',
-              icon: 'fa-gauge-high',
-              options: [
-                { id: 'reset', label: 'Reset all to 0', icon: 'fa-undo', type: 'warning', action: () => { 
-                    ['rpm','rpd','tpm','tpd','ash','asd'].forEach(k => document.getElementById('quota-'+k).value = '0');
-                  } 
-                },
-                { id: 'close', label: 'Close & Fix', icon: 'fa-xmark', type: 'secondary', action: () => {} }
-              ]
-            });
-          } else {
-            ModalDialog.showNotification('One or more limits exceed the maximum allowed boundaries.', 'error');
-          }
-          return;
-        }
+    // Slide out from right
+    drawer.style.right = '0px';
+    if (backdrop) backdrop.style.display = 'block';
+  }
 
-        if (isNaN(valLimit) || valLimit < 0) {
-          if (typeof ValidationNotifier !== 'undefined') {
-            ValidationNotifier.showOptionPopup({
-              title: 'Invalid Quota Configuration',
-              message: 'The Hard Token Limit must be a valid positive number. Do you want to reset it to Unlimited (0) or fix it?',
-              icon: 'fa-triangle-exclamation',
-              options: [
-                { id: 'reset', label: 'Reset to 0 (Unlimited)', icon: 'fa-undo', type: 'warning', action: () => { document.getElementById('quota-limit').value = '0'; } },
-                { id: 'fix', label: 'Fix Manually', icon: 'fa-pen', type: 'primary', action: () => { document.getElementById('quota-limit').focus(); } }
-              ]
-            });
-          } else {
-            ModalDialog.showNotification('Hard Token Limit must be a valid positive number.', 'error');
-          }
-          return;
-        }
-        
-        const payload = {
-          hardTokenLimit: valLimit,
-          quotaExceedAction: document.getElementById('quota-action').value,
-          quotaAlertEnabled: document.getElementById('quota-alert').checked,
-          rateLimitRPM: valRpm,
-          rateLimitRPD: valRpd,
-          rateLimitTPM: valTpm,
-          rateLimitTPD: valTpd,
-          rateLimitASH: valAsh,
-          rateLimitASD: valAsd
-        };
-        
-        try {
-          const updateRes = await ApiService.request(`/api/providers/${providerId}`, { method: 'PUT', body: JSON.stringify(payload) });
-          if (updateRes.success) {
-            ModalDialog.showNotification('Quota and Limits configured successfully!', 'success');
-            if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
-            else window.app.renderView('providers');
-          } else {
-            ModalDialog.showNotification(updateRes.error || 'Failed to update quota', 'error');
-          }
-        } catch (e) {
-          ModalDialog.showNotification('Network error while saving quota', 'error');
-        }
+  static async saveQuota(providerId) {
+    const valLimit = parseInt(document.getElementById('quota-limit')?.value, 10) || 0;
+    const valRpm = parseInt(document.getElementById('quota-rpm')?.value, 10) || 0;
+    const valRpd = parseInt(document.getElementById('quota-rpd')?.value, 10) || 0;
+    const valTpm = parseInt(document.getElementById('quota-tpm')?.value, 10) || 0;
+    const valTpd = parseInt(document.getElementById('quota-tpd')?.value, 10) || 0;
+    const valAsh = parseInt(document.getElementById('quota-ash')?.value, 10) || 0;
+    const valAsd = parseInt(document.getElementById('quota-asd')?.value, 10) || 0;
+
+    if (isNaN(valLimit) || valLimit < 0) {
+      ModalDialog.showNotification('Hard Token Limit must be a valid positive number.', 'error');
+      return;
+    }
+    
+    const payload = {
+      hardTokenLimit: valLimit,
+      quotaExceedAction: document.getElementById('quota-action')?.value || 'fallback',
+      quotaAlertEnabled: Boolean(document.getElementById('quota-alert')?.checked),
+      rateLimitRPM: valRpm,
+      rateLimitRPD: valRpd,
+      rateLimitTPM: valTpm,
+      rateLimitTPD: valTpd,
+      rateLimitASH: valAsh,
+      rateLimitASD: valAsd
+    };
+    
+    try {
+      const updateRes = await ApiService.request(`/api/providers/${providerId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      if (updateRes.success) {
+        ModalDialog.showNotification('Quota & Rate Limits saved successfully!', 'success');
+        ProvidersView.closeQuotaDrawer();
+        if (window.app && window.app.notifyDataChanged) window.app.notifyDataChanged();
+        else ProvidersView.refresh();
+      } else {
+        ModalDialog.showNotification(updateRes.error || 'Failed to update quota', 'error');
       }
-    });
+    } catch (e) {
+      ModalDialog.showNotification('Network error while saving quota', 'error');
+    }
   }
 
   static async syncLimits(providerId) {
@@ -854,8 +1057,7 @@ class ProvidersView {
       const res = await ApiService.request(`/api/providers/${providerId}/sync-limits`, { method: 'POST' });
       if (res.success) {
         ModalDialog.showNotification('Limits synced successfully!', 'success');
-        ModalDialog.closeModal();
-        setTimeout(() => ProvidersView.configureQuota(providerId), 300);
+        ProvidersView.configureQuota(providerId);
       } else {
         ModalDialog.showNotification(res.error || 'Failed to sync limits', 'error');
         btn.innerHTML = ogHtml;

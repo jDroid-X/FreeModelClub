@@ -87,7 +87,13 @@ class TaxonomyHelper {
 
   // ─── BUILD PYRAMID (Combo Club → Model Club → Skills/Families/Providers → Models) ─
   static buildPyramid(models, providers = [], combos = []) {
-    const normalized = this.normalizeModels(models);
+    // Enforce Rule: Only active, non-archived providers are shown in active views
+    const activeProviders = (providers || []).filter(p => p.isActive && !p.isArchived && p.displayName && p.displayName !== 'Unnamed Provider' && p.baseUrl);
+    const activeProviderIds = new Set(activeProviders.map(p => p.id));
+
+    // Enforce Rule: Only active models belonging to active providers are shown
+    const activeModels = (models || []).filter(m => m.isActive !== false && activeProviderIds.has(m.providerId));
+    const normalized = this.normalizeModels(activeModels);
 
     const skillGroups = this.SKILL_CATEGORIES.map(cat => ({
       skillName: cat.name, categoryId: cat.id, icon: cat.icon, color: cat.color,
@@ -100,7 +106,9 @@ class TaxonomyHelper {
       models: normalized.filter(m => m.headFamilyId === hf.id)
     })).filter(g => g.models.length > 0);
 
-    return { models: normalized, skillGroups, familyGroups, providers, combos };
+    const activeCombos = (combos || []).filter(c => c.isActive !== false);
+
+    return { models: normalized, skillGroups, familyGroups, providers: activeProviders, combos: activeCombos };
   }
 }
 

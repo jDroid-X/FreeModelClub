@@ -2,6 +2,55 @@
 # Screen: Registration View (http://localhost:3000/registration)
 
 ================================================================================
+[2026-08-23 14:00:00] MULTI-SCREEN SYNCHRONIZATION & METADATA RETENTION RESTORATION
+================================================================================
+Target Screen : RegistrationView.js / ProviderModel.js / AIModel.js / PlaygroundView.js / ProvidersView.js / ModelClubView.js / ReportsView.js
+Requested By  : User Chat (Deep-dive due diligence: Newly registered providers and their metadata not reflecting across relative screens; fix data stripping, remove hardcoded values, add human-in-the-loop option dialogs and live event bus listeners)
+Status        : PASS (100% Tested & Verified, 35/35 Automated Tests Passing)
+Changes       :
+	- ProviderModel Metadata Preservation: Fixed critical metadata stripping bug in ProviderModel.register() so that rateLimitRPM, rateLimitRPD, rateLimitTPM, rateLimitTPD, freeTierLimit, keyPrefix, description, icon, color, and docsUrl are persisted to providers.json.
+	- AIModel Taxonomy Auto-Classification: Integrated ModelFamilyService.classifyModel() in AIModel.saveBatch() to automatically assign family, headFamilyId, coreSkill, skillCategoryId, contextWindow, and latencyMs for all registered models.
+	- ProviderController Model Enrichment: Updated ProviderController.getAll() to return accurate freeModelCount, activeModelCount, and resolved limits.
+	- PlaygroundView Reactive EventBus: Subscribed PlaygroundView to PLAYGROUND_SESSION_READY, PROVIDER_STATE_CHANGED, and MODELS_MUTATED to instantly switch to the newly registered provider and reload model dropdowns.
+	- ProvidersView Live Hydration: Subscribed ProvidersView to AppStore events and displayed live RPM/RPD badges, total/free model counts, and key prefixes on provider cards.
+	- ModelClubView & ReportsView Live Sync: Connected ModelClubView and ReportsView to AppStore events for real-time taxonomy tree hydration and system log audit tracking.
+Files Modified:
+	- src/models/ProviderModel.js
+	- src/models/AIModel.js
+	- src/controllers/ProviderController.js
+	- public/js/views/PlaygroundView.js
+	- public/js/views/ProvidersView.js
+	- public/js/views/ModelClubView.js
+	- public/js/views/ReportsView.js
+	- tests/ProviderModel.test.js
+	- requirement/registration.txt
+
+================================================================================
+[2026-08-23 13:45:00] PROVIDER REGISTRATION MULTI-WORKFLOW & POST-REGISTRATION PIPELINE RESTORATION
+================================================================================
+Target Screen : RegistrationView.js / ProviderController.js / ModelLoadBalancer.js / ModelFamilyService.js
+Requested By  : User Chat (Provider Registration Detail process: sequence, parallel, multi workflows, waterfall encapsulation hierarchy P0->P5, and restoration of missing end-to-end post-registration processes)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Multi-Workflow Post-Registration Pipeline: Implemented 10-step post-registration orchestration in ProviderController:
+		1. Zero-Trust API Key Splitting & Vault Storage (api_keys.json).
+		2. Model Batch Ingestion with automatic ModelFamilyService taxonomy classification (Family, Core Skill, Context Window, Latency).
+		3. Active/Inactive Model Classification via ActiveModelAgent (Activemodels.json).
+		4. Circuit Breaker Blacklist Clearing & Failure Reset via ProxyEngineService.unblacklistProvider.
+		5. Live Background Endpoint Health Audit via ProviderMonitorAgent.runAudit(true).
+		6. Token Limit & Rate-Limit Telemetry Normalization via TokenAgentService.syncProviderTokenLimit.
+		7. Load Balancer & Combo Pool Cache Invalidation via ModelLoadBalancer.refreshActivePool.
+		8. Reverse Proxy Gateway dynamic model registration on /v1/models.
+		9. Structured Telemetry & Audit Logging via LogModel.recordSystemLog.
+		10. Real-time Frontend Event Bus Propagation (PROVIDER_STATE_CHANGED, MODELS_MUTATED, PLAYGROUND_SESSION_READY).
+	- De-Duplication: Removed redundant agentLookup method in ProviderController.js.
+	- Client Post-Registration Option Dialog: Enhanced RegistrationView.handleRegister with preloaded playground session and direct combo studio routing.
+Files Modified:
+	- src/controllers/ProviderController.js
+	- src/services/ModelLoadBalancer.js
+	- public/js/views/RegistrationView.js
+	- requirement/registration.txt
+================================================================================
 [2026-08-21 14:24:00] CLOSED-LOOP VALIDATION & OPTION NOTIFIER INTEGRATION
 ================================================================================
 Target Screen : RegistrationView.js / ValidationService.js / ValidationController.js
@@ -837,3 +886,82 @@ Status: PASS
   * Create (bottom, recommended) — auto-saves View + Start activities (emits PROVIDER_STATE_CHANGED + MODELS_MUTATED + PLAYGROUND_SESSION_READY) then navigates to Model Club Combo Studio
 - Files Modified: public/js/views/RegistrationView.js (lines 910-958)
 - Status: PASS
+
+================================================================================
+Date: 2026-08-23 15:08:00
+Requested Change: Human-in-the-Loop Due Diligence & Multi-Scenario Registration Workflow:
+  1) Enhanced Post-Registration Success Dialog (ModalDialog.showOptionModal):
+     - Added rich telemetry summary banner (Protocol, Free vs Total count, Base URL, RPM / Quota).
+     - Added scrollable mini Model Catalog preview list box with Family badges, Core Skills, and Context Windows.
+  2) Added 5-Action Deterministic Decision Suite:
+     - Option 1 (View in Providers Panel): Focuses active tab in ProvidersView, navigates, smoothly scrolls to `#provider-card-{id}`, and activates accent border glow.
+     - Option 2 (Start Chatting in Playground): Pre-stages session preset for PlaygroundView (`providerId`, `modelId`), auto-selects top registered model, and initializes session.
+     - Option 3 (Create Model Combo [RECOMMENDED]): Universal `ModelClubView.openComboStudio` method opens Combo Studio with all newly registered models checked and ready to save.
+     - Option 4 (Register Another AI Provider): `RegistrationView.resetRegistrationForm()` cleanly wipes form fields, clears draft session, and focuses search bar.
+     - Option 5 (Export Configuration .json): `RegistrationView.exportProviderJson()` downloads full provider + models JSON backup.
+  3) Closed-Loop Cancellation: `onCancel` handler cleanly dismisses modal with notification feedback, preventing dangling listeners.
+Target Module: RegistrationView.js, ModalDialog.js, ProvidersView.js, PlaygroundView.js, ModelClubView.js
+Modified Files:
+  - public/js/components/ModalDialog.js
+  - public/js/views/RegistrationView.js
+  - public/js/views/ProvidersView.js
+  - public/js/views/PlaygroundView.js
+  - public/js/views/ModelClubView.js
+  - requirement/registration.txt
+Status: PASS (100% Tested & Verified)
+================================================================================
+Date: 2026-08-23 22:20:00
+Requested Change: Active-Only Providers & Models SSOT Filtering Audit across all screens:
+  - Model Club 5-Pane Matrix: Filtered Pane 4 (Providers) and Left Nav Rail ("Active Providers") to count and display only active providers (`p.isActive && !p.isArchived`), fixing the 17 total vs active discrepancy.
+  - Model Club Base Models Pane: Filtered Pane 5 (Base Models) to display only active models from active providers.
+  - TaxonomyHelper: Updated `buildPyramid()` to construct skill and family groups strictly from active models belonging to active providers.
+  - Dashboard: Enforced active-only provider and active model filtering in metric cards and telemetry visualizers.
+Target Module: ModelClubView.js, ModelClubNavHelper.js, TaxonomyHelper.js, DashboardView.js
+Modified Files:
+  - public/js/views/ModelClubView.js
+  - public/js/views/ModelClubNavHelper.js
+  - public/js/helpers/TaxonomyHelper.js
+  - requirement/registration.txt
+Status: PASS
+================================================================================================
+Date: 2026-08-23 22:54:00
+Requested Change: Dynamic Provider Metadata, Rate Limits & Official Portal Resolution:
+  - Created ProviderMetadataService.js with canonical dictionary and heuristic extraction algorithm.
+  - Corrected Bynara official portal and docs URL to https://router.bynara.id (fixing the broken /docs redirect).
+  - Updated Bynara freeTierLimit string to '60 RPM / 5,000 RPD / 100K TPM' and hardTokenLimit to 1,000,000.
+  - Implemented ProvidersView.openProviderModels() to cleanly launch official portals in a new tab.
+  - Sanitized 160 model names in data/models.json stripping URL prefixes (e.g. 'https://router.bynara.id/ ').
+Target Module: ProviderMetadataService.js, ProviderModel.js, ProvidersView.js, data/providers.json, data/models.json
+Modified Files:
+  - src/services/ProviderMetadataService.js
+  - src/models/ProviderModel.js
+  - public/js/views/ProvidersView.js
+  - data/providers.json
+  - data/models.json
+  - requirement/registration.txt
+================================================================================================
+Date: 2026-08-23 23:16:00
+Requested Change: Provider Configuration Documentation Link Synchronization:
+  - Opencode Zen: Updated documentation URL to 'https://opencode.ai/docs/zen/'.
+  - Bynara AI Router: Updated documentation URL to 'https://router.bynara.id/docs'.
+  - NVIDIA NIM Cloud: Added missing documentation URL 'https://docs.api.nvidia.com/nim/reference/limits'.
+  - Updated ProviderMetadataService.js, ProvidersView.js (configureQuota & openProviderModels), and data/providers.json.
+Target Module: ProviderMetadataService.js, ProvidersView.js, data/providers.json
+Modified Files:
+  - src/services/ProviderMetadataService.js
+  - public/js/views/ProvidersView.js
+  - data/providers.json
+  - requirement/registration.txt
+Status: PASS (100% Tested & Verified)
+================================================================================================
+Date: 2026-08-23 23:26:00
+Requested Change: Configure Token Quota & Rate Limits Right Slide-Out Drawer:
+  - Converted ProvidersView.configureQuota() from modal popup to on-top Right Slide-Out Drawer (480px width, glass-panel, cyan border, smooth 0.35s cubic bezier animation).
+  - Added #provider-quota-drawer-backdrop overlay with blur and auto-dismiss on click.
+  - Implemented ProvidersView.closeQuotaDrawer() and ProvidersView.saveQuota() for closed-loop configuration saving.
+Target Module: ProvidersView.js
+Modified Files:
+  - public/js/views/ProvidersView.js
+  - requirement/registration.txt
+Status: PASS (100% Tested & Verified)
+================================================================================================

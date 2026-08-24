@@ -267,6 +267,7 @@ class PlaygroundView {
 
   // ── Models & Providers Loader ──
   static _hasRegisteredStoreListeners = false;
+  static _pendingSessionPreset = null;
 
   static async loadAllModels(force = false) {
     if (window.AppStore && !PlaygroundView._hasRegisteredStoreListeners) {
@@ -277,6 +278,24 @@ class PlaygroundView {
         }).catch(() => {});
       });
       window.AppStore.on('MODELS_MUTATED', () => {
+        PlaygroundView.loadAllModels(true).then(() => {
+          PlaygroundView.populateModelDropdown();
+        }).catch(() => {});
+      });
+      window.AppStore.on('PLAYGROUND_SESSION_READY', (data) => {
+        const { providerId, modelId } = data || {};
+        PlaygroundView._pendingSessionPreset = { providerId, modelId };
+        PlaygroundView.loadAllModels(true).then(() => {
+          const provSelect = document.getElementById('chat-provider-select');
+          if (provSelect && providerId) {
+            provSelect.value = providerId;
+            PlaygroundView.onProviderChange(providerId, modelId);
+          } else {
+            PlaygroundView.populateModelDropdown();
+          }
+        }).catch(() => {});
+      });
+      window.addEventListener('fmc_data_changed', () => {
         PlaygroundView.loadAllModels(true).then(() => {
           PlaygroundView.populateModelDropdown();
         }).catch(() => {});
@@ -302,11 +321,9 @@ class PlaygroundView {
       const activeList = (modelsRes && modelsRes.models && modelsRes.models.length > 0) ? modelsRes.models : [];
       const fullList = (allModelsRes && allModelsRes.models && allModelsRes.models.length > 0) ? allModelsRes.models : [];
       
-      // Use active models if available, otherwise fallback to full models filtered by active providers
-      let combined = activeList.length > 0 ? activeList : fullList.filter(m => PlaygroundView.providers.some(p => p.id === m.providerId || p.id === m.provider));
-      if (combined.length === 0 && fullList.length > 0) {
-        combined = fullList;
-      }
+      // Use active models if available, strictly filtered by active providers
+      const activeProvIds = new Set(PlaygroundView.providers.map(p => p.id));
+      let combined = (activeList.length > 0 ? activeList : fullList).filter(m => m.isActive !== false && (activeProvIds.size === 0 || activeProvIds.has(m.providerId) || activeProvIds.has(m.provider)));
       PlaygroundView.allModels = combined;
 
       const dbCombos = Array.isArray(combosRes) ? combosRes : (combosRes && combosRes.combos) || [];
@@ -356,7 +373,9 @@ class PlaygroundView {
     const modelSelect = document.getElementById('ollama-model-select');
     if (!provSelect || !modelSelect || typeof ModelDropdownHelper === 'undefined') return;
 
-    const curProv = provSelect.value || (PlaygroundView.providers && PlaygroundView.providers[0] ? PlaygroundView.providers[0].id : 'gemini');
+    const preset = PlaygroundView._pendingSessionPreset;
+    const curProv = (preset && preset.providerId) || provSelect.value || (PlaygroundView.providers && PlaygroundView.providers[0] ? PlaygroundView.providers[0].id : 'gemini');
+    
     provSelect.innerHTML = ModelDropdownHelper.renderProviderComboDropdownHtml(
       PlaygroundView.providers || [],
       PlaygroundView.combos || [],
@@ -364,7 +383,8 @@ class PlaygroundView {
       PlaygroundView.allModels || []
     );
 
-    PlaygroundView.onProviderChange(curProv);
+    PlaygroundView.onProviderChange(curProv, preset ? preset.modelId : null);
+    PlaygroundView._pendingSessionPreset = null;
 
     if (typeof SearchableSelect !== 'undefined') {
       SearchableSelect.init(provSelect, { placeholder: 'Search providers...', maxHeight: 300 });
@@ -372,7 +392,20 @@ class PlaygroundView {
     }
   }
 
-  static onProviderChange(providerId) {
+  static selectProvider(providerId, modelId = null) {
+    if (!providerId) return;
+    this._pendingSessionPreset = { providerId, modelId };
+    const provSelect = document.getElementById('chat-provider-select');
+    if (provSelect) {
+      provSelect.value = providerId;
+      this.onProviderChange(providerId, modelId);
+    }
+    if (window.AppStore && window.AppStore.emit) {
+      window.AppStore.emit('PLAYGROUND_SESSION_READY', { providerId, modelId });
+    }
+  }
+
+  static onProviderChange(providerId, requestedModelId = null) {
     const modelSelect = document.getElementById('ollama-model-select');
     if (!modelSelect) return;
 
@@ -380,14 +413,8 @@ class PlaygroundView {
       const allM = PlaygroundView.allModels || [];
       const isGreen = PlaygroundView.localIndicatorGreen;
       const installed = PlaygroundView.localInstalledModels || [];
-      // Determine a sensible default model for the chosen provider/combo
-      // Prefer a model already selected by the user if it belongs to this provider
-      let defaultModelId = window.app.selectedModelId;
-      const providerModels = ModelDropdownHelper.renderModelsDropdownHtml(allM, providerId, isGreen, installed, '');
-      // Check if the current selected model is valid for this provider
-      // Since ModelDropdownHelper filters allM internally, we can check if defaultModelId matches any of the models that would be returned.
-      // But a cleaner way is just to see if the rendered HTML string contains value="defaultModelId"
-      // Even better, avoid DOM parsing and just filter directly.
+      let defaultModelId = requestedModelId || window.app.selectedModelId;
+
       let filteredModels = [];
       const isCombo = (PlaygroundView.combos && PlaygroundView.combos.some(c => c.id === providerId)) || providerId.startsWith('combo_') || providerId.includes('combo');
       
@@ -412,7 +439,11 @@ class PlaygroundView {
         if (typeof ModelDropdownHelper !== 'undefined' && ModelDropdownHelper.rankModelTier) {
           filteredModels.sort((a, b) => ModelDropdownHelper.rankModelTier(b) - ModelDropdownHelper.rankModelTier(a));
         }
-        defaultModelId = filteredModels[0].id;
+        if (requestedModelId && filteredModels.some(m => m.id === requestedModelId || m.modelId === requestedModelId)) {
+          defaultModelId = requestedModelId;
+        } else if (!filteredModels.some(m => m.id === defaultModelId || m.modelId === defaultModelId)) {
+          defaultModelId = filteredModels[0].id;
+        }
       } else {
         defaultModelId = '';
       }
@@ -490,13 +521,19 @@ class PlaygroundView {
     }
     PlaygroundView.loadSessions();
 
-    const selectedModelId = (window.app && window.app.selectedModelId) || 'llama-3.3-70b-versatile';
-    let initialProvider = 'gemini';
-    const selectedModelObj = (PlaygroundView.allModels || []).find(m => m.id === selectedModelId);
-    if (selectedModelObj && selectedModelObj.providerId) {
+    const preset = PlaygroundView._pendingSessionPreset;
+    const selectedModelId = (preset && preset.modelId) || (window.app && window.app.selectedModelId) || 'llama-3.3-70b-versatile';
+    let initialProvider = (preset && preset.providerId) || 'gemini';
+    const selectedModelObj = (PlaygroundView.allModels || []).find(m => m.id === selectedModelId || m.modelId === selectedModelId);
+    if (!preset && selectedModelObj && selectedModelObj.providerId) {
        initialProvider = selectedModelObj.providerId;
-    } else if (PlaygroundView.providers && PlaygroundView.providers.length > 0) {
+    } else if (!preset && PlaygroundView.providers && PlaygroundView.providers.length > 0) {
        initialProvider = PlaygroundView.providers[0].id;
+    }
+
+    if (preset) {
+      window.app.selectedModelId = selectedModelId;
+      PlaygroundView._pendingSessionPreset = null;
     }
 
     let providerOptions = '';

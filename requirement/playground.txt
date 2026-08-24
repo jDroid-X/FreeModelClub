@@ -2,6 +2,20 @@
 # Screen: Playground View (http://localhost:12247/playground)
 
 ================================================================================
+[2026-08-23 14:00:00] PLAYGROUND REACTIVE SESSION PRESET & LIVE PROVIDER-MODEL SYNC
+================================================================================
+Target Screen : PlaygroundView.js / ModelDropdownHelper.js
+Requested By  : User Chat (Newly registered provider is not reflecting in playground dropdown and relative screens with its metadata as required)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Reactive EventBus Ingestion: Subscribed PlaygroundView to PLAYGROUND_SESSION_READY, PROVIDER_STATE_CHANGED, and MODELS_MUTATED to instantly invalidate memory caches and re-fetch the complete SSOT active models and providers list.
+	- Auto-Selection on Post-Registration: Handled PLAYGROUND_SESSION_READY to automatically switch the active provider selectbox and model dropdown to the newly registered provider and model.
+	- Dynamic Model Tier Ranking: Applied ModelDropdownHelper.rankModelTier to guarantee the highest capability and newest models appear at the top of the select dropdown for any selected provider or combo.
+Files Modified:
+	- public/js/views/PlaygroundView.js
+	- requirement/playground.txt
+
+================================================================================
 [2026-08-21 21:58:00] COMBOSMARTAGENT (22-AGENT MASTER ORCHESTRATOR) IMPLEMENTATION
 ================================================================================
 Target Screen : ComboSmartAgent.js / openaiRoutes.js / ProxyEngineService.js / ChatOrchestrator.js
@@ -1762,3 +1776,12 @@ DESCRIPTION: Fixed layout bug where expanding/unhiding the left sidebar could ca
 - Files Modified: public/js/views/PlaygroundView.js
 - Tests: Vitest 33/33 PASS, Server HTTP 200 OK
 - Status: PASS
+================================================================================
+DATE: 2026-08-23 16:15:30 | STATUS: PASS
+CHANGE: Markdown Table & CSV Download Block Ultra-Compacting
+TARGET SCREEN: Playground View (Chatbot Markdown Tables)
+MODIFIED FILES:
+  - public/js/views/playground/ChatMarkdownRenderer.js [COMPACT .agv-table-wrap, single-line 22px header bar with inline CSV button and overflow-x scroll wrapper]
+  - public/css/components.css                         [TIGHTEN .agv-table th, .agv-table td padding to 3px 8px, line-height to 1.3, compact header bar]
+DESCRIPTION: Eliminated wasted whitespace around Markdown-rendered tables. Compacted header bar to 22px with inline TABLE label and mini CSV download pill button, reduced cell padding and line heights, and wrapped tables in an overflow-x responsive container.
+================================================================================

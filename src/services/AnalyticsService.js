@@ -13,8 +13,10 @@ class AnalyticsService {
   static getDashboardSummary() {
     const providers = ProviderModel.getAll();
     const activeProviders = ProviderModel.getActiveProviders();
+    const activeProvIds = new Set(activeProviders.map(p => p.id));
 
     const models = AIModel.getAll();
+    const registeredActiveModels = models.filter(m => m.isActive !== false && activeProvIds.has(m.providerId));
     const activeModels = AIModel.getActiveModels();
 
     const apiLogs = LogModel.getApiLogs(500);
@@ -34,7 +36,7 @@ class AnalyticsService {
       totalLatencyMs = successLogs.reduce((acc, curr) => acc + (curr.latencyMs || 0), 0) / successLogs.length;
     }
 
-    const modelAnalytics = activeModels.map((m) => {
+    const modelAnalytics = registeredActiveModels.map((m) => {
       const totalTokens = (m.totalPromptTokens || 0) + (m.totalCompletionTokens || 0);
       return {
         id: m.id,
@@ -67,8 +69,8 @@ class AnalyticsService {
       overview: {
         totalProviders: providers.length,
         activeProviders: activeProviders.length,
-        totalModels: models.length,
-        activeFreeModels: activeModels.length,
+        totalModels: registeredActiveModels.length,
+        activeFreeModels: registeredActiveModels.length,
         totalPromptTokens,
         totalCompletionTokens,
         totalTokens,

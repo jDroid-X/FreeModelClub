@@ -20,6 +20,8 @@ router.get('/status', IntegrationController.getConfig);
 router.get('/config', IntegrationController.getConfig);
 router.put('/config', IntegrationController.saveConfig);
 router.post('/auto-inject', IntegrationController.autoInjectConfig);
+router.post('/check-tool-status', IntegrationController.checkToolStatus);
+router.get('/check-tool-status', IntegrationController.checkToolStatus);
 router.post('/n8n-sync', IntegrationController.n8nSync);
 router.post('/master-brain-pipeline', IntegrationController.executeMasterBrainPipeline);
 router.get('/master-brain-pipeline', IntegrationController.executeMasterBrainPipeline);

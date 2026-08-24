@@ -8,7 +8,7 @@
 class SettingsAgentHelper {
   static getRocasSpecs() {
     return {
-      provider_agent: { agentId: 'provider_agent', name: 'Provider Agent', role: '10-Year Expert in online provider & free model discovery', task: 'Discover Base URL, Protocol, Key Portal, and free models for AI Cloud platforms.', goal: '1-Click Provider & Free Model Staging.', constraints: 'Strict raw JSON schema output only.', input: 'Provider name or domain query.', output: 'JSON object with baseUrl, protocol, and staged models.', validation: 'Validates URL formats & JSON parsing.', objectives: 'Automate provider onboarding.', context: 'RegistrationView.js, ProviderAgentService.js.', actions: 'agentLookupProvider(query), applyProviderData().', systemSpecs: 'Primary Model: GPT-4o / Llama 3.3 70B.' },
+      provider_agent: { agentId: 'provider_agent', name: 'Provider Agent', role: '10-Year Expert in Live AI Provider & Free Model Discovery via Perplexity AI Real-time Search, Frontier Attached Model Engine, and Multi-Tier ChatGPT/Gemini Automated Backups', task: 'Execute Comprehensive 5-Stage Discovery Workflow: (1) Live Perplexity AI Online Search & Document Retrieval (Primary: Sonar Search, Backup: ChatGPT GPT-4o / Google Gemini 2.5 Flash), (2) Multi-Engine LLM Structured Extraction using Attached Model Engine (Default: GPT-4o / Gemini 2.5 Flash / Groq Llama 3.3), (3) Strict JSON Output Normalization & Context Window Inference, (4) Unlinked API Key Guard & Missing Key Protection, (5) Automatic 1-Click Staged Model & Provider Form Staging.', goal: '1-Click Universal AI Cloud Platform Onboarding with accurate base endpoints, API key portals, protocol connectors, and free-tier model pools with zero search downtime.', constraints: 'Mandatory Rule 11 Live Discovery: Never bypass live search for hardcoded catalog. Multi-tier backup failover (Perplexity -> ChatGPT -> Gemini -> Frontier Catalog). Strict JSON output with zero hallucinations. Require active API key with unlinked warning alert.', input: 'Target Provider or domain query string (e.g. Gemini, Groq, OpenRouter, NVIDIA, Bynara, OpenAI, Perplexity, Cerebras, SambaNova, DeepSeek, Mistral) with optional attached model/provider specification.', output: 'Strict JSON schema: displayName, protocol, baseUrl, apiKeyHelp, apiKeyUrl, keyPrefix, freeTierQuota, description, and models array [modelId, modelName, family, coreSkill, contextWindow, maxTokens, isFree].', validation: 'Dynamic Input Sanitization & Output Schema Validation: JSON.parse integrity check, non-empty protocol and baseUrl validation, multi-tier backup failover audit, and unlinked key error signaling.', objectives: 'Eliminate manual AI API configuration and discover latest verified free-tier models with full context window and token limit metadata.', context: 'ProviderAgent.js, ProviderAgentService.js, ProviderController.js, RegistrationView.js, ProvidersView.js.', actions: 'openPopup(query), populateDropdowns(), search(), lookupProvider(query, forceLive, options), performOnlineAiSearch(query, options), applyData(payload), executeMultiTierBackup().', systemSpecs: 'Primary Search: Perplexity Sonar. Attached Frontier Engine: GPT-4o (OpenAI Flagship) / Gemini 2.5 Flash (Google Cloud) / Groq Llama 3.3 70B Versatile. Automated Backup: ChatGPT (GPT-4o / GPT-4o-mini) & Gemini (Gemini 2.5 Flash / 1.5 Flash). Timeout: 15000ms. Protocols: OpenAI Compatible, Gemini API, Anthropic Messages.' },
       keepalive_agent: { agentId: 'keepalive_agent', name: 'KeepAlive Socket Agent', role: 'Persistent HTTP Socket Connection Manager', task: 'Maintain TCP socket pools to eliminate TLS handshake latency.', goal: 'Sub-50ms connection latency.', constraints: 'Max 50 idle sockets per host.', input: 'Target API URL.', output: 'Reusable Agent socket connection.', validation: 'Pings socket health before reuse.', objectives: 'Zero TLS overhead.', context: 'KeepAliveAgent.js, ProxyExecutionHelper.js.', actions: 'getAgent(url), purgeIdleSockets().', systemSpecs: 'Native Node.js keepAlive Agent.' },
       proxy_engine_agent: { agentId: 'proxy_engine_agent', name: 'Proxy Engine Failover Agent', role: 'OpenAI / Anthropic Gateway & Closed-Loop Router', task: 'Translate payloads, route across Combos, and failover on HTTP errors.', goal: '100% completion rate.', constraints: 'Max 3 retry attempts per combo pool.', input: 'POST /v1/chat/completions or /v1/messages.', output: 'OpenAI/Anthropic SSE stream or JSON.', validation: 'Verifies auth headers & model status.', objectives: 'Fault-tolerant LLM proxy gateway.', context: 'server.js, ProxyEngineService.js.', actions: 'handleChatCompletion(), executeFailover().', systemSpecs: 'Supports Round-Robin & Fallback.' },
       token_agent: { agentId: 'token_agent', name: 'Token Agent', role: 'Token Quota & Latency Telemetry Synchronizer', task: 'Measure latency, sum token usage, and format SI units (k, M, B).', goal: 'Accurate real-time token telemetry.', constraints: 'Zero false token counts; sanitize inputs.', input: 'Provider ID & telemetry logs.', output: 'Updated token limit & ping latency state.', validation: 'Validates reachable HTTP endpoints.', objectives: 'Real-time quota tracking.', context: 'TokenAgentService.js, Dashboard.js.', actions: 'syncAllProviderTokens(), pingLatency().', systemSpecs: 'HTTP ping latency timeout 3000ms.' },
@@ -484,9 +484,30 @@ class SettingsAgentHelper {
     const providers = window.PlaygroundView.providers || [{ id: 'groq', displayName: 'Groq API' }];
     const combos = window.PlaygroundView.combos || [];
     const allModels = window.PlaygroundView.allModels || [];
-    let providerOptions = '';
-    const initialProvider = combos.length > 0 ? ('combo_' + combos[0].id) : (providers[0]?.id || 'groq');
     
+    // Check if ROCAS memo specifies a default model (e.g. Gemini 2.5 Flash / GPT-4o / Groq Llama 3.3 70B for Provider Agent)
+    let initialProvider = providers[0]?.id || 'groq';
+    let defaultModelId = null;
+
+    if (agentKey === 'provider_agent') {
+      const geminiProv = providers.find(p => p.id === 'gemini');
+      const openaiProv = providers.find(p => p.id === 'openai');
+      const groqProv = providers.find(p => p.id === 'groq');
+      if (geminiProv) {
+        initialProvider = 'gemini';
+        defaultModelId = 'gemini-2.5-flash';
+      } else if (openaiProv) {
+        initialProvider = 'openai';
+        defaultModelId = 'gpt-4o';
+      } else if (groqProv) {
+        initialProvider = 'groq';
+        defaultModelId = 'llama-3.3-70b-versatile';
+      }
+    } else if (combos.length > 0) {
+      initialProvider = 'combo_' + combos[0].id;
+    }
+
+    let providerOptions = '';
     if (typeof ModelDropdownHelper !== 'undefined') {
       providerOptions = ModelDropdownHelper.renderProviderComboDropdownHtml(providers, combos, initialProvider);
     }
@@ -495,7 +516,7 @@ class SettingsAgentHelper {
       title: `<i class="fa-solid fa-sliders" style="color: var(--accent-cyan);"></i> Re-Assign Model for ${spec.name}`,
       content: `
         <div style="font-size: 0.82rem; color: var(--text-main);">
-          <p style="margin-bottom: 10px; color: var(--text-muted);">Select active model engine or Model Combo to attach to <strong>${spec.name}</strong>:</p>
+          <p style="margin-bottom: 10px; color: var(--text-muted);">Select active model engine or Model Combo to attach to <strong>${spec.name}</strong> (Default System Model: <em>${spec.systemSpecs ? spec.systemSpecs.split('.')[0] : 'Best Available Model'}</em>):</p>
           
           <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
             <div class="form-group" style="flex: 1; min-width: 150px;">
@@ -533,9 +554,52 @@ class SettingsAgentHelper {
       const pSel = document.getElementById('modal-provider-select');
       if (pSel) {
         pSel.value = initialProvider;
-        this.onModalProviderChange(initialProvider);
+        this.onModalProviderChange(initialProvider, defaultModelId);
       }
     }, 50);
+  }
+
+  static onModalProviderChange(val, preferredModelId = null) {
+    const mSelect = document.getElementById('agent-attached-model-select');
+    if (!mSelect) return;
+    const allModels = window.PlaygroundView?.allModels || [];
+    const combos = window.PlaygroundView?.combos || [];
+    let models = [];
+
+    if (val.startsWith('combo_')) {
+      const comboId = val.replace('combo_', '');
+      const combo = combos.find(c => c.id === comboId);
+      if (combo) {
+        models = (combo.models || []).map(m => ({ id: m.modelId || m, name: m.modelName || m.modelId || m }));
+      }
+    } else {
+      models = allModels.filter(m => m.providerId === val || m.provider === val);
+    }
+
+    if (models.length === 0) {
+      if (val === 'gemini') {
+        models = [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' }, { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' }];
+      } else if (val === 'openai') {
+        models = [{ id: 'gpt-4o', name: 'GPT-4o' }, { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }];
+      } else if (val === 'groq') {
+        models = [{ id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' }, { id: 'qwen-2.5-coder-32b', name: 'Qwen 2.5 Coder 32B' }];
+      } else {
+        models = [{ id: 'default-model', name: 'Default Agent Engine' }];
+      }
+    }
+
+    mSelect.innerHTML = models.map(m => `<option value="${m.id || m.modelId}">${m.name || m.modelName || m.id || m.modelId}</option>`).join('');
+
+    if (preferredModelId) {
+      const match = Array.from(mSelect.options).find(opt => opt.value === preferredModelId || opt.value.includes(preferredModelId));
+      if (match) mSelect.value = match.value;
+    } else if (val === 'gemini') {
+      const match = Array.from(mSelect.options).find(opt => opt.value.includes('2.5') || opt.value.includes('flash'));
+      if (match) mSelect.value = match.value;
+    } else if (val === 'openai') {
+      const match = Array.from(mSelect.options).find(opt => opt.value.includes('gpt-4o'));
+      if (match) mSelect.value = match.value;
+    }
   }
 
   static launchAgent(agentKey) {

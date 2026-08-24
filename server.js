@@ -196,6 +196,8 @@ app.get('/api/system/info', SystemInfoController.getSystemInfo);
 app.get('/api/system/check-update', SystemInfoController.checkAppUpdate);
 app.get('/api/system/tray-status', SystemInfoController.getTrayStatus);
 app.post('/api/system/launch-tray', SystemInfoController.launchTray);
+app.get('/api/system/program-matrix', SystemInfoController.getProgramMatrix);
+app.post('/api/system/program-matrix/sync', SystemInfoController.syncProgramMatrix);
 app.get('/api/system/logs', LogController.getSystemLogs);
 app.get('/api/user/profiles', UserController.getUsers);
 app.get('/api/user/profile', UserController.getUserByEmail);

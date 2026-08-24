@@ -252,24 +252,6 @@ class ProviderAgentHelper {
           { modelId: 'deepseek-reasoner', modelName: 'DeepSeek R1 Reasoner', family: 'DeepSeek', coreSkill: 'Deep Math & Logic', contextWindow: 64000, maxTokens: 8192, isFree: true }
         ]
       },
-      bynara: {
-        id: 'bynara',
-        rawId: 'bynara',
-        displayName: 'Bynara Cloud AI API',
-        protocol: 'OpenAI Compatible',
-        baseUrl: 'https://api.bynara.ai/v1',
-        apiKeyHelp: 'Generate free API Key at https://console.bynara.ai/keys',
-        apiKeyUrl: 'https://console.bynara.ai/keys',
-        keyPrefix: 'byn-',
-        freeTierQuota: '5,000 Free Credits / Developer Tier',
-        tokenDetailsHelp: 'Bynara Cloud provides high-speed free tier access to open-weights models.',
-        description: 'Bynara high-performance AI inference platform hosting Llama 3.3, Qwen 2.5 Coder, and DeepSeek R1 models.',
-        models: [
-          { modelId: 'bynara/llama-3.3-70b-instruct', modelName: 'Bynara Llama 3.3 70B Instruct', family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072, maxTokens: 4096, isFree: true },
-          { modelId: 'bynara/qwen-2.5-coder-32b', modelName: 'Bynara Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Full-Stack Code Generation', contextWindow: 65536, maxTokens: 4096, isFree: true },
-          { modelId: 'bynara/deepseek-r1', modelName: 'Bynara DeepSeek R1 Reasoning', family: 'DeepSeek', coreSkill: 'Deep Math & Logic', contextWindow: 65536, maxTokens: 8192, isFree: true }
-        ]
-      },
       hyperbolic: {
         id: 'hyperbolic',
         rawId: 'hyperbolic',
@@ -294,13 +276,82 @@ class ProviderAgentHelper {
         baseUrl: 'https://api.openai.com/v1',
         apiKeyHelp: 'Get API Key at https://platform.openai.com/api-keys',
         apiKeyUrl: 'https://platform.openai.com/api-keys',
-        keyPrefix: 'sk-',
-        freeTierQuota: 'Free Tier / Pay-As-You-Go',
-        tokenDetailsHelp: 'OpenAI provides various models including GPT-4o and GPT-4o-mini.',
+        keyPrefix: 'sk-proj-',
+        freeTierQuota: 'Standard Developer Tier',
+        tokenDetailsHelp: 'OpenAI provides frontier models including GPT-4o, GPT-4o-mini, o1-preview, and o1-mini.',
         description: 'Official OpenAI API platform.',
         models: [
           { modelId: 'gpt-4o', modelName: 'GPT-4o Flagship', family: 'GPT', coreSkill: 'General Reasoning & Code', contextWindow: 128000, maxTokens: 4096, isFree: true },
-          { modelId: 'gpt-4o-mini', modelName: 'GPT-4o Mini', family: 'GPT', coreSkill: 'Fast Chat & Instruction', contextWindow: 128000, maxTokens: 16384, isFree: true }
+          { modelId: 'gpt-4o-mini', modelName: 'GPT-4o Mini', family: 'GPT', coreSkill: 'Fast Chat & Instruction', contextWindow: 128000, maxTokens: 16384, isFree: true },
+          { modelId: 'o1-preview', modelName: 'OpenAI o1 Preview', family: 'GPT', coreSkill: 'Deep Math & Logic', contextWindow: 128000, maxTokens: 32768, isFree: true },
+          { modelId: 'o1-mini', modelName: 'OpenAI o1 Mini', family: 'GPT', coreSkill: 'Fast STEM Reasoning', contextWindow: 128000, maxTokens: 65536, isFree: true }
+        ]
+      },
+      perplexity: {
+        id: 'perplexity',
+        rawId: 'perplexity',
+        displayName: 'Perplexity AI Search Engine',
+        protocol: 'OpenAI Compatible',
+        baseUrl: 'https://api.perplexity.ai',
+        apiKeyHelp: 'Get API Key at https://www.perplexity.ai/settings/api',
+        apiKeyUrl: 'https://www.perplexity.ai/settings/api',
+        keyPrefix: 'pplx-',
+        freeTierQuota: 'API Access / Search Grounded',
+        tokenDetailsHelp: 'Perplexity AI Sonar models provide live internet grounded search and reasoning.',
+        description: 'Real-time search and reasoning model API.',
+        models: [
+          { modelId: 'sonar', modelName: 'Perplexity Sonar Search', family: 'Perplexity', coreSkill: 'Real-Time Web Search & Synthesis', contextWindow: 128000, maxTokens: 4096, isFree: true },
+          { modelId: 'sonar-pro', modelName: 'Perplexity Sonar Pro', family: 'Perplexity', coreSkill: 'Deep Multi-Step Web Research', contextWindow: 200000, maxTokens: 8192, isFree: true },
+          { modelId: 'sonar-reasoning', modelName: 'Perplexity Sonar Reasoning', family: 'Perplexity', coreSkill: 'CoT Math & Live Search', contextWindow: 128000, maxTokens: 8192, isFree: true }
+        ]
+      },
+      poe: {
+        id: 'poe',
+        rawId: 'poe',
+        displayName: 'Poe AI Platform',
+        protocol: 'OpenAI Compatible',
+        baseUrl: 'https://api.poe.com/v1',
+        apiKeyHelp: 'Get API Key from https://poe.com/api/keys',
+        apiKeyUrl: 'https://poe.com/api/keys',
+        keyPrefix: 'sk-poe-',
+        freeTierQuota: 'Daily Free Compute Points',
+        tokenDetailsHelp: 'Poe platform provides multi-bot ecosystem and developer APIs.',
+        description: 'Multi-model chatbot ecosystem.',
+        models: [
+          { modelId: 'Claude-3.5-Sonnet', modelName: 'Poe Claude 3.5 Sonnet', family: 'Claude', coreSkill: 'Coding & Analysis', contextWindow: 200000, maxTokens: 8192, isFree: true },
+          { modelId: 'GPT-4o', modelName: 'Poe GPT-4o', family: 'GPT', coreSkill: 'General Reasoning', contextWindow: 128000, maxTokens: 4096, isFree: true }
+        ]
+      },
+      morph: {
+        id: 'morph',
+        rawId: 'morph',
+        displayName: 'Morph LLM Cloud',
+        protocol: 'OpenAI Compatible',
+        baseUrl: 'https://api.morphllm.com/v1',
+        apiKeyHelp: 'Get API Key at https://www.morphllm.com',
+        apiKeyUrl: 'https://www.morphllm.com',
+        keyPrefix: 'sk-',
+        freeTierQuota: 'Developer Free Tier',
+        tokenDetailsHelp: 'Morph LLM hosts high-capacity GLM 5.2 and frontier models.',
+        description: 'High-speed model inference provider.',
+        models: [
+          { modelId: 'morph-glm52-744b', modelName: 'Morph GLM 5.2 744B', family: 'GLM', coreSkill: 'Ultra High Capacity Reasoning', contextWindow: 128000, maxTokens: 8192, isFree: true }
+        ]
+      },
+      comet: {
+        id: 'comet',
+        rawId: 'comet',
+        displayName: 'Comet API Platform',
+        protocol: 'OpenAI Compatible',
+        baseUrl: 'https://api.cometapi.com/v1',
+        apiKeyHelp: 'Get API Key from https://www.cometapi.com/console/token',
+        apiKeyUrl: 'https://www.cometapi.com/console/token',
+        keyPrefix: 'sk-',
+        freeTierQuota: 'Universal Free Tier Tokens',
+        tokenDetailsHelp: 'Comet API provides fast AI proxy and completion tokens.',
+        description: 'Universal AI proxy platform.',
+        models: [
+          { modelId: 'comet-gpt-4o', modelName: 'Comet GPT-4o', family: 'GPT', coreSkill: 'General Reasoning', contextWindow: 128000, maxTokens: 4096, isFree: true }
         ]
       }
     };
@@ -371,6 +422,19 @@ class ProviderAgentHelper {
       'chat gpt': 'openai',
       'openai api': 'openai',
       'openai cloud platform': 'openai',
+      'perplexity': 'perplexity',
+      'perplexity ai': 'perplexity',
+      'pplx': 'perplexity',
+      'poe': 'poe',
+      'poe ai': 'poe',
+      'morph': 'morph',
+      'morph llm': 'morph',
+      'comet': 'comet',
+      'comet api': 'comet',
+      'bynara id': 'bynara',
+      'router bynara': 'bynara',
+      'router.bynara.id': 'bynara',
+      'bynara router': 'bynara',
       'moonshot': 'moonshot',
       'moonshot cloud ai': 'moonshot',
       'opencode': 'opencode',

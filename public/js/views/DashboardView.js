@@ -36,14 +36,14 @@ class DashboardView {
           DashboardView.cachedProviders = null;
           DashboardView.cachedModels = null;
           if (window.app && window.app.currentView === 'dashboard') {
-            const c = document.getElementById('view-container');
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
             if (c) DashboardView.render(c, true);
           }
         });
         window.AppStore.on('MODELS_MUTATED', () => {
           DashboardView.cachedModels = null;
           if (window.app && window.app.currentView === 'dashboard') {
-            const c = document.getElementById('view-container');
+            const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
             if (c) DashboardView.render(c, true);
           }
         });
@@ -54,7 +54,7 @@ class DashboardView {
         DashboardView.cachedProviders = null;
         DashboardView.cachedLogs = null;
         if (window.app && window.app.currentView === 'dashboard') {
-          const c = document.getElementById('view-container');
+          const c = document.getElementById('page-view-content') || document.getElementById('view-container') || document.getElementById('main-content');
           if (c) DashboardView.render(c, true);
         }
       });
@@ -84,16 +84,17 @@ class DashboardView {
         telemetryData = tRes.data || tRes.telemetry;
         DashboardView.cachedTelemetry = telemetryData;
       }
+      if (pRes && pRes.providers) {
+        providersList = (pRes.providers || []).filter(p => p.isActive && !p.isArchived && p.displayName && p.displayName !== 'Unnamed Provider' && p.baseUrl);
+        DashboardView.cachedProviders = providersList;
+      }
       if (mRes && mRes.models) {
-        modelsList = mRes.models;
+        const activeProvIds = new Set(providersList.map(p => p.id));
+        modelsList = (mRes.models || []).filter(m => m.isActive !== false && (activeProvIds.size === 0 || activeProvIds.has(m.providerId)));
         if (acRes && acRes.activeModels && acRes.activeModels.length > 0) {
           modelsList = modelsList.filter(m => acRes.activeModels.includes(m.id) || acRes.activeModels.includes(m.modelId));
         }
         DashboardView.cachedModels = modelsList;
-      }
-      if (pRes && pRes.providers) {
-        providersList = pRes.providers;
-        DashboardView.cachedProviders = providersList;
       }
       if (lRes && lRes.logs) {
         apiLogs = lRes.logs;

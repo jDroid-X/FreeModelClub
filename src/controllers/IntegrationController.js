@@ -136,6 +136,101 @@ class IntegrationController {
   }
 
 
+  static resolveToolTargetPath(toolId) {
+    const appData = process.env.APPDATA || (process.env.HOME ? path.join(process.env.HOME, '.config') : null);
+    const userProfile = process.env.USERPROFILE || process.env.HOME || process.cwd();
+    const normTool = (toolId || '').toLowerCase().trim();
+
+    let targetFile = '';
+    let injectStrategy = 'chat.lm.providers';
+
+    switch (normTool) {
+      case 'vscode':
+        targetFile = path.join(appData || userProfile, 'Code', 'User', 'settings.json');
+        injectStrategy = 'chat.lm.providers';
+        break;
+      case 'cursor':
+        targetFile = path.join(appData || userProfile, 'Cursor', 'User', 'settings.json');
+        injectStrategy = 'chat.lm.providers';
+        break;
+      case 'windsurf':
+        targetFile = path.join(appData || userProfile, 'Windsurf', 'User', 'settings.json');
+        injectStrategy = 'chat.lm.providers';
+        break;
+      case 'cline':
+        targetFile = path.join(appData || userProfile, 'Code', 'User', 'globalStorage', 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json');
+        injectStrategy = 'mcpServers';
+        break;
+      case 'claude':
+      case 'claude-desktop':
+        targetFile = path.join(appData || userProfile, 'Claude', 'claude_desktop_config.json');
+        injectStrategy = 'mcpServers';
+        break;
+      case 'pearai':
+        targetFile = path.join(appData || userProfile, 'PearAI', 'User', 'settings.json');
+        injectStrategy = 'chat.lm.providers';
+        break;
+      case 'jan':
+        targetFile = path.join(userProfile, 'jan', 'models.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'anythingllm':
+        targetFile = path.join(appData || userProfile, 'anythingllm-desktop', 'storage', 'custom-models.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'zencode':
+        targetFile = path.join(userProfile, '.zencode', 'fmc-proxy-config.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'openclaw':
+        targetFile = path.join(userProfile, '.openclaw', 'config.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'codex':
+        targetFile = path.join(userProfile, '.codex', 'fmc-settings.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'ollama':
+        targetFile = path.join(userProfile, '.ollama', 'fmc-proxy-bridge.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'openwebui':
+        targetFile = path.join(userProfile, '.openwebui', 'fmc-connection.json');
+        injectStrategy = 'rawJson';
+        break;
+      case 'mcp':
+        targetFile = path.join(userProfile, '.mcp', 'fmc-mcp-servers.json');
+        injectStrategy = 'mcpServers';
+        break;
+      default:
+        targetFile = path.join(userProfile, `.${normTool}`, 'fmc-connection.json');
+        injectStrategy = 'rawJson';
+        break;
+    }
+
+    const dir = path.dirname(targetFile);
+    const dirExists = fs.existsSync(dir);
+    const fileExists = fs.existsSync(targetFile);
+
+    return { targetFile, injectStrategy, dirExists, fileExists };
+  }
+
+  static checkToolStatus(req, res) {
+    const { toolId } = req.body || req.query || {};
+    if (!toolId) {
+      return res.status(400).json({ success: false, message: 'toolId is required' });
+    }
+    const resolved = IntegrationController.resolveToolTargetPath(toolId);
+    return res.json({
+      success: true,
+      toolId,
+      targetFile: resolved.targetFile,
+      fileExists: resolved.fileExists,
+      dirExists: resolved.dirExists,
+      injectStrategy: resolved.injectStrategy
+    });
+  }
+
   static autoInjectConfig(req, res) {
     const { toolId, script } = req.body;
     if (!toolId || !script) {
@@ -143,49 +238,37 @@ class IntegrationController {
     }
 
     try {
-      const appData = process.env.APPDATA;
-      if (!appData) {
-        throw new Error('APPDATA environment variable not found. Auto-inject only supported on Windows currently.');
+      const resolved = IntegrationController.resolveToolTargetPath(toolId);
+      const { targetFile, injectStrategy } = resolved;
+
+      const dir = path.dirname(targetFile);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
       }
 
-      let targetFile = '';
-      let injectStrategy = 'chat.lm.providers';
-
-      switch (toolId.toLowerCase()) {
-        case 'vscode':
-          targetFile = path.join(appData, 'Code', 'User', 'settings.json');
-          break;
-        case 'cursor':
-          targetFile = path.join(appData, 'Cursor', 'User', 'settings.json');
-          break;
-        case 'windsurf':
-          targetFile = path.join(appData, 'Windsurf', 'User', 'settings.json');
-          break;
-        case 'cline':
-          targetFile = path.join(appData, 'Code', 'User', 'globalStorage', 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json');
-          injectStrategy = 'mcpServers';
-          break;
-        default:
-          throw new Error(`Auto-inject not supported for tool: ${toolId}`);
-      }
-
-      if (!fs.existsSync(targetFile)) {
-        // Create an empty valid JSON template if it doesn't exist
-        const defaultContent = injectStrategy === 'mcpServers' ? '{\n  "mcpServers": {}\n}' : '{\n}';
-        fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+      let backupFile = null;
+      if (fs.existsSync(targetFile)) {
+        // Create an automatic backup before overwriting/modifying
+        backupFile = `${targetFile}.bak`;
+        try {
+          fs.copyFileSync(targetFile, backupFile);
+        } catch (bErr) {
+          console.warn('Backup copy warning:', bErr);
+        }
+      } else {
+        let defaultContent = '{\n}';
+        if (injectStrategy === 'mcpServers') defaultContent = '{\n  "mcpServers": {}\n}';
+        else if (injectStrategy === 'chat.lm.providers') defaultContent = '{\n}';
         fs.writeFileSync(targetFile, defaultContent, 'utf8');
       }
 
       let content = fs.readFileSync(targetFile, 'utf8');
-      
-      // We will do string-based injection to avoid stripping user comments (JSONC)
+
       if (injectStrategy === 'chat.lm.providers') {
         const propIndex = content.indexOf('"chat.lm.providers"');
         if (propIndex === -1) {
-          // Doesn't exist, append property right before the final closing brace
           content = content.replace(/\}\s*$/, `, "chat.lm.providers": [\n${script}\n] }`);
         } else {
-          // Property exists, find array start and inject
           const arrayStart = content.indexOf('[', propIndex);
           if (arrayStart !== -1) {
             content = content.substring(0, arrayStart + 1) + `\n${script},` + content.substring(arrayStart + 1);
@@ -201,6 +284,14 @@ class IntegrationController {
             content = content.substring(0, objStart + 1) + `\n"fmc-proxy": ${script},` + content.substring(objStart + 1);
           }
         }
+      } else {
+        // Raw JSON or config snippet
+        try {
+          const parsed = JSON.parse(script);
+          content = JSON.stringify(parsed, null, 2);
+        } catch {
+          content = script;
+        }
       }
 
       fs.writeFileSync(targetFile, content, 'utf8');
@@ -213,14 +304,19 @@ class IntegrationController {
         category: 'AUTO_INJECT_SUCCESS',
         level: 'INFO',
         message: `Successfully injected config into ${toolId} settings`,
-        details: { targetFile }
+        details: { targetFile, backupFile, toolId }
       });
       db.write(db.files.system_logs, systemLogs);
 
-      return res.json({ success: true, message: `Successfully injected config into ${path.basename(targetFile)}` });
+      return res.json({
+        success: true,
+        targetFile,
+        backupFile,
+        toolId,
+        message: `Successfully injected config into ${path.basename(targetFile)} (${targetFile})`
+      });
     } catch (err) {
       console.error('Auto Inject Error:', err);
-      
       const systemLogs = db.read(db.files.system_logs) || [];
       systemLogs.push({
         id: `sys_log_${Date.now()}`,
@@ -247,6 +343,8 @@ class IntegrationController {
     db.write(db.files.config, updated);
     return res.json({ success: true, config: updated });
   }
+
+
 
   static async n8nSync(req, res) {
     const { exec } = require('child_process');

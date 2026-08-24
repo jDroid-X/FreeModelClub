@@ -83,6 +83,10 @@ class ApiService {
     return this.request('/api/providers/all');
   }
 
+  static getProviderApiKey(providerId) {
+    return this.request(`/api/providers/${providerId}/key`);
+  }
+
   static updateProviderApiKey(providerId, apiKey) {
     return this.request(`/api/providers/${providerId}/update-key`, {
       method: 'POST',
@@ -120,15 +124,16 @@ class ApiService {
     });
   }
 
-  static lookupProviderAgent(query) {
+  static lookupProviderAgent(params) {
+    const payload = typeof params === 'string' ? { query: params } : (params || {});
     return this.request('/api/providers/agent-lookup', {
       method: 'POST',
-      body: JSON.stringify({ query })
+      body: JSON.stringify(payload)
     });
   }
 
-  static agentLookupProvider(query) {
-    return this.lookupProviderAgent(query);
+  static agentLookupProvider(params) {
+    return this.lookupProviderAgent(params);
   }
 
   static registerProvider(data) {
@@ -158,6 +163,16 @@ class ApiService {
 
   static pingProvider(id) {
     return this.request('/api/providers/' + id + '/ping', {
+      method: 'POST'
+    });
+  }
+
+  static getProviderApiKey(id) {
+    return this.request('/api/providers/' + id + '/key');
+  }
+
+  static syncProviderLimits(id) {
+    return this.request('/api/providers/' + id + '/sync-limits', {
       method: 'POST'
     });
   }
@@ -660,6 +675,20 @@ class ApiService {
     return this.request('/api/integrations/config', {
       method: 'PUT',
       body: JSON.stringify(data)
+    });
+  }
+
+  static autoInjectConfig(data) {
+    return this.request('/api/integrations/auto-inject', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  static checkToolStatus(toolId) {
+    return this.request('/api/integrations/check-tool-status', {
+      method: 'POST',
+      body: JSON.stringify({ toolId })
     });
   }
 
