@@ -59,6 +59,9 @@ class ModelClubView {
               <button class="btn btn-primary btn-xs" style="width: 100%; justify-content: flex-start;" onclick="ModelClubView.openCreateComboModal()">
                 <i class="fa-solid fa-plus-circle"></i> + New Model Combo
               </button>
+              <button class="btn btn-secondary btn-xs" style="width: 100%; justify-content: flex-start;" onclick="ModelClubView.openModelBrowseListBox()" title="Master-Detail Model Inspector">
+                <i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i> Model Inspector ListBox
+              </button>
               <div style="display: flex; gap: 4px;">
                 <button class="btn btn-secondary btn-xs" style="flex: 1; font-size: 0.7rem;" onclick="ModelClubComboHelper.exportCombosJson(ModelClubView.combos)"><i class="fa-solid fa-download" style="color: var(--accent-emerald);"></i> Export</button>
                 <button class="btn btn-secondary btn-xs" style="flex: 1; font-size: 0.7rem;" onclick="ModelClubComboHelper.importCombosJson(() => ModelClubView.refreshAll())"><i class="fa-solid fa-upload" style="color: var(--accent-cyan);"></i> Import</button>
@@ -479,6 +482,75 @@ class ModelClubView {
         this.openCreateComboStudio(selectedIds, `compare-combo-${Date.now().toString().slice(-4)}`);
       }
     });
+  }
+
+  static async openModelBrowseListBox() {
+    const models = this.allModels || [];
+    if (models.length === 0) {
+      ModalDialog.showNotification('No models available to inspect.', 'info');
+      return;
+    }
+
+    const listBoxItems = models.map(m => ({
+      id: m.id,
+      title: m.displayName || m.id,
+      subtitle: `${m.providerId || 'Local'} • ${m.family || 'General'}`,
+      badge: (m.isFree || m.freeTierLimit) ? 'Free' : 'Pro',
+      badgeClass: (m.isFree || m.freeTierLimit) ? 'badge-emerald' : 'badge-cyan',
+      icon: 'fa-microchip',
+      description: m.description || `High-performance language model under provider ${m.providerId || 'Unknown'}. Supports standard chat completions.`,
+      details: {
+        'Model ID': m.id,
+        'Display Name': m.displayName || m.id,
+        'Provider': m.providerId || 'Local',
+        'Family': m.family || 'N/A',
+        'Core Skill': m.coreSkill || 'General',
+        'Context Window': m.contextWindow ? `${m.contextWindow.toLocaleString()} tokens` : 'Standard (4K - 128K)',
+        'Reasoning / CoT': (m.supportsReasoning || m.hasReasoning) ? 'Supported' : 'Standard',
+        'Quota Limit': m.freeTierLimit || 'Free Tier'
+      },
+      options: [
+        {
+          id: 'test_in_playground',
+          label: 'Launch in Playground',
+          type: 'primary',
+          icon: 'fa-play',
+          action: (item) => {
+            ModalDialog.closeModal();
+            app.navigate('playground');
+            setTimeout(() => {
+              if (window.PlaygroundView && window.PlaygroundView.selectModel) {
+                window.PlaygroundView.selectModel(item.id);
+              }
+            }, 250);
+          }
+        },
+        {
+          id: 'create_combo',
+          label: 'Create Combo with Model',
+          type: 'secondary',
+          icon: 'fa-cubes-stacked',
+          action: (item) => {
+            ModalDialog.closeModal();
+            ModelClubView.openCreateComboStudio([item.id]);
+          }
+        }
+      ]
+    }));
+
+    ModalDialog.showCustomModal({
+      title: `<i class="fa-solid fa-list-check" style="color: var(--accent-cyan);"></i> Master Model Inspector (${models.length} Models)`,
+      content: `<div id="mc-listbox-modal-target" style="min-height: 400px; height: 50vh;"></div>`,
+      confirmText: 'Done',
+      onConfirm: () => {}
+    });
+
+    setTimeout(() => {
+      ListBoxComponent.render('mc-listbox-modal-target', {
+        items: listBoxItems,
+        selectedId: listBoxItems[0]?.id
+      });
+    }, 100);
   }
 
   static async refreshAll() {

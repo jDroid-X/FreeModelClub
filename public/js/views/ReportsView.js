@@ -1245,7 +1245,8 @@ class ReportsView {
     try {
         const res = await fetch('/api/providers/all');
         const data = await res.json();
-        const p = data.data.find(x => x.id === providerId);
+        const providersList = data.providers || data.data || [];
+        const p = providersList.find(x => x.id === providerId);
         
         if (!p) {
             content.innerHTML = `<div class="alert alert-danger">Provider not found</div>`;

@@ -12,6 +12,10 @@ data/session_*.json
 *.chat
 *.log
 .tray_launcher.lock
+Chat_Request.txt
+Chat Request.txt
+data/device_key.json
+docs/*Chat*.txt
 test-results/
 scratch/
 .gemini/

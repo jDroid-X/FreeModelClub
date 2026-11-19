@@ -24,6 +24,10 @@ class ValidationController {
     } else if (scope === 'model_combo') {
       const allModels = db.read(db.files.models) || [];
       validationResult = ValidationService.validateModelCombo(data, allModels);
+    } else if (scope === 'tool_config') {
+      validationResult = ValidationService.validateToolConfig(data);
+    } else if (scope === 'settings') {
+      validationResult = ValidationService.validateSettings(data);
     } else {
       validationResult = { isValid: true, issues: [], options: [{ id: 'proceed', label: 'Proceed with Validation', type: 'emerald', isRecommended: true, icon: 'fa-check' }] };
     }
@@ -54,8 +58,11 @@ class ValidationController {
       }
     } else if (optionId === 'auto_assign_fallback') {
       resolvedData.fallbackModelId = 'llama-3.1-8b-instant';
+    } else if (optionId === 'use_default_rpm') {
+      resolvedData.rateLimitRPM = 30;
+    } else if (optionId === 'use_default_tokens') {
+      resolvedData.maxTokens = 4096;
     } else if (optionId === 'apply_groq_optimizations') {
-      // In a real scenario, this would set internal token limit config
       resolvedData.displayName = (resolvedData.displayName || 'Groq') + ' (Optimized)';
     } else if (optionId === 'switch_existing') {
       const allProviders = db.read(db.files.providers) || [];

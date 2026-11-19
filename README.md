@@ -80,69 +80,157 @@ git clone https://github.com/jDroid-X/FreeModelClub.git
 cd FreeModelClub
 ```
 
-### 2. Window's Direct Install (Recommended for Windows Users)
-If you are on Windows, you can simply use the provided automated batch scripts to install and launch the application without opening a command prompt.
+### 2. Windows 1-Click Automated Install & Launch (Recommended)
+If you are on Windows, you can use the enterprise automated scripts to install and launch without manual terminal commands:
 
-1. **Install:** Double-click on `Install_FreeModelsClub.bat` to automatically download and configure all necessary dependencies. Wait for the success message. The application will be installed to `%USERPROFILE%\jDroid-X\FreeModelClub\`.
-2. **Launch:** Double-click on `Launch_Server_Console.bat` (or your preferred launch script) to start the server and automatically open the FreeModelsClub Smart Dashboard in your browser.
+1. **Install Dependencies:** Double-click `Install_FreeModelsClub.bat` in the root folder. It checks your Windows environment, validates Node.js (v18+), provisions folders, and runs an isolated deterministic install.
+2. **Launch into System Tray (Silent):** Double-click `Launch_FMC.bat` in the root folder. FreeModelsClub boots silently and mounts directly to your Windows Taskbar / Notification Tray with zero background console clutter.
+3. **Launch with Real-Time Server Console:** If you prefer watching live streaming inference logs and request latency in real time, double-click `scripts\Launch_Server_Console.bat`.
 
 > [!NOTE]
-> **Fresh Seed Database:** The `data/` directory is pre-seeded with clean, zeroed-out templates for 17 AI providers and 44 free models.
-> FreeModelsClub features an **Auto-Seeding Engine** that dynamically initializes default schemas securely upon first boot!
+> **Active Verified Models & Providers:** The `data/` database is pre-configured with **21 AI Providers**, **322 Registered LLMs**, and **314 Active Free & Open-Weights Models** spanning Groq, NVIDIA NIM, Bynara, OpenRouter, Google Gemini, OpenAI, Opencode, Ollama, Azure AI, and Vercel.
+> FreeModelsClub features an **ActiveModelAgent** and **Auto-Seeding Engine** that dynamically initializes default schemas securely upon first boot!
 > 
 > **Default Install Location:** By default, the application installs to `%USERPROFILE%\jDroid-X\FreeModelClub\`. This is outside your OneDrive sync folders and keeps the app fully contained within the jDroid-X ecosystem.
 
-### 3. Manual Installation (NPM Dependencies)
-If you are on Linux/macOS or prefer the command line, use the built-in deterministic installer script which provisions your local environment safely:
+### 3. Cross-Platform Manual Installation (NPM)
+If you are on Linux, macOS, or prefer a manual CLI workflow:
 ```bash
 npm install
 ```
 
-### 4. Application Lifecycle Management (Batch Scripts)
+### 4. Application Lifecycle Management (Enterprise Scripts)
 We provide a strict suite of enterprise-grade scripts to manage the application cleanly:
 
-- `Install_FreeModelsClub.bat`: Verifies environment, builds directories, and installs dependencies.
-- `Launch_Server_Console.bat`: Performs health checks, ensures ports are free, boots the server, and opens the UI.
-- `Update_FreeModelsClub.bat`: Safely creates timestamped backups of your API keys/data before pulling new code from GitHub.
-- `Stop_FreeModelsClub.bat`: Cleans up the background Node process and unbinds port 12247 safely.
-- `Uninstall_FreeModelsClub.bat`: Wipes dependencies while offering options to preserve or destroy your configurations.
+- `Install_FreeModelsClub.bat` *(Root)*: Verifies environment, builds directories, and installs dependencies.
+- `Launch_FMC.bat` *(Root)*: 1-Click Master silent launcher with Windows System Tray integration (`jDroid-X-FMC`).
+- `Update_FreeModelsClub.bat` *(Root)*: Safely creates timestamped backups of your API keys/data before pulling updates.
+- `Uninstall_FreeModelsClub.bat` *(Root)*: Wipes dependencies with options to preserve or clean your configurations.
+- `scripts\Launch_Server_Console.bat`: Performs health checks, ensures ports are free, boots the server, and shows live logs.
+- `scripts\Launch_Silent.vbs`: Starts the Node.js server completely hidden in the background.
+- `scripts\Stop_FreeModelsClub.bat`: Safely halts the background Node process and unbinds port 12247.
 
 ### 5. Launch the Server
 You can boot the application using any of the following methods:
 
-- **Method A: Standard NPM Launch (Cross-Platform)**
+- **Method A: Windows 1-Click Tray (Recommended)**
+  Double-click `Launch_FMC.bat`.
+- **Method B: Standard Cross-Platform NPM Launch**
   ```bash
   npm start
   ```
-
-- **Method B: Windows Console Launcher**
-  Double click on `Launch_Server_Console.bat`. This will open a dedicated terminal window showing you real-time server logs and API pings.
-
-- **Method C: Silent Background Launcher (Windows)**
-  Double click on `Launch_Silent.vbs`. The server will boot completely invisibly in the background without cluttering your taskbar.
+- **Method C: Windows Real-Time Console Launcher**
+  Double-click `scripts\Launch_Server_Console.bat`.
+- **Method D: Silent Background Launcher**
+  Double-click `scripts\Launch_Silent.vbs`.
 
 ### 6. Access the Smart Dashboard
 Once the terminal reads `FreeModelsClub Localhost Smart Chatbot Server Running!`, open your browser and navigate to:
 👉 **http://localhost:12247**
 
-**Default Login Credentials:**
-- **Email**: `FreeModelsClub@jdroidxy.com`
-- **Password**: `Admin@1234`
-
-*(You will be prompted to register your first Provider immediately upon logging in.)*
+> [!SECURITY]
+> **Production Security Mandate (Zero Pre-Shared Keys & Passwords):**
+> In compliance with enterprise security protocols, no live third-party API keys or unencrypted passwords are shared with this distribution.
+> - **Initial Setup**: Sign in with your localized administrator account (default initialized on boot: `admin@localhost` or as configured in your private `.env`).
+> - **Mandatory Password Update**: Update your password upon initial login in **Settings -> Security**.
+> - **Generate Client API Key**: Navigate to **Settings -> Tool Connections** to generate your own private localized bearer token for external IDEs and agents.
 
 ---
 
-## 🔗 Integrating 3rd-Party AI Tools
+## ⚡ Supported Working Models & Providers (314 Active Free Models)
 
-FreeModelsClub acts as a central nervous system for all your AI development tools. By linking them to this localhost server, you gain centralized telemetry and rate-limit protection.
+FreeModelsClub continuously audits, benchmarks, and serves **314 active free & open-weights models** across **21 AI providers**:
 
-Configure any external tool (Cursor, Windsurf, Claude Desktop, Antigravity) with the following standard credentials:
+| Provider Suite | Active Models | Key Models & Highlights |
+| :--- | :---: | :--- |
+| **Groq Cloud** | 9 | `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `qwen3_6-27b`, `deepseek-r1-distill-llama-70b`, `mixtral-8x7b-32768`, `whisper-large-v3-turbo` |
+| **NVIDIA NIM Cloud** | 71 | `nemotron-3-ultra-550b`, `nemotron-3-super-120b`, `nemotron-3-nano-omni-30b`, `nvidia-llama-3_3-70b`, `nvidia-coder-32b`, `deepseek-v4-flash`, `bge-m3` |
+| **Bynara AI Router** | 72 | `kimi-k2_7-code-free`, `deepseek-v4-flash-free`, `mimo-v2_5-free`, `ling-3_0-flash-free`, `laguna-s-2_1-free` |
+| **Opencode Zen** | 71 | `deepseek-v4-flash-free`, `mimo-v2_5-free`, `ling-3_0-flash-free`, `llama-3_3-70b-versatile`, `mixtral-8x7b` |
+| **OpenRouter Free Models** | 17 | `laguna-s-2_1_free`, `cohere_north-mini-code_free`, `gemma-4-31b-it_free`, `nemotron-3-ultra-550b_free`, `gpt-oss-20b_free` |
+| **OpenAI Cloud & ChatGPT** | 17 | `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`, `o1-preview`, `o1-mini`, `gpt-oss-20b` |
+| **Azure AI** | 15 | Enterprise managed open-weights models and serverless inference endpoints |
+| **Vercel AI SDK Endpoints** | 15 | High-speed edge-optimized free tier endpoints |
+| **Abhiraj GPT-OSS** | 9 | Open-weights research models (`gpt-oss-20b`, specialized reasoning checkpoints) |
+| **Ollama Localhost** | 7 | 100% offline localhost models (`smollm3_latest`, `qwen2_5_3b`, etc. via port 11434) |
+| **Google Gemini API** | 5 | `gemini-2.5-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`, `gemma-2-9b-it` |
+| **AgentRouter API** | 5 | Unified open-source routing agent endpoints |
+| **Kie AI** | 1 | Specialized coding and reasoning agent endpoint |
+| **Total Active Models** | **314** | **100% Free / Open-Weights Models Active and Verified** |
+
+> [!TIP]
+> **Active Model Combos (Model Club):** In addition to individual models, FreeModelsClub bundles **7 multi-model combos** (such as `jDroidxyz-combo-agent`, `jdroid-x-combos`, and `coding-combo-agent`) with intelligent **Round-Robin**, **Fallback**, and **Auto** load-balancing to ensure 99.99% uptime with zero rate-limit errors.
+
+---
+
+## 🔄 How to Synchronize Working Models
+
+FreeModelsClub features automated, multi-tiered synchronization to keep active models and provider states in continuous harmony:
+
+### 1. Automatic Dynamic Sync (ActiveModelAgent)
+The built-in `ActiveModelAgent` automatically audits and classifies all registered models in `data/models.json` against `data/providers.json` on application startup and on a recurring schedule.
+- Active models are dynamically written to `data/Activemodels.json` (314 active).
+- Temporarily paused or inactive provider models are safely isolated in `data/inactivemodel.json` (8 inactive).
+
+### 2. Manual CLI Sync Command
+To reconcile model names, display labels, and provider metadata against the single source of truth at any time:
+```bash
+node scripts/sync_models.js
+```
+This script audits `data/models.json` and updates provider display names and formatting.
+
+### 3. Verify Live Working Models via REST API
+Verify that all active models are responding via the OpenAI-compatible endpoint:
+```bash
+curl http://localhost:12247/v1/models
+```
+Or check the active model count via the native internal API:
+```bash
+curl http://localhost:12247/api/models/active
+```
+
+---
+
+## 🔗 Integrating 3rd-Party AI Tools & Agents
+
+FreeModelsClub acts as a central nervous system for all your AI development tools. By linking them to this localhost server, you gain centralized telemetry, zero plaintext key exposure, and multi-model rate-limit protection.
+
+Configure any external tool (Cursor, Windsurf, Claude Desktop, Antigravity, Open-WebUI) with the following standard credentials:
 - **Base URL**: `http://localhost:12247/v1`
-- **API Key**: `fmc-live-key-jdroidxy-2026` *(This is your default localhost key, viewable in the Settings tab).*
+- **API Key**: `<your-fmc-api-key>` *(Generated in the **Settings -> API Keys** tab of your local dashboard).*
 
-### Example: Connecting Anthropic Claude Desktop
-FreeModelsClub automatically translates Claude's `/v1/messages` format into standard OpenAI protocols!
+### Example 1: OpenAI-Compatible Chat Completion (cURL)
+Call any single model (e.g. `llama-3.3-70b-versatile`) directly:
+```bash
+curl http://localhost:12247/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-fmc-api-key>" \
+  -d '{
+    "model": "groq_llama-3_3-70b-versatile",
+    "messages": [
+      {"role": "user", "content": "Explain quantum computing in two sentences."}
+    ],
+    "temperature": 0.7
+  }'
+```
+
+### Example 2: Using Intelligent Model Combos (Zero Rate Limits)
+Route requests through a load-balanced combo agent (e.g. `jDroidxyz-combo-agent` or `jdroid-x-combos`):
+```bash
+curl http://localhost:12247/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-fmc-api-key>" \
+  -d '{
+    "model": "jDroidxyz-combo-agent",
+    "messages": [
+      {"role": "user", "content": "Write a clean JavaScript debounce function."}
+    ],
+    "stream": true
+  }'
+```
+
+### Example 3: Connecting Anthropic Claude Desktop
+FreeModelsClub automatically translates Claude's `/v1/messages` format into standard OpenAI protocols on the fly!
 1. Open your `claude_desktop_config.json`
 2. Point the Anthropic Base URL to `http://localhost:12247/v1`
 3. Check the **Settings -> Tool Connections** tab in the FreeModelsClub dashboard for an exact copy-paste configuration snippet!

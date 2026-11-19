@@ -9,6 +9,7 @@ const http = require('http');
 const ProviderModel = require('../models/ProviderModel');
 const AIModel = require('../models/AIModel');
 const ModelFamilyService = require('./ModelFamilyService');
+const ProviderAgentHelper = require('./ProviderAgentHelper');
 const db = require('../models/Database');
 
 class ProviderService {
@@ -180,51 +181,30 @@ class ProviderService {
   }
 
   static getFallbackFreeModelsForProvider(provider) {
-    if (provider.id === 'groq' || provider.baseUrl.includes('groq.com')) {
-      return [
-        { id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B (Fast LPU)' },
-        { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B (Groq)' },
-        { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
-        { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' }
-      ];
-    }
-    if (provider.id === 'bynara' || (provider.baseUrl && provider.baseUrl.includes('bynara'))) {
-      return [
-        { id: 'mimo-v2.5-free', name: 'Bynara MiMo v2.5 Free', family: 'MiMo', coreSkill: 'General Reasoning', contextWindow: 65536, isFree: true },
-        { id: 'mimo-v2.5-pro-free', name: 'Bynara MiMo v2.5 Pro', family: 'MiMo', coreSkill: 'Advanced Logic', contextWindow: 65536, isFree: true },
-        { id: 'claude-sonnet-4.5', name: 'Bynara Claude Sonnet 4.5', family: 'Claude', coreSkill: 'Coding & Analysis', contextWindow: 200000, isFree: true },
-        { id: 'claude-haiku-4.5', name: 'Bynara Claude Haiku 4.5', family: 'Claude', coreSkill: 'Fast Execution', contextWindow: 200000, isFree: true },
-        { id: 'glm-4-flash', name: 'Bynara GLM 4 Flash', family: 'GLM', coreSkill: 'Multilingual Chat', contextWindow: 128000, isFree: true },
-        { id: 'llama-3.3-70b-instruct', name: 'Bynara Llama 3.3 70B', family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072, isFree: true },
-        { id: 'qwen-2.5-coder-32b', name: 'Bynara Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Code Generation', contextWindow: 32768, isFree: true }
-      ];
-    }
-    if (provider.id === 'openrouter' || provider.baseUrl.includes('openrouter.ai')) {
-      return [
-        { id: 'poolside/laguna-s-2.1:free', name: 'Poolside Laguna S 2.1 (Free)' },
-        { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B (Free)' },
-        { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B Instruct (Free)' },
-        { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 Reasoning (Free)' },
-        { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B Instruct (Free)' }
-      ];
-    }
-    if (provider.id === 'gemini' || provider.baseUrl.includes('googleapis.com')) {
-      return [
-        { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Free)' },
-        { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Free)' },
-        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' }
-      ];
-    }
-    if (provider.id === 'ollama' || provider.baseUrl.includes('11434')) {
-      return [
-        { id: 'llama3:latest', name: 'Llama 3 Local' },
-        { id: 'qwen2.5-coder:latest', name: 'Qwen 2.5 Coder Local' },
-        { id: 'deepseek-r1:latest', name: 'DeepSeek R1 Local' }
-      ];
-    }
+    const pId = (provider.id || '').toLowerCase();
+    const pUrl = (provider.baseUrl || '').toLowerCase();
+    const pName = (provider.name || provider.displayName || '').toLowerCase();
+
+    try {
+      const knownDb = ProviderAgentHelper.getKnownProvidersDatabase();
+      for (const [k, pInfo] of Object.entries(knownDb)) {
+        if (pId === k || pId.includes(k) || pUrl.includes(k) || pName.includes(k)) {
+          if (Array.isArray(pInfo.models) && pInfo.models.length > 0) {
+            return pInfo.models.map(m => ({
+              id: m.modelId || m.id,
+              name: m.modelName || m.name || m.modelId,
+              family: m.family || 'General',
+              coreSkill: m.coreSkill || 'General Reasoning',
+              contextWindow: m.contextWindow || 131072,
+              isFree: true
+            }));
+          }
+        }
+      }
+    } catch (e) {}
 
     return [
-      { id: 'generic-free-model', name: 'Generic Free Model' }
+      { id: 'generic-free-model', name: 'Generic Free Model', family: 'General', coreSkill: 'General Reasoning', contextWindow: 32768, isFree: true }
     ];
   }
 

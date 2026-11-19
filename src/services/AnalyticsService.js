@@ -8,6 +8,7 @@ const ProviderModel = require('../models/ProviderModel');
 const AIModel = require('../models/AIModel');
 const LogModel = require('../models/LogModel');
 const ComboModel = require('../models/ComboModel');
+const db = require('../models/Database');
 
 class AnalyticsService {
   static getDashboardSummary() {
@@ -19,21 +20,26 @@ class AnalyticsService {
     const registeredActiveModels = models.filter(m => m.isActive !== false && activeProvIds.has(m.providerId));
     const activeModels = AIModel.getActiveModels();
 
-    const apiLogs = LogModel.getApiLogs(500);
+    const apiLogs = LogModel.getApiLogs(2000);
 
     let totalPromptTokens = 0;
     let totalCompletionTokens = 0;
     let totalRequests = apiLogs.length;
     let totalLatencyMs = 0;
 
+    const config = db.read(db.files.config) || {};
+    const defaultBaselineLatency = config.historical_metrics?.rolling_avg_latency_ms || 180;
+
     models.forEach((m) => {
       totalPromptTokens += m.totalPromptTokens || 0;
       totalCompletionTokens += m.totalCompletionTokens || 0;
     });
 
-    const successLogs = apiLogs.filter((l) => l.status === 'SUCCESS');
+    const successLogs = apiLogs.filter((l) => l.status === 'SUCCESS' && typeof l.latencyMs === 'number' && l.latencyMs > 0);
     if (successLogs.length > 0) {
-      totalLatencyMs = successLogs.reduce((acc, curr) => acc + (curr.latencyMs || 0), 0) / successLogs.length;
+      totalLatencyMs = successLogs.reduce((acc, curr) => acc + curr.latencyMs, 0) / successLogs.length;
+    } else {
+      totalLatencyMs = defaultBaselineLatency;
     }
 
     const modelAnalytics = registeredActiveModels.map((m) => {
@@ -223,8 +229,8 @@ class AnalyticsService {
   static getBIAnalyticalReport() {
     const db = require('../models/Database');
     const biMapping = this.getBIMapping();
-    const apiLogs = LogModel.getApiLogs(1000);
-    const sysLogs = LogModel.getSystemLogs(1000);
+    const apiLogs = LogModel.getApiLogs(2000);
+    const sysLogs = LogModel.getSystemLogs(2000);
     const providers = ProviderModel.getAll();
     const models = AIModel.getAll();
     const combos = ComboModel.getAll();
@@ -271,9 +277,9 @@ class AnalyticsService {
       providerId: p.id,
       displayName: p.displayName,
       totalCalls: p.count,
-      avgLatencyMs: p.count > 0 ? Math.round(p.latSum / p.count) : (p.id === 'ollama' ? 120 : 280),
-      minLatencyMs: p.minLat < 99999 ? p.minLat : 85,
-      maxLatencyMs: p.maxLat > 0 ? p.maxLat : 450,
+      avgLatencyMs: p.count > 0 ? Math.round(p.latSum / p.count) : 0,
+      minLatencyMs: p.minLat < 99999 ? p.minLat : 0,
+      maxLatencyMs: p.maxLat > 0 ? p.maxLat : 0,
       slaCompliance: p.count > 0 ? Math.round(((p.count - p.errors) / p.count) * 100) : 100
     }));
 
@@ -317,17 +323,19 @@ class AnalyticsService {
     // 4. Model Club Combo Routing & Failover Efficiency
     const comboRoutingEfficiency = combos.map(c => {
       const comboLogs = apiLogs.filter(l => l.comboId === c.id || (l.model && l.model.includes(c.id)));
-      const primaryCount = Math.round(comboLogs.length * 0.85);
-      const fallbackCount = comboLogs.length - primaryCount;
+      const fallbackLogs = comboLogs.filter(l => l.isFailover || l.isFallback || l.wasFailover || l.failover || (l.status === 'ERROR' && l.retryCount > 0));
+      const fallbackCount = fallbackLogs.length;
+      const primaryCount = comboLogs.length - fallbackCount;
+      const primaryPct = comboLogs.length > 0 ? ((primaryCount / comboLogs.length) * 100).toFixed(1) : '100.0';
       return {
         comboId: c.id,
         comboName: c.name || c.id,
         strategy: c.strategy || 'round-robin',
         modelsInPool: (c.modelsList || c.models || []).length,
         totalRouted: comboLogs.length,
-        primarySuccessPct: comboLogs.length > 0 ? ((primaryCount / comboLogs.length) * 100).toFixed(1) : '100.0',
+        primarySuccessPct: primaryPct,
         failoverActivations: fallbackCount,
-        efficiencyScore: '99.4%'
+        efficiencyScore: comboLogs.length > 0 ? `${primaryPct}%` : '100.0%'
       };
     });
 

@@ -34,8 +34,14 @@ class RegistrationView {
       'Gemini API': 'https://generativelanguage.googleapis.com/v1beta',
       'Bynara API': 'https://router.bynara.id/v1',
       'Bynara Cloud': 'https://router.bynara.id/v1',
+      'NVIDIA API': 'https://integrate.api.nvidia.com/v1',
+      'Opencode API': 'https://opencode.ai/zen/v1',
       'Together API': 'https://api.together.xyz/v1',
+      'SambaNova API': 'https://api.sambanova.ai/v1',
+      'Cerebras API': 'https://api.cerebras.ai/v1',
       'Mistral API': 'https://api.mistral.ai/v1',
+      'DeepSeek API': 'https://api.deepseek.com/v1',
+      'OpenAI API': 'https://api.openai.com/v1',
       'Ollama Local API': 'http://localhost:11434/v1',
       'Anthropic API': 'https://api.anthropic.com/v1',
       'OpenAI Compatible': `http://${typeof window !== 'undefined' ? (window.location.hostname || 'localhost') : 'localhost'}:12247/v1`
@@ -80,22 +86,29 @@ class RegistrationView {
 
     const dbProviders = this.providersList || [];
     const predefined = this.getPredefinedProviders();
-    const allPaneProviders = dbProviders.length > 0
-      ? dbProviders.map(reg => {
-          const pre = predefined.find(p => p.id === reg.id);
-          const pModelCount = this.allModelsList.filter(m => m.providerId === reg.id || m.provider === reg.id).length;
-          return {
-            id: reg.id,
-            name: reg.displayName || reg.id,
-            proto: reg.protocol || (pre ? pre.proto : 'OpenAI Compatible'),
-            icon: pre ? pre.icon : 'fa-server',
-            color: pre ? pre.color : 'var(--accent-cyan)',
-            isActive: Boolean(reg.isActive),
-            apiKey: reg.apiKey || '',
-            modelsCount: pModelCount || ((reg.models && reg.models.length) || 0)
-          };
-        })
-      : predefined.map(p => ({ ...p, isActive: false, modelsCount: 0 }));
+    const registeredIds = new Set(dbProviders.map(p => p.id));
+
+    const allPaneProviders = [
+      ...dbProviders.map(reg => {
+        const pre = predefined.find(p => p.id === reg.id);
+        const pModelCount = this.allModelsList.filter(m => m.providerId === reg.id || m.provider === reg.id).length;
+        return {
+          id: reg.id,
+          name: reg.displayName || reg.id,
+          proto: reg.protocol || (pre ? pre.proto : 'OpenAI Compatible'),
+          icon: pre ? pre.icon : 'fa-server',
+          color: pre ? pre.color : 'var(--accent-cyan)',
+          isActive: Boolean(reg.isActive),
+          apiKey: reg.apiKey || '',
+          modelsCount: pModelCount || ((reg.models && reg.models.length) || 0)
+        };
+      }),
+      ...predefined.filter(p => !registeredIds.has(p.id)).map(p => ({
+        ...p,
+        isActive: false,
+        modelsCount: 0
+      }))
+    ];
 
     allPaneProviders.sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0));
 

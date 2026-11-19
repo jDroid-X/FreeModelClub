@@ -1,4 +1,5 @@
-const db = require('./src/models/Database');
+const path = require('path');
+const db = require(path.join(__dirname, '../src/models/Database'));
 const providers = db.read(db.files.providers);
 const models = db.read(db.files.models);
 

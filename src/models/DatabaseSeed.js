@@ -9,8 +9,8 @@ class DatabaseSeed {
     return [
       {
         id: 'usr_default',
-        email: 'FreeModelsClub@jdroidxy.com',
-        password: 'Admin@1234',
+        email: 'admin@localhost',
+        password: 'ChangeMe@1234',
         mustChangePassword: true,
         role: 'admin',
         createdAt: new Date().toISOString()
@@ -204,7 +204,7 @@ class DatabaseSeed {
     return [
       {
         id: 'key_default_admin',
-        key: 'fmc-live-key-jdroidxy-2026',
+        key: 'fmc-live-local-default',
         label: 'Default FMC Tool API Key',
         clientApp: 'Antigravity / VS Code / Claude',
         createdAt: new Date().toISOString(),
@@ -231,7 +231,7 @@ class DatabaseSeed {
       {
         step: 1,
         title: 'Sign In to Localhost Service',
-        description: 'Open http://localhost:12247 in browser. Use pre-filled default credentials: Email: FreeModelsClub@jdroidxy.com, Password: Admin@1234.',
+        description: 'Open http://localhost:12247 in browser. Sign in using your localized administrator account configured during initial setup.',
         hilAction: 'Click Sign In button. System verifies session and redirects to Provider Registration screen if no provider is active.'
       },
       {

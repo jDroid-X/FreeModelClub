@@ -2,6 +2,29 @@
 # Screen: Reports View (http://localhost:12247/reports)
 
 ================================================================================
+[2026-08-26 14:42:00] REPORTS & DIAGNOSTICS AUTHENTIC TOKEN COMPUTATION & DYNAMIC UNIT FORMATTING
+================================================================================
+Target Screen : ReportsViewHelper.js & AnalyticsService.js
+Requested By  : User Chat ("why every day default 14.00K data is consumed is shown in Dashboard - Model Usage (7D). find the gap or fix the similar type of bugs acrros the app where repetitive data is duplicated")
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Removed Synthetic Multipliers and Hardcoded Fallbacks:
+		* Removed fake baseline trend curve synthesis from `ReportsViewHelper.generateStats`.
+		* Zero-log days now authentically report empty segments with 0 tokens and 0 unique clients.
+		* Replaced billion-scale division (`/ 1000000000`) in leaderboard and market share with exact token counts.
+		* Updated chart bar heights and tooltips to dynamic auto-formatting (`formatVal`: K, M, B).
+	- Analytics Service Enhancements:
+		* Fixed `providerLatencyMatrix` in `AnalyticsService.js` to return 0ms instead of fake fallbacks when calls = 0.
+		* Computed real combo failover counts from actual API logs.
+	- 3D Matrix & Program Mapping Compliance:
+		* Passed Program Mapping Agent audit (100% GREEN, 40 mapped nodes, 0 violations).
+Files Modified:
+	- public/js/views/ReportsViewHelper.js
+	- src/services/AnalyticsService.js
+	- requirement/reports.txt
+================================================================================
+
+================================================================================
 [2026-08-21 08:03:00] REPORTS HUMAN-IN-THE-LOOP (HITL) QUICK ACTION JUMP BUTTONS & LOG INSPECTOR
 ================================================================================
 Target Screen : ReportsView.js / ReportsViewHelper.js

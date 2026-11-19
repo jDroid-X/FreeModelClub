@@ -12,7 +12,7 @@ class AuthController {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required. Default: FreeModelsClub@jdroidxy.com / Admin@1234'
+        message: 'Email and password are required.'
       });
     }
 
@@ -47,8 +47,8 @@ class AuthController {
 
   static getDefaultCredentials(req, res) {
     return res.json({
-      defaultEmail: 'FreeModelsClub@jdroidxy.com',
-      defaultPassword: 'Admin@1234'
+      defaultEmail: 'admin@localhost',
+      defaultPassword: ''
     });
   }
 

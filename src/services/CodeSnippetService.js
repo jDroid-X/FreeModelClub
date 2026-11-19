@@ -6,7 +6,7 @@
  */
 
 class CodeSnippetService {
-  static getSnippets(baseUrl = 'http://localhost:12247/v1', apiKey = 'fmc-live-key-jdroidxy-2026', selectedModel = 'llama-3.3-70b-versatile') {
+  static getSnippets(baseUrl = 'http://localhost:12247/v1', apiKey = 'YOUR_FMC_API_KEY', selectedModel = 'llama-3.3-70b-versatile') {
     const endpoints = {
       dashboard: 'http://localhost:12247',
       baseUrl: `${baseUrl}`,

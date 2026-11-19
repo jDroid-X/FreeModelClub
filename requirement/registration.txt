@@ -983,3 +983,17 @@ Modified Files:
   - requirement/registration.txt
 Status: PASS (100% Tested & Verified)
 ================================================================================================
+Date: 2026-08-24 11:43:00
+Requested Change: Root Cause Analysis & Architecture Due Diligence — Hardcode Elimination & OOPS MVC SSOT:
+  - Eliminated hardcoded fallback if-else blocks in ProviderService.js; replaced with dynamic lookup from ProviderAgentHelper.getKnownProvidersDatabase() (Single Source of Truth).
+  - Enhanced RegistrationViewHelper.getPredefinedProviders() to support all 14 canonical providers (Groq, OpenRouter, Gemini, Bynara, NVIDIA, Opencode, Together, SambaNova, Cerebras, Mistral, DeepSeek, OpenAI, Ollama, Custom).
+  - Expanded RegistrationViewHelper.getDefaultModelsForProtocol() with full verified free model catalogs for NVIDIA, Opencode, SambaNova, Cerebras, DeepSeek, and OpenAI.
+  - Updated RegistrationView.getDefaultUrls() and left-pane provider rail to dynamically render both active DB providers and available predefined presets in fresh installations.
+Target Module: ProviderService.js, RegistrationViewHelper.js, RegistrationView.js
+Modified Files:
+  - src/services/ProviderService.js
+  - public/js/views/RegistrationViewHelper.js
+  - public/js/views/RegistrationView.js
+  - requirement/registration.txt
+Status: PASS (100% Tested & Verified)
+================================================================================================

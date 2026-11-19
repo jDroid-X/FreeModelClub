@@ -256,8 +256,11 @@ class ProvidersView {
                           <i id="toggle-icon-${p.id}" class="fa-solid ${p.isActive ? 'fa-toggle-on' : 'fa-toggle-off'}" style="color: ${p.isActive ? '#ea580c' : 'var(--text-muted)'}; font-size: 1.4rem; cursor: pointer; transition: color 0.2s;" onclick="ProvidersView.toggleStatus('${p.id}', ${!p.isActive})" title="Toggle Active Status"></i>
                         `}
                         
-                        <!-- Right side: Standard Action Icons -->
-                        <div style="display: flex; gap: 14px; font-size: 1.1rem; align-items: center;">
+                        <!-- Right side: Standard Action Icons & Quick Action Menu -->
+                        <div style="display: flex; gap: 10px; font-size: 1.05rem; align-items: center;">
+                          <button class="btn btn-secondary btn-xs" style="padding: 2px 6px; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 4px;" onclick="ProvidersView.openProviderQuickActionsModal('${p.id}')" title="Open Quick Actions Dialog with Options">
+                            <i class="fa-solid fa-bolt" style="color: var(--accent-cyan);"></i> <span>Actions</span>
+                          </button>
                           <i class="fa-solid fa-layer-group" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="View & Filter Models for ${p.displayName || p.id}" onclick="app.navigate('model-club'); setTimeout(() => { if (window.ModelClubView && window.ModelClubView.filterByProvider) window.ModelClubView.filterByProvider('${p.id}'); }, 250);"></i>
                           <i class="fa-solid fa-chart-simple" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Provider Diagnostics & Telemetry (${p.displayName || p.id})" onclick="app.navigate('reports'); setTimeout(() => { if (window.ReportsView && window.ReportsView.filterByProvider) window.ReportsView.filterByProvider('${p.id}'); }, 250);"></i>
                           <i class="fa-solid fa-play" style="color: var(--text-muted); cursor: pointer; transition: color 0.2s;" title="Launch in Playground (${p.displayName || p.id})" onclick="app.navigate('playground'); setTimeout(() => { if (window.PlaygroundView && window.PlaygroundView.selectProvider) window.PlaygroundView.selectProvider('${p.id}'); }, 250);"></i>
@@ -588,21 +591,6 @@ class ProvidersView {
   }
 
 
-  static filterList(val) {
-    const term = val.toLowerCase();
-    const grid = document.querySelector('.grid-2');
-    const xmark = document.querySelector('#provider-search-input ~ .fa-xmark');
-    if (xmark) xmark.style.display = val ? 'block' : 'none';
-    if (!grid) return;
-    Array.from(grid.children).forEach(card => {
-        if (card.innerText.toLowerCase().includes(term)) {
-            card.style.display = 'flex';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-  }
-
   static async openProviderDrawer(providerId) {
     const drawer = document.getElementById('code-drawer');
     const content = document.getElementById('code-drawer-content');
@@ -614,7 +602,8 @@ class ProvidersView {
     try {
         const res = await fetch('/api/providers/all');
         const data = await res.json();
-        const p = data.data.find(x => x.id === providerId);
+        const providersList = data.providers || data.data || [];
+        const p = providersList.find(x => x.id === providerId);
         
         if (!p) {
             content.innerHTML = `<div class="alert alert-danger">Provider not found</div>`;
@@ -1157,6 +1146,104 @@ class ProvidersView {
       }
     } catch (e) {
       ModalDialog.showNotification('Error syncing tokens', 'error');
+    }
+  }
+
+  static async openProviderQuickActionsModal(providerId) {
+    const res = await ApiService.getAllProviders();
+    const prov = (res.providers || []).find(p => p.id === providerId);
+    if (!prov) {
+      ModalDialog.showNotification('Provider not found', 'error');
+      return;
+    }
+
+    const options = [
+      {
+        id: 'test_ping',
+        label: 'Ping & Test Live Connection',
+        type: 'primary',
+        icon: 'fa-bolt',
+        action: () => ProvidersView.testProvider(providerId)
+      },
+      {
+        id: 'discover_models',
+        label: 'Discover / Fetch Live Models',
+        type: 'secondary',
+        icon: 'fa-wand-magic-sparkles',
+        action: () => ProvidersView.fetchProviderModelsOnline(providerId)
+      },
+      {
+        id: 'configure_quota',
+        label: 'Configure Token Quota & Limits',
+        type: 'secondary',
+        icon: 'fa-sliders',
+        action: () => ProvidersView.configureQuota(providerId)
+      },
+      {
+        id: 'edit_key',
+        label: 'Update API Key',
+        type: 'secondary',
+        icon: 'fa-key',
+        action: () => ProvidersView.promptEditApiKey(providerId)
+      },
+      {
+        id: 'launch_playground',
+        label: 'Launch in Playground',
+        type: 'secondary',
+        icon: 'fa-play',
+        action: () => {
+          app.navigate('playground');
+          setTimeout(() => {
+            if (window.PlaygroundView && window.PlaygroundView.selectProvider) {
+              window.PlaygroundView.selectProvider(providerId);
+            }
+          }, 250);
+        }
+      },
+      {
+        id: 'view_telemetry',
+        label: 'View Telemetry in Reports',
+        type: 'secondary',
+        icon: 'fa-chart-simple',
+        action: () => {
+          app.navigate('reports');
+          setTimeout(() => {
+            if (window.ReportsView && window.ReportsView.filterByProvider) {
+              window.ReportsView.filterByProvider(providerId);
+            }
+          }, 250);
+        }
+      }
+    ];
+
+    ModalDialog.showOptionModal({
+      title: `<i class="fa-solid fa-bolt" style="color: var(--accent-cyan);"></i> Quick Actions: ${prov.displayName || prov.id}`,
+      message: `Choose an action for provider <strong>${prov.displayName || prov.id}</strong> (Protocol: ${prov.protocol}):`,
+      options
+    });
+  }
+
+  static async fetchProviderModelsOnline(providerId) {
+    ModalDialog.showNotification(`Discovering models for '${providerId}'...`, 'info');
+    try {
+      const res = await ApiService.getAllProviders();
+      const prov = (res.providers || []).find(p => p.id === providerId);
+      if (!prov) return ModalDialog.showNotification('Provider not found', 'error');
+
+      const fetchRes = await ApiService.fetchModels(prov.baseUrl, prov.apiKey, prov.protocol, providerId);
+      if (fetchRes && fetchRes.success && Array.isArray(fetchRes.models) && fetchRes.models.length > 0) {
+        ModalDialog.showNotification(`Discovered ${fetchRes.models.length} models for '${prov.displayName || providerId}'!`, 'success');
+        app.navigate('registration');
+        setTimeout(() => {
+          if (window.RegistrationView && window.RegistrationView.selectFromPane) {
+            RegistrationView.selectFromPane(prov.protocol, providerId);
+          }
+        }, 250);
+      } else {
+        ModalDialog.showNotification(`Discovery result: ${fetchRes?.error || fetchRes?.message || 'No new models returned by endpoint.'}`, 'warning');
+      }
+    } catch (e) {
+      ModalDialog.showNotification(`Model discovery failed: ${e.message}`, 'error');
     }
   }
 

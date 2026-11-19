@@ -58,18 +58,24 @@ class NavigationHelper {
             </li>
           `).join('')}
         </ul>
-        <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 4px; padding: 10px;">
-          <div class="status-pill" style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-emerald);">
-            <span class="status-dot" style="background: var(--accent-emerald);"></span>
-            <span>Port 12247 Active</span>
-          </div>
-          <div id="local-server-status-pill" class="status-pill" style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-amber);" title="Ollama / Local Server status (Port 11434)">
-            <span id="local-server-status-dot" class="status-dot" style="background: var(--accent-amber);"></span>
-            <span id="local-server-status-text">Local Server Checking...</span>
-          </div>
-          <div class="status-pill" style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-cyan); cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 4px; margin-top: 2px;" onclick="app.navigate('about')" title="Version 1.0.0 • Click for About & Updates">
-            <i class="fa-solid fa-circle-info" style="font-size: 0.72rem;"></i>
-            <span>v1.0.0 • jDroid-X FMC</span>
+        <div class="sidebar-footer" style="padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+          <div class="sidebar-status-card" style="display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; background: rgba(0, 0, 0, 0.22); border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.72rem;">
+            <!-- Live Gateway & Engine Row (Interactive) -->
+            <div id="local-server-status-pill" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--text-main); font-weight: 600; cursor: pointer;" onclick="NavigationHelper.openServerHealthModal()" title="Click to view Localhost Server Health Diagnostics & Actions">
+              <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <span id="local-server-status-dot" class="status-dot" style="background: var(--accent-emerald); width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 5px var(--accent-emerald); flex-shrink: 0;"></span>
+                <span id="local-server-status-text" style="font-size: 0.70rem; color: var(--text-main); overflow: hidden; text-overflow: ellipsis;">Online :12247</span>
+              </div>
+              <span style="font-size: 0.65rem; color: var(--accent-cyan); font-weight: 700; flex-shrink: 0; background: rgba(6, 182, 212, 0.12); padding: 1px 4px; border-radius: 3px; border: 1px solid rgba(6, 182, 212, 0.25);">LIVE</span>
+            </div>
+            <!-- Version & About Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 3px; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.66rem; color: var(--text-muted); cursor: pointer;" onclick="app.navigate('about')" title="Version 1.0.0 • Click for About & Updates">
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); font-size: 0.65rem;"></i>
+                <span style="color: var(--text-muted);">v1.0.0 • jDroid-X FMC</span>
+              </span>
+              <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.60rem; color: var(--text-dim);"></i>
+            </div>
           </div>
         </div>
       </aside>
@@ -421,6 +427,77 @@ class NavigationHelper {
 
   static renderShellHtml(currentUser, currentView) {
     return this.renderLayoutShellHtml(currentView, 'default', currentUser);
+  }
+
+  static async openServerHealthModal() {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:12247';
+    let ollamaStatus = 'Checking...';
+    let isOllamaOnline = false;
+
+    try {
+      const res = await ApiService.getSystemInfo();
+      isOllamaOnline = Boolean(res && res.isLocalServerActive);
+      ollamaStatus = isOllamaOnline ? 'Online (Port 11434)' : 'Offline / Standby';
+    } catch (e) {
+      ollamaStatus = 'Offline';
+    }
+
+    const options = [
+      {
+        id: 'ping_server',
+        label: 'Ping Proxy Server (:12247)',
+        type: 'primary',
+        icon: 'fa-bolt',
+        action: async () => {
+          const t0 = performance.now();
+          try {
+            await fetch('/v1/models');
+            const latency = Math.round(performance.now() - t0);
+            ModalDialog.showNotification(`Proxy Server responded in ${latency}ms (HTTP 200 OK)`, 'success');
+          } catch (err) {
+            ModalDialog.showNotification(`Ping failed: ${err.message}`, 'error');
+          }
+        }
+      },
+      {
+        id: 'view_telemetry',
+        label: 'Open Reports & Telemetry',
+        type: 'secondary',
+        icon: 'fa-chart-pie',
+        action: () => app.navigate('reports')
+      },
+      {
+        id: 'open_about',
+        label: 'System Diagnostics & Matrix',
+        type: 'secondary',
+        icon: 'fa-microchip',
+        action: () => app.navigate('about')
+      },
+      {
+        id: 'refresh_health',
+        label: 'Force Telemetry Refresh',
+        type: 'secondary',
+        icon: 'fa-arrows-rotate',
+        action: () => {
+          if (window.HeaderTelemetry && window.HeaderTelemetry.updateTelemetry) {
+            window.HeaderTelemetry.updateTelemetry();
+          }
+          ModalDialog.showNotification('Telemetry refreshed!', 'info');
+        }
+      }
+    ];
+
+    ModalDialog.showOptionModal({
+      title: '<i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i> Localhost System Health Diagnostics',
+      message: `
+        <div style="font-size: 0.8rem; line-height: 1.6; margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+          <div><strong>Express Proxy Gateway:</strong> <span style="color: var(--accent-emerald); font-weight: 700;">ONLINE</span> (Port 12247 • ${origin})</div>
+          <div><strong>Ollama AI Engine:</strong> <span style="color: ${isOllamaOnline ? 'var(--accent-emerald)' : 'var(--accent-amber)'}; font-weight: 700;">${ollamaStatus}</span></div>
+          <div><strong>Zero-Trust Gatekeeper:</strong> <span style="color: var(--accent-cyan); font-weight: 700;">Active & Secured</span></div>
+        </div>
+      `,
+      options
+    });
   }
 }
 

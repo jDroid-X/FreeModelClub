@@ -124,6 +124,13 @@ class ApiService {
     });
   }
 
+  static fetchModels(baseUrl, apiKey, protocol = 'OpenAI Compatible', providerId = null) {
+    return this.request('/api/providers/fetch-models', {
+      method: 'POST',
+      body: JSON.stringify({ providerId, baseUrl, apiKey, protocol })
+    });
+  }
+
   static lookupProviderAgent(params) {
     const payload = typeof params === 'string' ? { query: params } : (params || {});
     return this.request('/api/providers/agent-lookup', {
@@ -494,12 +501,12 @@ class ApiService {
   }
 
   // Reports
-  static getApiLogs() {
-    return this.request('/api/reports/api-logs');
+  static getApiLogs(limit = 2000) {
+    return this.request(`/api/reports/api-logs?limit=${limit}`);
   }
 
-  static getSystemLogs() {
-    return this.request('/api/reports/system-logs');
+  static getSystemLogs(limit = 2000) {
+    return this.request(`/api/reports/system-logs?limit=${limit}`);
   }
 
   static getReports(context = null) {
@@ -567,7 +574,7 @@ class ApiService {
   }
 
   // Integrations
-  static getSnippets(model = 'llama-3.3-70b-versatile', apiKey = 'fmc-live-key-jdroidxy-2026') {
+  static getSnippets(model = 'llama-3.3-70b-versatile', apiKey = 'YOUR_FMC_API_KEY') {
     return this.request(`/api/integrations/snippets?model=${encodeURIComponent(model)}&apiKey=${encodeURIComponent(apiKey)}`);
   }
 

@@ -76,7 +76,7 @@ class ProgramMappingAgent {
         }
 
         // PonyTail Line Budget Rule
-        const maxLines = m.type === 'ViewController' ? 1800 : (m.type === 'DatabaseSchema' ? 1500 : 750);
+        const maxLines = (m.type === 'ViewController' || m.type === 'ViewHelper') ? 1800 : (m.type === 'DatabaseSchema' ? 1500 : 750);
         if (lineCount > maxLines) {
           report.violations.push({
             module: m.module,

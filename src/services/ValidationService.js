@@ -88,6 +88,48 @@ class ValidationService {
   }
 
   /**
+   * Validates Tool configuration parameters
+   */
+  static validateToolConfig(toolData = {}) {
+    const issues = [];
+    const options = [];
+
+    if (!toolData.toolName || toolData.toolName.trim().length < 2) {
+      issues.push({ field: 'toolName', rule: 'REQUIRED', message: 'Tool Name is required.' });
+    }
+
+    if (toolData.rateLimitRPM && (isNaN(toolData.rateLimitRPM) || Number(toolData.rateLimitRPM) <= 0)) {
+      issues.push({ field: 'rateLimitRPM', rule: 'NUMERIC_POSITIVE', message: 'RPM limit must be a positive number.' });
+      options.push({ id: 'use_default_rpm', label: 'Use Default 30 RPM', type: 'emerald', isRecommended: true, icon: 'fa-gauge' });
+    }
+
+    return {
+      isValid: issues.length === 0,
+      issues,
+      options: options.length > 0 ? options : [{ id: 'proceed', label: 'Proceed with Tool Configuration', type: 'emerald', isRecommended: true, icon: 'fa-check' }]
+    };
+  }
+
+  /**
+   * Validates Settings / Theme configuration parameters
+   */
+  static validateSettings(settingsData = {}) {
+    const issues = [];
+    const options = [];
+
+    if (settingsData.maxTokens && (isNaN(settingsData.maxTokens) || Number(settingsData.maxTokens) < 100)) {
+      issues.push({ field: 'maxTokens', rule: 'MIN_LIMIT', message: 'Max output tokens must be at least 100.' });
+      options.push({ id: 'use_default_tokens', label: 'Set to 4096 Tokens', type: 'emerald', isRecommended: true, icon: 'fa-sliders' });
+    }
+
+    return {
+      isValid: issues.length === 0,
+      issues,
+      options: options.length > 0 ? options : [{ id: 'proceed', label: 'Proceed with Settings', type: 'emerald', isRecommended: true, icon: 'fa-check' }]
+    };
+  }
+
+  /**
    * Validates Chat completions payload format
    */
   static validateChatPayload(payload = {}) {

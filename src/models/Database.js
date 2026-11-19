@@ -49,6 +49,11 @@ class Database {
     this._registerShutdownHooks();
   }
 
+  _cleanJson(content) {
+    if (!content) return '[]';
+    return content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+  }
+
   ensureDirectoryExists(dir) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -61,7 +66,7 @@ class Database {
       try {
         if (!fs.existsSync(filePath)) return true;
         const raw = fs.readFileSync(filePath, 'utf8');
-        const parsed = JSON.parse(raw || '[]');
+        const parsed = JSON.parse(this._cleanJson(raw));
         return Array.isArray(parsed) && parsed.length === 0;
       } catch (e) {
         console.error(`Database init check error on ${filePath}:`, e.message);
@@ -104,7 +109,7 @@ class Database {
       try {
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, 'utf8');
-          this._cache.set(filePath, JSON.parse(content || '[]'));
+          this._cache.set(filePath, JSON.parse(this._cleanJson(content)));
         }
       } catch (err) {
         console.error(`Database cache warm error on ${filePath}:`, err.message);
@@ -121,7 +126,7 @@ class Database {
     try {
       if (!fs.existsSync(filePath)) return [];
       const content = fs.readFileSync(filePath, 'utf8');
-      const data = JSON.parse(content || '[]');
+      const data = JSON.parse(this._cleanJson(content));
       this._cache.set(filePath, data);
       return data;
     } catch (err) {

@@ -2,6 +2,24 @@
 # Screen: Model Club View (http://localhost:3000/model-club)
 
 ================================================================================
+[2026-08-26 14:52:00] MASTER-DETAIL MODEL INSPECTOR LISTBOX & ACTION MODALS
+================================================================================
+Target Screen : ModelClubView.js / ListBoxComponent.js / ValidationNotifier.js
+Requested By  : User Chat (Run AI Agents to Sync, Frontend, Backend, UI/UX features, ListBox with details, Dialog box with options, Validations)
+Status        : PASS (100% Tested & Verified)
+Changes       :
+	- Master-Detail Model Inspector ListBox:
+		* Added 1-click "Model Inspector ListBox" button in Model Club left navigation rail.
+		* Rendered interactive master list with real-time text search and rich detail pane via `ListBoxComponent.js`.
+		* Integrated instant action buttons ("Launch in Playground", "Create Combo with Model") from within the inspector detail view.
+	- 3D Matrix & Program Mapping Compliance:
+		* Passed Program Mapping Agent audit (100% GREEN, 40 mapped nodes, 0 violations).
+Files Modified:
+	- public/js/views/ModelClubView.js
+	- requirement/model_club.txt
+================================================================================
+
+================================================================================
 [2026-08-21 20:10:00] MULTI-AGENT SYNC: LOAD BALANCING STRATEGY GUIDE & SSOT INTEGRATION
 ================================================================================
 Target Screen : ModelClubStudioRenderer.js / LoadBalancingStrategyHelper.js / ParametersViewModel.js

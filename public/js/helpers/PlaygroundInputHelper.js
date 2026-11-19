@@ -180,6 +180,9 @@ class PlaygroundInputHelper {
 
     return `
       <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; align-items: center;">
+        <button type="button" class="btn btn-primary btn-xs" style="padding: 2px 8px; font-size: 0.7rem; font-weight: 700;" onclick="PlaygroundInputHelper.openPromptLibraryModal()">
+          <i class="fa-solid fa-book-bookmark" style="color: var(--accent-cyan);"></i> Prompt Library
+        </button>
         <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;"><i class="fa-solid fa-bolt" style="color: var(--accent-amber);"></i> Quick Chips:</span>
         ${chips.map(c => `
           <button type="button" class="btn btn-secondary btn-xs" style="padding: 2px 8px; font-size: 0.7rem;" onclick="PlaygroundInputHelper.applyQuickChip('${encodeURIComponent(c.prompt)}')">
@@ -195,6 +198,74 @@ class PlaygroundInputHelper {
     if (!textarea) return;
     textarea.value = decodeURIComponent(encPrompt) + ' ';
     textarea.focus();
+  }
+
+  static openPromptLibraryModal() {
+    const options = [
+      {
+        id: 'rocas_architect',
+        label: 'ROCAS 20-Yr Enterprise Architect',
+        type: 'primary',
+        icon: 'fa-sitemap',
+        action: () => {
+          PlaygroundInputHelper.applyQuickChip(encodeURIComponent(
+            `[ROLE]: 20-Year Principal Enterprise Architect & Clean OOPS-based MVC Specialist\n[OBJECTIVE]: Refactor code following 7-Stage Waterfall Closed-Loop Workflow with strict line limits and zero code duplication:\n`
+          ));
+        }
+      },
+      {
+        id: 'fullstack_engineer',
+        label: 'Senior Full-Stack Engineer (Node + Vanilla JS)',
+        type: 'secondary',
+        icon: 'fa-laptop-code',
+        action: () => {
+          PlaygroundInputHelper.applyQuickChip(encodeURIComponent(
+            `[ROLE]: Senior Full-Stack Engineer\n[OBJECTIVE]: Implement lightweight, high-performance web components with responsive glassmorphism UI:\n`
+          ));
+        }
+      },
+      {
+        id: 'code_auditor',
+        label: 'Deep Code Auditor & Leak Detective',
+        type: 'secondary',
+        icon: 'fa-shield-virus',
+        action: () => {
+          PlaygroundInputHelper.applyQuickChip(encodeURIComponent(
+            `[ROLE]: Principal Security & Code Auditor\n[OBJECTIVE]: Audit the following code for memory leaks, missing dependencies, unresolved references, and security vulnerabilities:\n`
+          ));
+        }
+      },
+      {
+        id: 'ui_designer',
+        label: 'Dynamic UI/UX Glassmorphism Specialist',
+        type: 'secondary',
+        icon: 'fa-palette',
+        action: () => {
+          PlaygroundInputHelper.applyQuickChip(encodeURIComponent(
+            `[ROLE]: Senior UI/UX Design System Specialist\n[OBJECTIVE]: Enhance the UI aesthetics, theme contrast, dark borders, and responsive micro-interactions for:\n`
+          ));
+        }
+      },
+      {
+        id: 'unit_tester',
+        label: 'Unit Test & Edge Case Specialist',
+        type: 'secondary',
+        icon: 'fa-vial-circle-check',
+        action: () => {
+          PlaygroundInputHelper.applyQuickChip(encodeURIComponent(
+            `[ROLE]: QA & Automated Testing Specialist\n[OBJECTIVE]: Generate comprehensive unit tests with edge-case and error scenario coverage for:\n`
+          ));
+        }
+      }
+    ];
+
+    if (typeof ModalDialog !== 'undefined') {
+      ModalDialog.showOptionModal({
+        title: '<i class="fa-solid fa-book-bookmark" style="color: var(--accent-cyan);"></i> System Prompt & Persona Library',
+        message: 'Select a specialized AI role/persona to inject into your prompt workspace:',
+        options
+      });
+    }
   }
 }
 

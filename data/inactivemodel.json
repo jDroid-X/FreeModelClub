@@ -1,1 +1,10 @@
-﻿[]
+[
+  "moonshot_moonshot-llama-3_3-70b-instruct",
+  "moonshot_moonshot-qwen-2_5-coder-32b",
+  "moonshot_moonshot-deepseek-r1",
+  "moonshot_moonshot-default-free-8b",
+  "chatgpt_chatgpt-llama-3_3-70b-instruct",
+  "chatgpt_chatgpt-qwen-2_5-coder-32b",
+  "chatgpt_chatgpt-deepseek-r1",
+  "chatgpt_chatgpt-default-free-8b"
+]

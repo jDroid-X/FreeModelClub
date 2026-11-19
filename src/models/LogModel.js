@@ -12,13 +12,15 @@ class LogModel {
     return logs;
   }
 
-  static getApiLogs(limit = 100) {
-    const logs = db.read(db.files.api_logs);
+  static getApiLogs(limit = 2000) {
+    const logs = db.read(db.files.api_logs) || [];
+    if (limit <= 0 || limit >= logs.length) return [...logs].reverse();
     return logs.slice(-limit).reverse();
   }
 
-  static getSystemLogs(limit = 100) {
-    const logs = db.read(db.files.system_logs);
+  static getSystemLogs(limit = 2000) {
+    const logs = db.read(db.files.system_logs) || [];
+    if (limit <= 0 || limit >= logs.length) return [...logs].reverse();
     return logs.slice(-limit).reverse();
   }
 

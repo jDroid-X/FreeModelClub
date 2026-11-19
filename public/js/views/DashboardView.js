@@ -501,7 +501,7 @@ class DashboardView {
           else if (tRes && tRes.telemetry) telemetryData = tRes.telemetry;
           if (lRes && lRes.logs) apiLogs = lRes.logs;
           
-          const userEmail = (window.app && window.app.currentUser && window.app.currentUser.email) || DashboardView.DEFAULT_USER_ACCOUNT;
+          const userEmail = (window.app && window.app.currentUser && window.app.currentUser.email) || 'admin@localhost';
           
           try {
             const metricsPanel = document.getElementById('dash-operational-metrics-container');

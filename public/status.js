@@ -1,9 +1,9 @@
 ﻿window.FMC_STATUS = {
-    "message":  "Dependencies Verified",
-    "subMessage":  "Ready to initiate Express server process",
-    "timestamp":  "2026-08-23T12:41:21",
-    "log":  "[OK] Dependencies verified.",
-    "badge":  "Environment Ready",
-    "status":  "deps_ok",
-    "progress":  85
+    "message":  "Starting Express Backend Server...",
+    "subMessage":  "Initializing server.js on port 12247",
+    "timestamp":  "2026-11-19T13:56:54",
+    "log":  "[INFO] Executing node server.js...",
+    "badge":  "Server Startup",
+    "status":  "starting_server",
+    "progress":  90
 };

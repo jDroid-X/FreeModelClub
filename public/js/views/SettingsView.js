@@ -21,7 +21,7 @@ class SettingsView {
     ]);
     this.keys = keysRes.keys || [];
     this.activeCombos = Array.isArray(combosRes) ? combosRes.filter(c => c.isActive) : ((combosRes && combosRes.combos) ? combosRes.combos.filter(c => c.isActive) : []);
-    this.selectedKeyForTools = this.keys.length > 0 ? this.keys[0].key : 'fmc-live-key-jdroidxy-2026';
+    this.selectedKeyForTools = this.keys.length > 0 ? this.keys[0].key : 'YOUR_FMC_API_KEY';
 
     container.innerHTML = `
       <div class="glass-panel">

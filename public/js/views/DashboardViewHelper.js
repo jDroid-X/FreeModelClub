@@ -900,27 +900,27 @@ class DashboardViewHelper {
     const fmt = this.formatTokens;
     const modelColors = { "deepseek": "#d946ef", "qwen": "#6366f1", "gemini": "#06b6d4", "mimo": "#06b6d4", "llama": "#f59e0b", "glm": "#f59e0b", "mistral": "#ec4899", "Other": "#10b981" };
     
-    // Ensure minimum full 7-day sequence is always populated with authentic history
-    const now = Date.now();
+    // Ensure full 7-day chronological sequence is always represented with authentic data
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
     const usageData = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now - i * 86400000);
-      const dayLabel = `${d.toLocaleString('default', { month: 'short' }).toUpperCase()} ${d.getDate()}`;
-      const found = rawUsage.find(u => u.date === dayLabel);
+      const d = new Date(todayEnd.getTime() - i * 86400000);
+      const isoKey = d.toISOString().split('T')[0];
+      const dayLabel = `${d.toLocaleString('en-US', { month: 'short' }).toUpperCase()} ${d.getDate()}`;
+      const found = rawUsage.find(u => u.key === isoKey || u.date === dayLabel);
       
-      if (found && found.segments && found.segments.length > 0 && found.segments.some(s => s.value > 0)) {
-        usageData.push(found);
-      } else {
-        const mult = [0.85, 0.92, 0.78, 1.05, 0.95, 1.12, 1.0][6 - i];
+      if (found) {
         usageData.push({
+          key: isoKey,
           date: dayLabel,
-          segments: [
-            { model: 'deepseek/deepseek-r1-distill-llama-70b', value: Math.round(5200 * mult) },
-            { model: 'qwen/qwen-2.5-72b-instruct', value: Math.round(3800 * mult) },
-            { model: 'google/gemini-2.0-flash-exp', value: Math.round(3100 * mult) },
-            { model: 'meta-llama/llama-3.3-70b-instruct', value: Math.round(2600 * mult) },
-            { model: 'mistralai/mistral-large-2411', value: Math.round(1800 * mult) }
-          ]
+          segments: found.segments || []
+        });
+      } else {
+        usageData.push({
+          key: isoKey,
+          date: dayLabel,
+          segments: []
         });
       }
     }

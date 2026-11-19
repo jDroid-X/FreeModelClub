@@ -8,7 +8,7 @@ const LogModel = require('../models/LogModel');
 
 class LogController {
   static getApiLogs(req, res) {
-    const limit = parseInt(req.query.limit || '100', 10);
+    const limit = parseInt(req.query.limit || '2000', 10);
     const logs = LogModel.getApiLogs(limit);
     return res.json({
       success: true,
@@ -18,7 +18,7 @@ class LogController {
   }
 
   static getSystemLogs(req, res) {
-    const limit = parseInt(req.query.limit || '100', 10);
+    const limit = parseInt(req.query.limit || '2000', 10);
     const logs = LogModel.getSystemLogs(limit);
     return res.json({
       success: true,
@@ -91,8 +91,8 @@ class LogController {
 
   static exportAuditReport(req, res) {
     const format = (req.query.format || 'json').toLowerCase();
-    const apiLogs = LogModel.getApiLogs(200);
-    const systemLogs = LogModel.getSystemLogs(200);
+    const apiLogs = LogModel.getApiLogs(2000);
+    const systemLogs = LogModel.getSystemLogs(2000);
     const reports = LogModel.getReports();
 
     if (format === 'csv') {

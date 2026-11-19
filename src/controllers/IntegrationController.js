@@ -13,7 +13,7 @@ const path = require('path');
 class IntegrationController {
   static getSnippets(req, res) {
     const model = req.query.model || 'llama-3.3-70b-versatile';
-    const apiKey = req.query.apiKey || 'fmc-live-key-jdroidxy-2026';
+    const apiKey = req.query.apiKey || 'YOUR_FMC_API_KEY';
     const baseUrl = 'http://127.0.0.1:12247/v1';
 
     const snippetData = CodeSnippetService.getSnippets(baseUrl, apiKey, model);

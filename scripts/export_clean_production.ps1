@@ -11,6 +11,12 @@ if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.D
 $src = Split-Path -Parent $ScriptDir
 $dst = Join-Path $src "jDroid-X-FreeModelClub"
 
+function Write-Utf8NoBom {
+    param([string]$FilePath, [string]$Content)
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($FilePath, $Content, $utf8NoBom)
+}
+
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host " FreeModelsClub - Clean Production Build & Distribution Exporter" -ForegroundColor Cyan
 Write-Host " Target Distribution: $dst" -ForegroundColor Yellow
@@ -33,6 +39,7 @@ $excludeList = @(
     '.gemini',
     'scratch',
     'test-results',
+    'logs',
     '.tray_launcher.lock',
     'Chat_Request.txt',
     'Chat Request.txt',
@@ -80,6 +87,13 @@ if (Test-Path $dstArtifacts) {
     Get-ChildItem -Path $dstArtifacts -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
+# 4. Clean logs directory and stray log files
+$dstLogs = Join-Path $dst "logs"
+if (Test-Path $dstLogs) {
+    Remove-Item -Path $dstLogs -Recurse -Force -ErrorAction SilentlyContinue
+}
+Get-ChildItem -Path $dst -Recurse -Filter "*.log" -Force | Remove-Item -Force -ErrorAction SilentlyContinue
+
 # STAGE 4: Clean Database Schema & Template Seeding
 Write-Host "[########..] 80% [STAGE 4/5] Initializing Clean Production Schemas & Vault..." -ForegroundColor Green
 
@@ -91,7 +105,7 @@ if (-not (Test-Path $dstData)) {
 # Remove any runtime databases or logs in destination data folder
 Get-ChildItem -Path $dstData -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
-# Copy system schemas, taxonomies, themes, user manual, and relationship maps only
+# Copy system schemas, taxonomies, themes, user manual, models, and relationship maps
 $templateFiles = @(
     'taxonomy.json',
     'themes.json',
@@ -99,7 +113,11 @@ $templateFiles = @(
     'help_docs.json',
     'bi_mapping.json',
     'program_mapping.json',
-    'settings_agent_db.json'
+    'settings_agent_db.json',
+    'models.json',
+    'combos.json',
+    'Activemodels.json',
+    'inactivemodel.json'
 )
 
 foreach ($f in $templateFiles) {
@@ -109,24 +127,52 @@ foreach ($f in $templateFiles) {
     }
 }
 
-# Initialize fresh empty zero-history production JSON collections
+# Sanitize providers.json: Strip ALL personal / encrypted API keys to empty strings ("")
+$srcProvidersPath = Join-Path $src "data\providers.json"
+if (Test-Path $srcProvidersPath) {
+    $rawProviders = Get-Content -Path $srcProvidersPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($prov in $rawProviders) {
+        $prov.apiKey = ""
+    }
+    $sanitizedProvidersJson = $rawProviders | ConvertTo-Json -Depth 10
+    Write-Utf8NoBom -FilePath (Join-Path $dstData "providers.json") -Content $sanitizedProvidersJson
+    Write-Host "  -> Sanitized providers.json: Stripped all active API keys to blank templates." -ForegroundColor Green
+}
+
+# Initialize fresh zero-leakage production collections
 $emptyArray = "[]"
 $cleanCollections = @(
-    'providers.json',
-    'models.json',
-    'combos.json',
-    'Activemodels.json',
-    'inactivemodel.json',
     'api_keys.json',
     'api_logs.json',
     'system_logs.json',
-    'users.json',
     'feedback.json'
 )
 
 foreach ($c in $cleanCollections) {
-    Set-Content -Path (Join-Path $dstData $c) -Value $emptyArray -Encoding UTF8 -Force
+    Write-Utf8NoBom -FilePath (Join-Path $dstData $c) -Content $emptyArray
 }
+
+# Clean production user template (forces password creation on first boot)
+$nowIso = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+$cleanUserTemplate = @"
+[
+  {
+    "id": "usr_default",
+    "email": "admin@localhost",
+    "password": "ChangeMe@1234",
+    "mustChangePassword": true,
+    "role": "admin",
+    "createdAt": "$nowIso"
+  }
+]
+"@
+Write-Utf8NoBom -FilePath (Join-Path $dstData "users.json") -Content $cleanUserTemplate
+
+# Ensure no cryptographic keys or salts leak into production
+$dstVault = Join-Path $dstData ".vault_key"
+$dstDeviceKey = Join-Path $dstData "device_key.json"
+if (Test-Path $dstVault) { Remove-Item -Path $dstVault -Force }
+if (Test-Path $dstDeviceKey) { Remove-Item -Path $dstDeviceKey -Force }
 
 # Default production runtime configuration
 $defaultConfig = @{
@@ -138,7 +184,7 @@ $defaultConfig = @{
     theme = "platinum"
 } | ConvertTo-Json -Depth 3
 
-Set-Content -Path (Join-Path $dstData "config.json") -Value $defaultConfig -Encoding UTF8 -Force
+Write-Utf8NoBom -FilePath (Join-Path $dstData "config.json") -Content $defaultConfig
 
 # STAGE 5: Comprehensive Production Verification Audit
 Write-Host "[##########] 100% [STAGE 5/5] Performing Deep Production Verification Audit..." -ForegroundColor Green

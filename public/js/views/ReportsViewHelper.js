@@ -202,7 +202,7 @@ class ReportsViewHelper {
             <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;"><strong style="color:var(--accent-cyan);">Step 3</strong><br>Import all 10 screen JSONs from <code>n8n Workflow/</code> folder</div>
             <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;"><strong style="color:var(--accent-amber);">Step 4</strong><br>Import <code>Master FMC n8n Wkf.json</code> last</div>
             <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;"><strong style="color:var(--accent-emerald);">Step 5</strong><br>Open Master Brain → ▶️ "Test workflow" → watch all 15 agents execute</div>
-            <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;"><strong style="color:var(--accent-emerald);">Credentials</strong><br>Email: <code>FreeModelsClub@jdroidxy.com</code><br>Password: <code>Admin@1234</code></div>
+            <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;"><strong style="color:var(--accent-emerald);">Auth</strong><br>Use localized admin account configured in Settings</div>
           </div>
         </div>
 
@@ -605,22 +605,27 @@ class ReportsViewHelper {
       Object.keys(timeframeDays).forEach(tf => {
         const numDays = timeframeDays[tf];
         const daysMap = {};
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        const cutoffMs = todayEnd.getTime() - (numDays * 86400000);
         
         // Initialize timeline points
         for (let i = numDays - 1; i >= 0; i--) {
-          const d = new Date(now - i * 86400000);
-          const label = numDays === 1 ? d.toLocaleTimeString([], {hour: '2-digit'}) : `${d.toLocaleString('default', { month: 'short' }).toUpperCase()} ${d.getDate()}`;
-          daysMap[label] = { date: label, logs: [], uniqueClients: new Set() };
+          const d = new Date(todayEnd.getTime() - i * 86400000);
+          const isoKey = d.toISOString().split('T')[0];
+          const label = numDays === 1 ? d.toLocaleTimeString([], {hour: '2-digit'}) : `${d.toLocaleString('en-US', { month: 'short' }).toUpperCase()} ${d.getDate()}`;
+          daysMap[isoKey] = { key: isoKey, date: label, logs: [], uniqueClients: new Set() };
         }
         
         // Group logs
         logs.forEach(l => {
-          if (now - new Date(l.timestamp).getTime() <= numDays * 86400000) {
-            const d = new Date(l.timestamp);
-            const label = numDays === 1 ? d.toLocaleTimeString([], {hour: '2-digit'}) : `${d.toLocaleString('default', { month: 'short' }).toUpperCase()} ${d.getDate()}`;
-            if (daysMap[label]) {
-              daysMap[label].logs.push(l);
-              if (l.clientKey) daysMap[label].uniqueClients.add(l.clientKey);
+          if (!l.timestamp) return;
+          const logTime = new Date(l.timestamp).getTime();
+          if (logTime >= cutoffMs && logTime <= todayEnd.getTime()) {
+            const logIsoKey = new Date(l.timestamp).toISOString().split('T')[0];
+            if (daysMap[logIsoKey]) {
+              daysMap[logIsoKey].logs.push(l);
+              if (l.clientKey) daysMap[logIsoKey].uniqueClients.add(l.clientKey);
             }
           }
         });
@@ -630,43 +635,18 @@ class ReportsViewHelper {
         // Usage & Users
         const usageArr = [];
         const usersArr = [];
-        
-        // Collect existing total tokens across models to preserve authentic proportions
-        const globalModelTokens = {};
-        logs.forEach(l => {
-          const m = l.modelId || 'Unknown';
-          globalModelTokens[m] = (globalModelTokens[m] || 0) + (l.totalTokens > 0 ? l.totalTokens : 1000);
-        });
-        const hasLogs = Object.keys(globalModelTokens).length > 0;
-        const defaultCoreModels = ['deepseek-ai/deepseek-r1-distill-llama-70b', 'qwen/qwen-2.5-72b-instruct', 'google/gemini-2.0-flash-exp', 'meta-llama/llama-3.3-70b-instruct', 'mistralai/mistral-large-2411'];
 
-        groups.forEach((g, idx) => {
+        groups.forEach((g) => {
           const modelCounts = {};
           g.logs.forEach(l => {
-            const m = l.modelId || 'Unknown';
-            modelCounts[m] = (modelCounts[m] || 0) + (l.totalTokens > 0 ? l.totalTokens : 1000); 
+            const m = l.modelId || l.model || 'Unknown';
+            const tok = Number(l.totalTokens) || ((Number(l.promptTokens) || 0) + (Number(l.completionTokens) || 0)) || 0;
+            modelCounts[m] = (modelCounts[m] || 0) + tok; 
           });
 
-          // If a day has 0 logs, populate baseline 7D trend curve so no day in the 7D window is blank
-          if (Object.keys(modelCounts).length === 0) {
-            const multipliers = [0.84, 0.92, 0.78, 1.06, 0.95, 1.14, 1.0];
-            const mult = multipliers[idx % multipliers.length];
-            if (hasLogs) {
-              const topM = Object.keys(globalModelTokens).slice(0, 5);
-              topM.forEach(m => {
-                const baseVal = Math.max(Math.round((globalModelTokens[m] / Math.max(logs.length, 1)) * 5 * mult), 2800);
-                modelCounts[m] = baseVal;
-              });
-            } else {
-              defaultCoreModels.forEach((m, mIdx) => {
-                modelCounts[m] = Math.round((4800 - mIdx * 700) * mult);
-              });
-            }
-          }
-
           const segments = Object.keys(modelCounts).map(m => ({ model: m, value: modelCounts[m] }));
-          usageArr.push({ date: g.date, segments });
-          usersArr.push({ date: g.date, segments: [{ model: "Unique API Keys", value: g.uniqueClients.size || 1 }] });
+          usageArr.push({ key: g.key, date: g.date, segments });
+          usersArr.push({ key: g.key, date: g.date, segments: [{ model: "Unique API Keys", value: g.uniqueClients.size }] });
         });
 
         stats.usage["All Users"][tf] = usageArr;
@@ -674,16 +654,21 @@ class ReportsViewHelper {
 
         // Leaderboard
         const lbCounts = {};
-        let tfLogs = logs.filter(l => now - new Date(l.timestamp).getTime() <= numDays * 86400000);
+        let tfLogs = logs.filter(l => {
+          if (!l.timestamp) return false;
+          const t = new Date(l.timestamp).getTime();
+          return t >= cutoffMs && t <= todayEnd.getTime();
+        });
         tfLogs.forEach(l => {
-          const m = l.modelId || 'Unknown';
+          const m = l.modelId || l.model || 'Unknown';
           if (!lbCounts[m]) lbCounts[m] = { provider: l.providerName || l.providerId || 'Local', reqs: 0, tokens: 0 };
           lbCounts[m].reqs++;
-          lbCounts[m].tokens += l.totalTokens > 0 ? l.totalTokens : 1000;
+          const tok = Number(l.totalTokens) || ((Number(l.promptTokens) || 0) + (Number(l.completionTokens) || 0)) || 0;
+          lbCounts[m].tokens += tok;
         });
         
         stats.leaderboard["All Users"][tf] = Object.keys(lbCounts)
-          .map(m => ({ model: m, provider: lbCounts[m].provider, tokens: lbCounts[m].tokens / 1000000000 })) // billion scale
+          .map(m => ({ model: m, provider: lbCounts[m].provider, tokens: lbCounts[m].tokens }))
           .sort((a,b) => b.tokens - a.tokens)
           .map((item, idx) => ({ ...item, rank: idx + 1, change: 0 }));
 
@@ -691,18 +676,19 @@ class ReportsViewHelper {
         const provCounts = {};
         tfLogs.forEach(l => {
           const p = l.providerName || l.providerId || 'Localhost / Developer';
-          provCounts[p] = (provCounts[p] || 0) + (l.totalTokens > 0 ? l.totalTokens : 1000);
+          const tok = Number(l.totalTokens) || ((Number(l.promptTokens) || 0) + (Number(l.completionTokens) || 0)) || 0;
+          provCounts[p] = (provCounts[p] || 0) + tok;
         });
         const totalProvTokens = Object.values(provCounts).reduce((a,b) => a+b, 0) || 1;
         stats.market[tf] = [{
           authors: Object.keys(provCounts)
-            .map(p => ({ author: p, tokens: provCounts[p] / 1000000000, share: Math.round((provCounts[p]/totalProvTokens)*100) }))
+            .map(p => ({ author: p, tokens: provCounts[p], share: Math.round((provCounts[p]/totalProvTokens)*100) }))
             .sort((a,b) => b.share - a.share)
         }];
 
         // Geo Traffic (Local Proxy Traffic)
         stats.country[tf] = [{
-          rank: 1, country: "Localhost Developer", continent: "Local Network / Offline", tokens: totalProvTokens / 1000000000, share: 100
+          rank: 1, country: "Localhost Developer", continent: "Local Network / Offline", tokens: totalProvTokens, share: 100
         }];
 
         // Cost and Cache Ratio Calculations
@@ -805,135 +791,144 @@ class ReportsViewHelper {
         return modelColors[model] || colors[idx % colors.length];
       };
 
-      if (currentSubTab === 'usage' || currentSubTab === 'users') {
-        const sourceObj = currentSubTab === 'usage' ? stats.usage : stats.users;
-        const timeData = sourceObj[currentScope]?.[currentTimeframe] || [];
-        
-        if (timeData.length === 0) {
-          subContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-dim);">No data available for the selected scope & timeframe.</div>`;
-          return;
-        }
+        const formatVal = (v) => {
+          if (v == null || isNaN(v)) return '0';
+          if (v >= 1000000000) return (v / 1000000000).toFixed(2) + 'B';
+          if (v >= 1000000) return (v / 1000000).toFixed(2) + 'M';
+          if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+          return v.toLocaleString();
+        };
 
-        let barsHtml = '';
-        timeData.forEach(day => {
-          const segments = day.segments || [];
-          const total = segments.reduce((sum, s) => sum + (s.value || 0), 0);
-          const maxVal = currentTimeframe.includes('M') ? 40 : 15;
-          const chartH = Math.min(220, Math.max(10, (total / maxVal) * 220));
-
-          let segmentHtml = '';
-          let tooltipHtml = '';
+        if (currentSubTab === 'usage' || currentSubTab === 'users') {
+          const sourceObj = currentSubTab === 'usage' ? stats.usage : stats.users;
+          const timeData = sourceObj[currentScope]?.[currentTimeframe] || [];
           
-          segments.forEach((s, idx) => {
-            const pct = total > 0 ? (s.value || 0) / total : 0;
-            const color = getModelColor(s.model, idx);
-            const valStr = currentSubTab === 'usage' 
-              ? (s.value >= 1.0 ? `${s.value.toFixed(2)}T` : `${(s.value * 1000).toFixed(0)}B`)
-              : `${s.value.toLocaleString()}`;
+          if (timeData.length === 0) {
+            subContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-dim);">No data available for the selected scope & timeframe.</div>`;
+            return;
+          }
 
-            if (pct > 0) {
-              segmentHtml = `<div style="height: ${pct * chartH}px; background: ${color};" title="${s.model}: ${valStr}"></div>` + segmentHtml;
-              tooltipHtml += `
-                <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:2px;">
-                  <span style="display:flex; align-items:center; gap:4px; color:var(--text-main);">
-                    <span style="width:6px; height:6px; background:${color}; border-radius:1px;"></span>
-                    ${s.model}
-                  </span>
-                  <span style="color:var(--accent-cyan); font-weight:700;">${valStr}</span>
+          const maxDayTotal = Math.max(...timeData.map(d => (d.segments || []).reduce((sum, s) => sum + (s.value || 0), 0)), 1);
+
+          let barsHtml = '';
+          timeData.forEach(day => {
+            const segments = day.segments || [];
+            const total = segments.reduce((sum, s) => sum + (s.value || 0), 0);
+            const chartH = total > 0 ? Math.min(220, Math.max(8, (total / maxDayTotal) * 220)) : 0;
+
+            let segmentHtml = '';
+            let tooltipHtml = '';
+            
+            segments.forEach((s, idx) => {
+              const pct = total > 0 ? (s.value || 0) / total : 0;
+              const color = getModelColor(s.model, idx);
+              const valStr = currentSubTab === 'usage' 
+                ? formatVal(s.value)
+                : `${s.value.toLocaleString()}`;
+
+              if (pct > 0) {
+                segmentHtml = `<div style="height: ${Math.max(Math.round(pct * chartH), 2)}px; background: ${color};" title="${s.model}: ${valStr}"></div>` + segmentHtml;
+                tooltipHtml += `
+                  <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:2px;">
+                    <span style="display:flex; align-items:center; gap:4px; color:var(--text-main);">
+                      <span style="width:6px; height:6px; background:${color}; border-radius:1px;"></span>
+                      ${s.model}
+                    </span>
+                    <span style="color:var(--accent-cyan); font-weight:700;">${valStr}</span>
+                  </div>
+                `;
+              }
+            });
+
+            const displayTotal = currentSubTab === 'usage'
+              ? formatVal(total)
+              : `${total.toLocaleString()}`;
+
+            barsHtml += `
+              <div class="pg-bar-group" style="display: flex; flex-direction: column; justify-content: flex-end; width: ${90 / timeData.length}%; height: 100%; position: relative;">
+                <div class="pg-bar-tooltip" style="bottom: 110%;">
+                  <div style="font-size:0.7rem; font-weight:700; color:var(--accent-amber); border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:3px; margin-bottom:4px; display:flex; justify-content:space-between;">
+                    <span>${day.date}</span>
+                    <span>${displayTotal}</span>
+                  </div>
+                  ${tooltipHtml || '<div style="font-size:0.65rem; color:var(--text-dim);">No tokens consumed</div>'}
                 </div>
-              `;
-            }
+                <div style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.58rem; color: var(--text-dim); white-space: nowrap;">
+                  ${day.date}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1px; width: 100%;">
+                  ${segmentHtml || '<div style="height: 3px; background: rgba(255,255,255,0.06); border-radius: 1px;"></div>'}
+                </div>
+              </div>
+            `;
           });
 
-          const displayTotal = currentSubTab === 'usage'
-            ? (total >= 1.0 ? `${total.toFixed(2)}T` : `${(total * 1000).toFixed(0)}B`)
-            : `${total.toLocaleString()}`;
-
-          barsHtml += `
-            <div class="pg-bar-group" style="display: flex; flex-direction: column; justify-content: flex-end; width: ${90 / timeData.length}%; height: 100%; position: relative;">
-              <div class="pg-bar-tooltip" style="bottom: 110%;">
-                <div style="font-size:0.7rem; font-weight:700; color:var(--accent-amber); border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:3px; margin-bottom:4px; display:flex; justify-content:space-between;">
-                  <span>${day.date}</span>
-                  <span>${displayTotal}</span>
-                </div>
-                ${tooltipHtml}
+          subContainer.innerHTML = `
+            <div style="padding: 12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                <h5 style="color: var(--text-main); margin: 0; font-size: 0.88rem;">
+                  <i class="fa-solid fa-chart-column" style="color:var(--accent-cyan); margin-right:6px;"></i> 
+                  ${currentSubTab === 'usage' ? 'Token Volume Usage Breakdown' : 'Daily Unique Active Users'}
+                </h5>
+                <div style="font-size: 0.72rem; color: var(--text-dim);">Hover over bars to view model distribution details.</div>
               </div>
-              <div style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.58rem; color: var(--text-dim); white-space: nowrap;">
-                ${day.date}
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 1px; width: 100%;">
-                ${segmentHtml}
+              <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 230px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; position: relative; margin-bottom: 24px; margin-top: 15px;">
+                ${barsHtml}
               </div>
             </div>
           `;
-        });
+        } 
+        else if (currentSubTab === 'leaderboard') {
+          const boardData = stats.leaderboard[currentScope]?.[currentTimeframe] || [];
+          if (boardData.length === 0) {
+            subContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-dim);">No leaderboard rankings available.</div>`;
+            return;
+          }
 
-        subContainer.innerHTML = `
-          <div style="padding: 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-              <h5 style="color: var(--text-main); margin: 0; font-size: 0.88rem;">
-                <i class="fa-solid fa-chart-column" style="color:var(--accent-cyan); margin-right:6px;"></i> 
-                ${currentSubTab === 'usage' ? 'Token Volume Usage Breakdown' : 'Daily Unique Active Users'}
-              </h5>
-              <div style="font-size: 0.72rem; color: var(--text-dim);">Hover over bars to view model distribution details.</div>
-            </div>
-            <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 230px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; position: relative; margin-bottom: 24px; margin-top: 15px;">
-              ${barsHtml}
-            </div>
-          </div>
-        `;
-      } 
-      else if (currentSubTab === 'leaderboard') {
-        const boardData = stats.leaderboard[currentScope]?.[currentTimeframe] || [];
-        if (boardData.length === 0) {
-          subContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-dim);">No leaderboard rankings available.</div>`;
-          return;
-        }
+          const maxTokens = Math.max(...boardData.map(d => d.tokens), 1);
 
-        const maxTokens = Math.max(...boardData.map(d => d.tokens), 1);
-
-        subContainer.innerHTML = `
-          <div style="padding: 12px; max-height: 380px; overflow-y: auto;">
-            <h5 style="color: var(--text-main); margin-bottom: 10px; font-size: 0.88rem;"><i class="fa-solid fa-trophy" style="color:var(--accent-amber); margin-right:6px;"></i> Model Performance & Popularity Leaderboard</h5>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
-                  <th style="padding: 6px;">Rank</th>
-                  <th style="padding: 6px;">Model Name</th>
-                  <th style="padding: 6px;">Provider</th>
-                  <th style="padding: 6px; width: 40%;">Token Volume (Relative Graph)</th>
-                  <th style="padding: 6px; text-align: center;">Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${boardData.map(item => {
-                  const chgColor = item.change > 0 ? 'var(--accent-emerald)' : (item.change < 0 ? 'var(--accent-rose)' : 'var(--text-dim)');
-                  const chgSign = item.change > 0 ? `+${item.change}%` : (item.change < 0 ? `${item.change}%` : '0%');
-                  const pct = (item.tokens / maxTokens) * 100;
-                  return `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                      <td style="padding: 6px; font-weight:700; color: var(--accent-amber);">#${item.rank}</td>
-                      <td style="padding: 6px; font-weight:700; color: var(--text-main);">${item.model}</td>
-                      <td style="padding: 6px; color: var(--text-dim); text-transform: capitalize;">${item.provider}</td>
-                      <td style="padding: 6px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                          <span style="color: var(--accent-cyan); font-weight: 600; width: 45px; text-align: right;">
-                            ${item.tokens >= 1000 ? (item.tokens / 1000).toFixed(1) + 'T' : item.tokens.toFixed(1) + 'B'}
-                          </span>
-                          <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--primary-light)); border-radius: 3px;"></div>
+          subContainer.innerHTML = `
+            <div style="padding: 12px; max-height: 380px; overflow-y: auto;">
+              <h5 style="color: var(--text-main); margin-bottom: 10px; font-size: 0.88rem;"><i class="fa-solid fa-trophy" style="color:var(--accent-amber); margin-right:6px;"></i> Model Performance & Popularity Leaderboard</h5>
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: left;">
+                    <th style="padding: 6px;">Rank</th>
+                    <th style="padding: 6px;">Model Name</th>
+                    <th style="padding: 6px;">Provider</th>
+                    <th style="padding: 6px; width: 40%;">Token Volume (Relative Graph)</th>
+                    <th style="padding: 6px; text-align: center;">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${boardData.map(item => {
+                    const chgColor = item.change > 0 ? 'var(--accent-emerald)' : (item.change < 0 ? 'var(--accent-rose)' : 'var(--text-dim)');
+                    const chgSign = item.change > 0 ? `+${item.change}%` : (item.change < 0 ? `${item.change}%` : '0%');
+                    const pct = (item.tokens / maxTokens) * 100;
+                    return `
+                      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 6px; font-weight:700; color: var(--accent-amber);">#${item.rank}</td>
+                        <td style="padding: 6px; font-weight:700; color: var(--text-main);">${item.model}</td>
+                        <td style="padding: 6px; color: var(--text-dim); text-transform: capitalize;">${item.provider}</td>
+                        <td style="padding: 6px;">
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--accent-cyan); font-weight: 600; min-width: 55px; text-align: right;">
+                              ${formatVal(item.tokens)}
+                            </span>
+                            <div style="flex-grow: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                              <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--primary-light)); border-radius: 3px;"></div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td style="padding: 6px; text-align: center; color: ${chgColor}; font-weight: 700;">${chgSign}</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-      }
+                        </td>
+                        <td style="padding: 6px; text-align: center; color: ${chgColor}; font-weight: 700;">${chgSign}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
       else if (currentSubTab === 'market') {
         const mktData = stats.market[currentTimeframe] || [];
         if (mktData.length === 0) {

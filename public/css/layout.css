@@ -178,31 +178,40 @@
 }
 
 .sidebar-footer {
-  padding: 16px;
+  padding: 8px 10px;
   border-top: 1px solid var(--border-color);
   font-size: 0.8rem;
   color: var(--muted-text-color, var(--text-dim));
+  background: var(--bg-card);
+}
+
+.sidebar-status-card {
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.sidebar-status-card:hover {
+  border-color: var(--accent-cyan);
 }
 
 .status-pill {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 20px;
-  color: var(--accent-emerald);
-  font-size: 0.75rem;
+  padding: 4px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--accent-emerald);
-  box-shadow: 0 0 8px var(--accent-emerald);
+  box-shadow: 0 0 6px var(--accent-emerald);
   animation: pulse 2s infinite;
 }
 

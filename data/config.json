@@ -1,4 +1,4 @@
-﻿{
+{
     "port":  12247,
     "monitoringFrequencyHours":  1,
     "rateLimitTPM":  70000,

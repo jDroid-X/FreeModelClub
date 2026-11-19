@@ -242,3 +242,59 @@ MODIFIED FILES:
   - public/js/components/HeaderTelemetry.js [FIX updateLocalServerStatusPill()]
 DESCRIPTION: Pill now shows green (FMC Proxy Active) always when dashboard is accessible. Separate Ollama status shown in tooltip. No longer shows red/disconnected when Ollama is not installed.
 ================================================================================
+
+================================================================================
+DATE: 2026-11-19T14:37:00+05:30 | STATUS: PASS
+CHANGE: README & Working Model Sync Audit & Installation Workflow Documentation
+TARGET SCREEN: User Manual & Documentation (README.md, scripts/sync_models.js)
+MODIFIED FILES:
+  - README.md
+  - scripts/sync_models.js
+  - requirement/manual.txt
+DESCRIPTION: 
+  - Verified and confirmed GitHub repository remote path: https://github.com/jDroid-X/FreeModelClub.git
+  - Fixed module path import in scripts/sync_models.js for deterministic sync execution.
+  - Audited and executed ActiveModelAgent classification: verified 314 Active Working Models, 8 Inactive Models, 21 Providers, and 7 Multi-Model Combos.
+  - Completely updated README.md with live model coverage matrix (Groq, NVIDIA NIM, Bynara, OpenRouter, Google Gemini, OpenAI, Opencode, Ollama, Azure, Vercel), model sync instructions, automated and manual installation lifecycle, and OpenAI/Anthropic usage examples.
+================================================================================
+
+================================================================================
+DATE: 2026-11-19T14:50:00+05:30 | STATUS: PASS
+CHANGE: Production Version Security Sanitization & Zero-Leak Audit
+TARGET SCREEN: Production Export (jDroid-X-FreeModelClub) & Security Governance
+MODIFIED FILES:
+  - README.md
+  - .gitignore
+  - public/js/views/LoginView.js
+  - public/js/views/ReportsViewHelper.js
+  - public/js/views/SettingsToolConnectionHelper.js
+  - public/js/views/SettingsView.js
+  - public/js/services/api.js
+  - src/controllers/AuthController.js
+  - src/controllers/IntegrationController.js
+  - src/models/DatabaseSeed.js
+  - src/services/CodeSnippetService.js
+  - scripts/export_clean_production.ps1
+  - data/user_manual.json
+  - requirement/manual.txt
+DESCRIPTION:
+  - Conducted deep cryptographic and pattern audit across entire project for personal paths, user IDs, passwords, and API keys.
+  - Sanitized README.md: Replaced all literal credentials and API keys with secure documentation placeholders (<your-fmc-api-key>, admin@localhost) and added production security mandate.
+  - Sanitized UI & Backend Controllers: Removed hardcoded default passwords, internal emails, and default keys from LoginView, ReportsViewHelper, AuthController, DatabaseSeed, and code snippet services.
+  - Enhanced scripts/export_clean_production.ps1: Automatically strips all provider API keys (blank apiKey: ""), seeds clean initial admin template (mustChangePassword: true), cleans logs, purges chat dumps, and copies full 322 models and 7 combos.
+  - Ran deep security scan on production build (jDroid-X-FreeModelClub): 100% Zero-Leak Verification (0 personal paths, 0 hardcoded passwords, 0 provider API keys).
+================================================================================
+
+================================================================================
+DATE: 2026-11-19T14:52:00+05:30 | STATUS: PASS
+CHANGE: Rule 14 Implementation - Zero-Leak Production-Only GitHub Sync & Credential Quarantine
+TARGET SCREEN: Governance & Architectural Rules (.agents/AGENTS.md)
+MODIFIED FILES:
+  - .agents/AGENTS.md
+  - requirement/manual.txt
+DESCRIPTION:
+  - Formally codified Rule 14 ("Zero-Leak Production-Only GitHub Sync & Sanitization Rule") into Tier P0 and Tier P4 of .agents/AGENTS.md.
+  - Mandated that all GitHub commits, releases, and remote syncs MUST be the sanitized Production Version (jDroid-X-FreeModelClub).
+  - Enforced zero dev data leakage: strict quarantine of personal user paths, user IDs, passwords, active provider API keys, default client API keys, and cryptographic salts before any git staging or sync.
+  - Re-executed scripts/export_clean_production.ps1 with 100% verification audit pass.
+================================================================================

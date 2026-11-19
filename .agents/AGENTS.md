@@ -10,6 +10,7 @@ This document establishes the master operational guidelines, Waterfall Encapsula
 [TIER P0: SUPREME CONSTITUTION & GOVERNANCE]
   ├─ Prime Directives (1-5) & Dynamic OOPS-based MVC
   ├─ Zero-Trust Gatekeeper & Outbound Key Protection
+  ├─ Zero-Leak Production-Only GitHub Sync & Sanitization
   └─ Circuit Breaker & Deterministic Branch Closure
        ↓
 [TIER P1: PHASE 0 INITIALIZATION & 7-STAGE WATERFALL]
@@ -30,7 +31,8 @@ This document establishes the master operational guidelines, Waterfall Encapsula
 [TIER P4: CODING CONSTRAINTS, PROGRAM MAPPING & PROVIDER SEARCH]
   ├─ Canonical Agent Map (A00 - A08) (Rule 9)
   ├─ Provider Agent Live Search Rule (Rule 10)
-  └─ Explicit Git Update Permission Rule (Rule 11)
+  ├─ Explicit Git Update Permission Rule (Rule 11)
+  └─ Zero-Leak Production-Only GitHub Sync & Sanitization Rule (Rule 14)
        ↓
 [TIER P5: TELEMETRY, REQUIREMENT LOGGING & CONTINUOUS UPTIME]
   ├─ Screen-Based Requirement Change Log (requirement/*.txt) (Rule 12)
@@ -48,6 +50,7 @@ This document establishes the master operational guidelines, Waterfall Encapsula
 5. **Program Mapping as Single Source of Truth**: Master relationship table across all programs. Any change must verify dependencies via `ProgramMappingAgent`.
 6. **Zero-Trust Outbound Key Resolution**: Always substitute unmasked keys from `data/providers.json` before making external API calls. Never overwrite real keys with `"********"`.
 7. **Deterministic Branch Closure & Circuit Breaker**: Every branch must resolve to a valid state or graceful fallback. Max 2 retry loops permitted.
+8. **Zero-Leak Production-Only GitHub Sync**: All code, schemas, and assets committed, pushed, or synchronized to GitHub must be the production-grade sanitized version. Zero personal paths, user IDs, passwords, active provider keys, or development dumps are permitted in repository commits.
 
 ---
 
@@ -112,6 +115,16 @@ Mandatory live discovery via DDG context and LLM extraction before falling back 
 
 ### Rule 11 — Explicit Git Update Permission Rule
 Never execute `git commit` or `git push` without explicit user instructions in chat.
+
+### Rule 14 — Zero-Leak Production-Only GitHub Sync & Sanitization Rule
+- **Production-Only Version Control Mandate**: All GitHub commits, releases, and repository syncs MUST represent the clean production distribution (`jDroid-X-FreeModelClub`). Zero development scratch files, prompt dumps (`Chat_Request.txt`), test runner logs, or transient debug traces may ever be staged or pushed.
+- **Strict Credential & Key Quarantine**:
+  - **Zero Personal Data**: Never commit personal computer directory paths (`C:\Users\...`), personal email addresses, or developer hardware identifiers.
+  - **Zero User IDs or Passwords**: `data/users.json` must be a clean production template with generic admin email (`admin@localhost`) and `mustChangePassword: true`, or empty `[]` for first-run setup. Never commit personal passwords or emails.
+  - **Zero Active Provider API Keys**: `data/providers.json` must always have `apiKey: ""` for every provider. Neither plaintext keys nor local CryptoVault encrypted strings (`enc:v1:...`) may be committed to git.
+  - **Zero Default Client API Keys**: `data/api_keys.json` must be `[]` or clean template. No pre-shared live keys in documentation or public endpoints.
+  - **Cryptographic Key & Salt Quarantine**: `data/.vault_key`, `data/device_key.json`, and hardware salts must be strictly ignored by `.gitignore` and never committed or pushed.
+- **Mandatory Pre-Sync Audit Check**: Before any `git add`, `git commit`, or `git push` is executed, `scripts/export_clean_production.ps1` must be run and pass all 5 verification audit checks with 0 sensitive data leaks detected.
 
 ---
 

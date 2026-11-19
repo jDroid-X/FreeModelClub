@@ -6,7 +6,7 @@
 
 class LoginView {
   static render() {
-    let defaultEmail = 'FreeModelsClub@jdroidxy.com';
+    let defaultEmail = '';
     try {
       const stored = localStorage.getItem('fmc_remembered_email') || (JSON.parse(localStorage.getItem('fmc_user') || 'null')?.email);
       if (stored) defaultEmail = stored;
@@ -25,8 +25,8 @@ class LoginView {
           <form id="login-form" onsubmit="LoginView.handleLogin(event)">
             <div class="form-group" style="text-align: left;">
               <label class="form-label">Email Address</label>
-              <input type="email" id="login-email" class="form-control" value="${defaultEmail}" required />
-              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Pre-filled session login email</div>
+              <input type="email" id="login-email" class="form-control" placeholder="admin@localhost" value="${defaultEmail}" required />
+              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Localized administrator email</div>
             </div>
 
             <div class="form-group" style="text-align: left;">
@@ -37,7 +37,7 @@ class LoginView {
                   <i class="fa-solid fa-eye" id="pass-toggle-icon"></i>
                 </button>
               </div>
-              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Default: Admin@1234</div>
+              <div class="field-hint"><i class="fa-solid fa-circle-info"></i> Localized administrator password</div>
             </div>
 
             <div class="form-group" style="text-align: left; margin-bottom: 24px;">

@@ -234,11 +234,48 @@ class SystemInfoController {
 
   static async getTrayStatus(req, res) {
     try {
-      const { exec } = require('child_process');
-      exec('tasklist /FI "IMAGENAME eq powershell.exe" /FO CSV /NH', (err, stdout) => {
-        const isRunning = !err && stdout && stdout.includes('powershell.exe');
-        return res.json({ success: true, isRunning: !!isRunning });
-      });
+      const fs = require('fs');
+      const lockPath = path.resolve(__dirname, '../../.tray_launcher.lock');
+      let isRunning = false;
+      let trayPid = null;
+
+      if (fs.existsSync(lockPath)) {
+        try {
+          const raw = fs.readFileSync(lockPath, 'utf8').trim();
+          const pid = parseInt(raw, 10);
+          if (!isNaN(pid) && pid > 0) {
+            try {
+              process.kill(pid, 0); // Check if PID is alive
+              isRunning = true;
+              trayPid = pid;
+            } catch (err) {
+              // Dead PID - auto-clean stale lock
+              fs.unlinkSync(lockPath);
+            }
+          }
+        } catch (e) {
+          // Non-blocking lock parse error
+        }
+      }
+
+      if (!isRunning) {
+        // Backup check: query for process running tray_launcher.ps1
+        const { exec } = require('child_process');
+        exec('powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like \'*tray_launcher.ps1*\' } | Select-Object -ExpandProperty ProcessId"', (err, stdout) => {
+          if (!err && stdout && stdout.trim()) {
+            const foundPid = parseInt(stdout.trim().split(/\r?\n/)[0], 10);
+            if (!isNaN(foundPid)) {
+              isRunning = true;
+              trayPid = foundPid;
+              try { fs.writeFileSync(lockPath, String(foundPid), 'utf8'); } catch (e) {}
+            }
+          }
+          return res.json({ success: true, isRunning, pid: trayPid });
+        });
+        return;
+      }
+
+      return res.json({ success: true, isRunning, pid: trayPid });
     } catch (e) {
       return res.json({ success: true, isRunning: false, error: e.message });
     }

@@ -80,11 +80,16 @@ class ProxyEngineService {
     }
   }
 
-  static recordProviderFailure(providerId) {
+  static recordProviderFailure(providerId, statusCode = 500) {
     if (!providerId) return;
     const current = (this.failureCounters.get(providerId) || 0) + 1;
     this.failureCounters.set(providerId, current);
-    if (current >= this.circuitBreakerThreshold) {
+
+    if (statusCode === 429) {
+      // Adaptive backoff for rate limits: 1m on 1st, 3m on 2nd, configured sleep on 3+
+      const backoffMinutes = current === 1 ? 1 : (current === 2 ? 3 : this.blacklistSleepMinutes);
+      this.blacklistProvider(providerId, backoffMinutes);
+    } else if (current >= this.circuitBreakerThreshold) {
       this.blacklistProvider(providerId, this.blacklistSleepMinutes);
     }
   }
@@ -280,7 +285,7 @@ class ProxyEngineService {
             return;
           }
 
-          ProxyEngineService.recordProviderFailure(currentProvider.id);
+          ProxyEngineService.recordProviderFailure(currentProvider.id, result?.statusCode || 500);
 
           if (result && (result.statusCode === 401 || result.statusCode === 403)) {
             // Temporary in-memory cooldown without permanently corrupting user database config

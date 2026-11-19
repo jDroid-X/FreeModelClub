@@ -16,7 +16,7 @@
     },
     "UserModel": {
       "path": "src/models/UserModel.js",
-      "purpose": "Manages user credentials authentication (FreeModelsClub@jdroidxy.com)",
+      "purpose": "Manages user credentials authentication (admin@localhost)",
       "dependencies": ["Database"]
     },
     "ProviderModel": {

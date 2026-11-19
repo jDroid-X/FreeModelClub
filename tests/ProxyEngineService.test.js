@@ -55,6 +55,15 @@ describe('ProxyEngineService — Circuit Breaker & Blacklist', () => {
     ProxyEngineService.recordProviderFailure('test_provider_2');
     expect(ProxyEngineService.isProviderBlacklisted('test_provider_2')).toBe(false);
   });
+
+  it('should apply adaptive short backoff on HTTP 429 rate limit', () => {
+    ProxyEngineService.recordProviderFailure('rate_limited_provider', 429);
+    expect(ProxyEngineService.isProviderBlacklisted('rate_limited_provider')).toBe(true);
+    const status = ProxyEngineService.getBlacklistedStatus();
+    const entry = status.find(s => s.providerId === 'rate_limited_provider');
+    expect(entry).toBeDefined();
+    expect(entry.remainingMinutes).toBeLessThanOrEqual(1);
+  });
 });
 
 describe('ComboModel — Normalization & Integrity', () => {

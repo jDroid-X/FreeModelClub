@@ -74,7 +74,7 @@ class UserModel {
 
   static getDefaultUser() {
     const users = db.read(db.files.users);
-    return users[0] || { email: 'FreeModelsClub@jdroidxy.com' };
+    return users[0] || { email: 'admin@localhost' };
   }
 
   /** Returns all users (used by AuthController.getUserProfile). */

@@ -449,30 +449,36 @@ class AboutView {
     });
 
     try {
-      // Execute the audit by calling a backend route (we will just mock it in UI for demonstration or call the log route if we don't have a direct execution route)
-      // Since we don't have a direct route to execute the scratch script yet, we'll simulate the strict output.
-      setTimeout(() => {
-        ModalDialog.showModal({
-          title: '3D Matrix Audit Result',
-          icon: 'fa-network-wired',
-          body: `
-            <div style="font-size: 0.8rem; color: var(--text-main); font-family: var(--font-code); background: var(--bg-code); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-              <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 8px;">================================================================</div>
-              <div style="color: var(--text-main); font-weight: 700; margin-bottom: 8px; text-align: center;">PROGRAM MAPPING AGENT: 3D MATRIX & CLOSED-LOOP AUDIT</div>
-              <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 12px;">================================================================</div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Dim 1 (View Controllers):</span> <span>5 Modules</span></div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Dim 2 (Services & Agents):</span> <span>16 Modules</span></div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px;"><span>Dim 3 (Database & Schemas):</span> <span>0 Modules</span></div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--accent-amber);"><span>Total Mapped Program Nodes:</span> <span>21</span></div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: var(--accent-emerald);"><span>Violations Found:</span> <span>0</span></div>
-              <div style="color: var(--accent-emerald); font-weight: 700;">✅ 3D Program Matrix Verified: All parallel threads & closed-loop feedback links 100% SECURED.</div>
-            </div>
-          `,
-          confirmText: 'Done'
-        });
-      }, 1500);
+      const res = await fetch('/api/system/program-matrix');
+      const audit = await res.json();
+      
+      const dim1Count = audit.dimension1_Views ? audit.dimension1_Views.length : 0;
+      const dim2Count = audit.dimension2_Controllers ? audit.dimension2_Controllers.length : 0;
+      const dim3Count = audit.dimension3_ModelsDB ? audit.dimension3_ModelsDB.length : 0;
+      const totalNodes = audit.totalMapped || (dim1Count + dim2Count + dim3Count);
+      const violationsCount = audit.violations ? audit.violations.length : 0;
+      const isSecured = violationsCount === 0;
+
+      ModalDialog.showModal({
+        title: '3D Matrix Audit Result',
+        icon: 'fa-network-wired',
+        body: `
+          <div style="font-size: 0.8rem; color: var(--text-main); font-family: var(--font-code); background: var(--bg-code); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 8px;">================================================================</div>
+            <div style="color: var(--text-main); font-weight: 700; margin-bottom: 8px; text-align: center;">PROGRAM MAPPING AGENT: 3D MATRIX & CLOSED-LOOP AUDIT</div>
+            <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 12px;">================================================================</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Dim 1 (View Controllers):</span> <span>${dim1Count} Modules</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Dim 2 (Services & Agents):</span> <span>${dim2Count} Modules</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;"><span>Dim 3 (Database & Schemas):</span> <span>${dim3Count} Modules</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--accent-amber);"><span>Total Mapped Program Nodes:</span> <span>${totalNodes}</span></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px; color: ${isSecured ? 'var(--accent-emerald)' : 'var(--accent-rose)'};"><span>Violations Found:</span> <span>${violationsCount}</span></div>
+            <div style="color: ${isSecured ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight: 700;">${isSecured ? '✅ 3D Program Matrix Verified: All parallel threads & closed-loop feedback links 100% SECURED.' : '⚠️ Violations detected in 3D Program Matrix.'}</div>
+          </div>
+        `,
+        confirmText: 'Done'
+      });
     } catch (e) {
-      ModalDialog.showNotification('Failed to run audit.', 'error');
+      ModalDialog.showNotification('Failed to run audit: ' + e.message, 'error');
     }
   }
 

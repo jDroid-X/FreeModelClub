@@ -7,14 +7,20 @@
 class RegistrationViewHelper {
   static getPredefinedProviders() {
     return [
-      { id: 'groq', name: 'Groq', proto: 'Groq API', icon: 'fa-bolt', color: 'var(--accent-cyan)' },
-      { id: 'openrouter', name: 'OpenRouter', proto: 'OpenRouter Free', icon: 'fa-globe', color: 'var(--accent-emerald)' },
-      { id: 'gemini', name: 'Gemini', proto: 'Gemini API', icon: 'fa-atom', color: 'var(--primary-light)' },
+      { id: 'groq', name: 'Groq Cloud', proto: 'Groq API', icon: 'fa-bolt', color: 'var(--accent-cyan)' },
+      { id: 'openrouter', name: 'OpenRouter Free', proto: 'OpenRouter Free', icon: 'fa-globe', color: 'var(--accent-emerald)' },
+      { id: 'gemini', name: 'Google Gemini', proto: 'Gemini API', icon: 'fa-atom', color: 'var(--primary-light)' },
       { id: 'bynara', name: 'Bynara AI Router', proto: 'Bynara API', icon: 'fa-route', color: 'var(--accent-cyan)' },
+      { id: 'nvidia', name: 'NVIDIA NIM Cloud', proto: 'NVIDIA API', icon: 'fa-microchip', color: 'var(--accent-emerald)' },
+      { id: 'opencode', name: 'Opencode Zen', proto: 'Opencode API', icon: 'fa-brain', color: 'var(--accent-amber)' },
       { id: 'together', name: 'Together AI', proto: 'Together API', icon: 'fa-handshake', color: 'var(--accent-amber)' },
-      { id: 'mistral', name: 'Mistral', proto: 'Mistral API', icon: 'fa-wind', color: 'var(--accent-cyan)' },
-      { id: 'ollama', name: 'Ollama Local', proto: 'Ollama Local API', icon: 'fa-server', color: 'var(--accent-emerald)' },
-      { id: 'custom', name: 'Custom', proto: 'OpenAI Compatible', icon: 'fa-gears', color: 'var(--text-dim)' }
+      { id: 'sambanova', name: 'SambaNova Cloud', proto: 'SambaNova API', icon: 'fa-cloud', color: 'var(--accent-cyan)' },
+      { id: 'cerebras', name: 'Cerebras Cloud', proto: 'Cerebras API', icon: 'fa-bolt-lightning', color: 'var(--accent-rose)' },
+      { id: 'mistral', name: 'Mistral AI', proto: 'Mistral API', icon: 'fa-wind', color: 'var(--accent-cyan)' },
+      { id: 'deepseek', name: 'DeepSeek Platform', proto: 'DeepSeek API', icon: 'fa-compass', color: 'var(--accent-indigo)' },
+      { id: 'openai', name: 'OpenAI ChatGPT', proto: 'OpenAI API', icon: 'fa-network-wired', color: 'var(--accent-emerald)' },
+      { id: 'ollama', name: 'Ollama Localhost', proto: 'Ollama Local API', icon: 'fa-server', color: 'var(--accent-emerald)' },
+      { id: 'custom', name: 'Custom Gateway', proto: 'OpenAI Compatible', icon: 'fa-gears', color: 'var(--text-dim)' }
     ];
   }
 
@@ -356,6 +362,22 @@ class RegistrationViewHelper {
         { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B Instruct v0.3', family: 'Mistral', coreSkill: 'General Chat', contextWindow: 32768 }
       ];
     }
+    if (proto === 'NVIDIA API' || proto === 'NVIDIA') {
+      return [
+        { id: 'meta/llama-3.3-70b-instruct', name: 'NVIDIA Meta Llama 3.3 70B', family: 'Llama', coreSkill: 'Coding & High-Speed Reasoning', contextWindow: 131072 },
+        { id: 'deepseek-ai/deepseek-r1', name: 'NVIDIA DeepSeek R1 Reasoning', family: 'DeepSeek', coreSkill: 'Deep Reasoning & Math', contextWindow: 65536 },
+        { id: 'nvidia/llama-3.1-nemotron-70b-instruct', name: 'NVIDIA Llama 3.1 Nemotron 70B', family: 'Nemotron', coreSkill: 'Enterprise Code & Logic', contextWindow: 131072 },
+        { id: 'nvidia/nemotron-3-ultra-550b-a55b', name: 'NVIDIA Nemotron 3 Ultra 550B', family: 'Nemotron', coreSkill: 'Frontier Reasoning & Orchestration', contextWindow: 131072 },
+        { id: 'nvidia/nemotron-3-super-120b-a12b', name: 'NVIDIA Nemotron 3 Super 120B', family: 'Nemotron', coreSkill: 'Multi-Agent High Efficiency MoE', contextWindow: 131072 },
+        { id: 'nvidia/nemotron-3-nano-30b-a3b', name: 'NVIDIA Nemotron 3 Nano 30B', family: 'Nemotron', coreSkill: 'Agentic Systems Lightweight MoE', contextWindow: 131072 },
+        { id: 'qwen/qwen2.5-coder-32b-instruct', name: 'NVIDIA Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Full-Stack Code Generation', contextWindow: 32768 }
+      ];
+    }
+    if (proto === 'Opencode API' || proto === 'Opencode') {
+      return [
+        { id: 'opencode-zen-coder', name: 'Opencode Zen Coder 32B', family: 'Qwen', coreSkill: 'Coding & Software Development', contextWindow: 65536 }
+      ];
+    }
     if (proto === 'Bynara API' || proto === 'Bynara' || proto === 'Bynara Cloud') {
       return [
         { id: 'mimo-v2.5-free', name: 'Bynara MiMo v2.5 Free', family: 'MiMo', coreSkill: 'General Reasoning', contextWindow: 65536 },
@@ -365,6 +387,30 @@ class RegistrationViewHelper {
         { id: 'glm-4-flash', name: 'Bynara GLM 4 Flash', family: 'GLM', coreSkill: 'Multilingual Chat', contextWindow: 128000 },
         { id: 'llama-3.3-70b-instruct', name: 'Bynara Llama 3.3 70B', family: 'Llama', coreSkill: 'General Reasoning & Code', contextWindow: 131072 },
         { id: 'qwen-2.5-coder-32b', name: 'Bynara Qwen 2.5 Coder 32B', family: 'Qwen', coreSkill: 'Code Generation', contextWindow: 32768 }
+      ];
+    }
+    if (proto === 'SambaNova API' || proto === 'SambaNova') {
+      return [
+        { id: 'Meta-Llama-3.3-70B-Instruct', name: 'SambaNova Llama 3.3 70B Instruct', family: 'Llama', coreSkill: 'RDU High Speed Reasoning', contextWindow: 131072 },
+        { id: 'DeepSeek-R1-Distill-Llama-70B', name: 'SambaNova DeepSeek R1 Distill 70B', family: 'DeepSeek', coreSkill: 'Reasoning & Math', contextWindow: 65536 }
+      ];
+    }
+    if (proto === 'Cerebras API' || proto === 'Cerebras') {
+      return [
+        { id: 'llama3.1-70b', name: 'Cerebras Llama 3.1 70B', family: 'Llama', coreSkill: '2000+ Tokens/Sec Inference', contextWindow: 131072 },
+        { id: 'llama3.1-8b', name: 'Cerebras Llama 3.1 8B', family: 'Llama', coreSkill: 'Ultra Fast General Chat', contextWindow: 131072 }
+      ];
+    }
+    if (proto === 'DeepSeek API' || proto === 'DeepSeek') {
+      return [
+        { id: 'deepseek-chat', name: 'DeepSeek V3 Chat', family: 'DeepSeek', coreSkill: 'General Reasoning & Code', contextWindow: 64000 },
+        { id: 'deepseek-reasoner', name: 'DeepSeek R1 Reasoner', family: 'DeepSeek', coreSkill: 'Deep Math & Logic', contextWindow: 64000 }
+      ];
+    }
+    if (proto === 'OpenAI API' || proto === 'OpenAI') {
+      return [
+        { id: 'gpt-4o-mini', name: 'OpenAI GPT-4o Mini', family: 'GPT', coreSkill: 'Fast Chat & Instruction', contextWindow: 128000 },
+        { id: 'gpt-4o', name: 'OpenAI GPT-4o Flagship', family: 'GPT', coreSkill: 'Frontier Multimodal Reasoning', contextWindow: 128000 }
       ];
     }
     if (proto === 'Mistral API') {

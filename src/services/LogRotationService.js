@@ -111,6 +111,23 @@ class LogRotationService {
       ? recentLogs.slice(-this.MAX_ITEMS_PER_TABLE)
       : recentLogs;
 
+    // Persist historical metrics (rolling average latency) before truncating
+    if (tableKey === 'api_logs' && allLogs.length > 0) {
+      const validSuccessLogs = allLogs.filter(l => l.status === 'SUCCESS' && typeof l.latencyMs === 'number' && l.latencyMs > 0);
+      if (validSuccessLogs.length > 0) {
+        const avgLat = Math.round(validSuccessLogs.reduce((acc, curr) => acc + curr.latencyMs, 0) / validSuccessLogs.length);
+        try {
+          const config = db.read(db.files.config) || {};
+          config.historical_metrics = config.historical_metrics || {};
+          config.historical_metrics.rolling_avg_latency_ms = avgLat;
+          config.historical_metrics.last_rotation_timestamp = new Date().toISOString();
+          db.write(db.files.config, config);
+        } catch (e) {
+          // Non-blocking metadata write
+        }
+      }
+    }
+
     // Update the main table with only recent logs
     const archivedCount = allLogs.length - capped.length;
     if (archivedCount > 0) {

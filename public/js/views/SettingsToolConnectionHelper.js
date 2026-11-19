@@ -86,7 +86,7 @@ class SettingsToolConnectionHelper {
     // 2. Resolve default API Key
     if (!this._selectedApiKey) {
       const activeKey = this._cachedApiKeys.find(k => k.isActive);
-      this._selectedApiKey = activeKey ? activeKey.key : ((window.SettingsView && window.SettingsView.selectedKeyForTools) || 'fmc-live-key-jdroidxy-2026');
+      this._selectedApiKey = activeKey ? activeKey.key : ((window.SettingsView && window.SettingsView.selectedKeyForTools) || 'YOUR_FMC_API_KEY');
     }
 
     // 3. Resolve Attached Model for Integration & Connect Agent (no undefined)
@@ -761,7 +761,7 @@ class SettingsToolConnectionHelper {
     const toolId = this._selectedConnectTool || 'vscode';
     const toolDef = this.TOOL_DEFINITIONS[toolId] || { name: toolId, targetPath: 'settings.json' };
     const { modelId, displayName } = this.getSelectedModelDetails();
-    const apiKey = this._selectedApiKey || (window.SettingsView && window.SettingsView.selectedKeyForTools) || 'fmc-live-key-jdroidxy-2026';
+    const apiKey = this._selectedApiKey || (window.SettingsView && window.SettingsView.selectedKeyForTools) || 'YOUR_FMC_API_KEY';
     const baseUrl = this.getBaseProxyUrl();
     const format = this._selectedProtocolFormat || 'openai';
 
