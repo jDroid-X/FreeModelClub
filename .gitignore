@@ -19,4 +19,11 @@ docs/*Chat*.txt
 test-results/
 scratch/
 .gemini/
+public/images/artifacts/
+requirement/Task_*.md
+requirement/imp*.md
+requirement/*audit*.md
+docs/*FIXES*.md
+docs/*BYNARA*.md
+docs/*scratch*.txt
 jDroid-X-FreeModelClub/

@@ -9,6 +9,14 @@ class DatabaseSeed {
     return [
       {
         id: 'usr_default',
+        email: 'FreeModelsClub@jdroidxy.com',
+        password: 'Admin@1234',
+        mustChangePassword: false,
+        role: 'admin',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'usr_admin_localhost',
         email: 'admin@localhost',
         password: 'ChangeMe@1234',
         mustChangePassword: true,

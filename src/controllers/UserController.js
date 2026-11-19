@@ -78,7 +78,7 @@ class UserController {
 
       const newUser = {
         id: `user_${Date.now()}`,
-        email,
+        email: email.trim(),
         password,
         name: name || '',
         phone: phone || '',
@@ -89,7 +89,8 @@ class UserController {
         dob: dob || '',
         avatar: avatar || '',
         emailVerified: true,
-        role: 'admin',
+        role: req.body.role || 'admin',
+        mustChangePassword: Boolean(req.body.mustChangePassword),
         createdAt: new Date().toISOString()
       };
 
@@ -99,6 +100,42 @@ class UserController {
       res.json({ success: true, user: safe });
     } catch (e) {
       console.error('[UserController.createUser]', e.message);
+      res.status(500).json({ success: false, error: e.message });
+    }
+  }
+
+  static deleteUser(req, res) {
+    try {
+      const id = req.body?.id || req.query?.id;
+      const email = req.body?.email || req.query?.email;
+      if (!id && !email) {
+        return res.status(400).json({ success: false, error: 'User id or email is required to delete' });
+      }
+
+      let users = db.read(db.files.users) || [];
+      if (users.length <= 1) {
+        return res.status(400).json({ success: false, error: 'Cannot delete the only remaining administrator account.' });
+      }
+
+      const initialCount = users.length;
+      users = users.filter(u => {
+        if (id && u.id === id) return false;
+        if (email && u.email?.toLowerCase() === email.toLowerCase().trim()) return false;
+        return true;
+      });
+
+      if (users.length === initialCount) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      db.write(db.files.users, users);
+      res.json({
+        success: true,
+        message: 'User account removed successfully',
+        remainingUsers: users.map(u => ({ ...u, password: undefined }))
+      });
+    } catch (e) {
+      console.error('[UserController.deleteUser]', e.message);
       res.status(500).json({ success: false, error: e.message });
     }
   }

@@ -64,6 +64,9 @@ class SettingsView {
             <button class="btn btn-secondary btn-sm settings-nav-btn" id="tab-btn-diagnostics" style="justify-content: flex-start; font-size: 0.75rem; text-align: left;" onclick="SettingsView.switchTab('diagnostics')">
               <i class="fa-solid fa-stethoscope" style="color: var(--accent-rose); margin-right: 6px;"></i> System Diagnostics
             </button>
+            <button class="btn btn-secondary btn-sm settings-nav-btn" id="tab-btn-users" style="justify-content: flex-start; font-size: 0.75rem; text-align: left;" onclick="SettingsView.switchTab('users')">
+              <i class="fa-solid fa-users-gear" style="color: var(--accent-cyan); margin-right: 6px;"></i> User Management
+            </button>
           </div>
 
           <!-- Right 80% Width Detail Content Pane -->
@@ -99,6 +102,7 @@ class SettingsView {
     else if (tabName === 'launch-rules') this.renderLaunchRulesTab(container);
     else if (tabName === 'master-data') this.renderMasterDataTab(container);
     else if (tabName === 'archive') SettingsAgentHelper.renderArchivedProvidersTab(container);
+    else if (tabName === 'users') this.renderUsersTab(container);
     else if (tabName === 'diagnostics') {
       if (typeof SettingsDiagnosticsHelper !== 'undefined') {
         SettingsDiagnosticsHelper.renderTab(container);
@@ -1300,6 +1304,287 @@ class SettingsView {
       SettingsAgentHelper.openRocasModal(agentId);
     } else {
       if (typeof ModalDialog !== 'undefined') ModalDialog.showNotification(`Viewing ROCAS Spec for ${agentId}...`, 'info');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // ── USER MANAGEMENT & LOCAL ACCOUNTS TAB ──
+  // ═════════════════════════════════════════════════════════════════════════
+
+  static async renderUsersTab(container) {
+    container.innerHTML = `
+      <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="font-size: 1.1rem; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-users-gear" style="color: var(--accent-cyan);"></i> User Management & Local Accounts
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Manage administrator accounts, authentication credentials, and user access policies.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="SettingsView.showAddUserModal()" style="display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-user-plus"></i> Add New User
+        </button>
+      </div>
+
+      <div class="glass-panel" style="padding: 14px; margin-bottom: 14px; border-left: 3px solid var(--accent-cyan);">
+        <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+          <i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan); font-size: 1.1rem; margin-top: 2px;"></i>
+          <div>
+            <strong style="color: var(--text-main);">Zero-Trust Multi-Account Gateway:</strong>
+            All accounts registered below can independently authenticate and manage models, API keys, and sessions. Multiple administrative and team user accounts can coexist simultaneously.
+          </div>
+        </div>
+      </div>
+
+      <div id="users-table-container">
+        <div style="text-align: center; padding: 24px; color: var(--text-muted);">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading user accounts...
+        </div>
+      </div>
+    `;
+
+    await this.loadAndRenderUsersList();
+  }
+
+  static async loadAndRenderUsersList() {
+    const listContainer = document.getElementById('users-table-container');
+    if (!listContainer) return;
+
+    try {
+      const res = await ApiService.getUsers();
+      const users = (res && res.users) || [];
+
+      if (users.length === 0) {
+        listContainer.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+            <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 8px; color: var(--accent-amber);"></i>
+            <p>No user accounts found. Click <strong>Add New User</strong> above to provision an administrator.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let rowsHtml = '';
+      users.forEach((u, idx) => {
+        const isOnlyUser = users.length <= 1;
+        const roleBadge = u.role === 'admin' 
+          ? `<span class="badge badge-emerald" style="font-size: 0.7rem;"><i class="fa-solid fa-shield-cat"></i> Admin</span>`
+          : `<span class="badge badge-cyan" style="font-size: 0.7rem;"><i class="fa-solid fa-user"></i> Standard</span>`;
+        
+        const pwdStatus = u.mustChangePassword
+          ? `<span class="badge badge-amber" style="font-size: 0.7rem;" title="Must set new password on next login"><i class="fa-solid fa-clock-rotate-left"></i> Rotation Pending</span>`
+          : `<span class="badge badge-emerald" style="font-size: 0.7rem;" title="Password active and secured"><i class="fa-solid fa-check"></i> Active</span>`;
+
+        const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleString() : 'System Seed';
+
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 10px 12px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-user-circle" style="color: var(--primary-light); font-size: 1.1rem;"></i>
+              <div>
+                <div>${u.email}</div>
+                <div style="font-size: 0.72rem; color: var(--text-dim); font-weight: normal;">ID: ${u.id || 'usr_' + idx}</div>
+              </div>
+            </td>
+            <td style="padding: 10px 12px;">${roleBadge}</td>
+            <td style="padding: 10px 12px;">${pwdStatus}</td>
+            <td style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted);">${createdDate}</td>
+            <td style="padding: 10px 12px; text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <button class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;" onclick="SettingsView.showChangePasswordModal('${u.email}')">
+                  <i class="fa-solid fa-key"></i> Change Password
+                </button>
+                <button class="btn btn-danger btn-sm" style="font-size: 0.72rem; padding: 4px 8px; ${isOnlyUser ? 'opacity: 0.4; cursor: not-allowed;' : ''}" 
+                  ${isOnlyUser ? 'disabled title="Cannot delete the sole administrator account"' : `onclick="SettingsView.deleteUser('${u.id}', '${u.email}')" title="Delete account"`}>
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      listContainer.innerHTML = `
+        <div class="glass-panel" style="overflow-x: auto; padding: 0;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
+            <thead>
+              <tr style="background: rgba(255, 255, 255, 0.04); border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <th style="padding: 10px 12px;">User Account</th>
+                <th style="padding: 10px 12px;">Role</th>
+                <th style="padding: 10px 12px;">Security Status</th>
+                <th style="padding: 10px 12px;">Created</th>
+                <th style="padding: 10px 12px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      listContainer.innerHTML = `
+        <div style="padding: 20px; color: var(--accent-rose); text-align: center;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Error loading user accounts: ${err.message}
+        </div>
+      `;
+    }
+  }
+
+  static showAddUserModal() {
+    ModalDialog.showCustomModal({
+      title: '<i class="fa-solid fa-user-plus" style="color:var(--accent-cyan);margin-right:6px;"></i> Add New User Account',
+      width: '520px',
+      confirmText: 'Cancel',
+      content: `
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">Email / User ID *</label>
+            <input type="email" id="new-user-email" class="form-control" placeholder="user@domain.com or admin@localhost" required style="width: 100%;" />
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">Initial Password *</label>
+            <input type="password" id="new-user-password" class="form-control" placeholder="Min 6 characters..." required style="width: 100%;" />
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">Account Role</label>
+            <select id="new-user-role" class="form-control" style="width: 100%;">
+              <option value="admin" selected>Administrator (Full Access)</option>
+              <option value="user">Standard User</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="text-align: left; margin-top: 4px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main);">
+              <input type="checkbox" id="new-user-must-change" />
+              <span>Require password rotation on first login</span>
+            </label>
+          </div>
+
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary" onclick="ModalDialog.closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="SettingsView.submitCreateUser()">
+              <i class="fa-solid fa-check"></i> Create Account
+            </button>
+          </div>
+        </div>
+      `
+    });
+  }
+
+  static async submitCreateUser() {
+    const email = document.getElementById('new-user-email')?.value?.trim();
+    const password = document.getElementById('new-user-password')?.value;
+    const role = document.getElementById('new-user-role')?.value || 'admin';
+    const mustChangePassword = document.getElementById('new-user-must-change')?.checked || false;
+
+    if (!email || !password) {
+      ModalDialog.showNotification('Email and password are required.', 'warning');
+      return;
+    }
+
+    if (password.length < 6) {
+      ModalDialog.showNotification('Password must be at least 6 characters long.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await ApiService.createUser({ email, password, role, mustChangePassword });
+      if (res && res.success) {
+        ModalDialog.closeModal();
+        ModalDialog.showNotification(`User account ${email} created successfully!`, 'success');
+        await this.loadAndRenderUsersList();
+      } else {
+        ModalDialog.showNotification(res.error || 'Failed to create user account.', 'error');
+      }
+    } catch (err) {
+      ModalDialog.showNotification('Creation error: ' + err.message, 'error');
+    }
+  }
+
+  static showChangePasswordModal(email) {
+    ModalDialog.showCustomModal({
+      title: `<i class="fa-solid fa-key" style="color:var(--accent-amber);margin-right:6px;"></i> Update Password for ${email}`,
+      width: '480px',
+      confirmText: 'Cancel',
+      content: `
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">Current Password *</label>
+            <input type="password" id="change-pwd-current" class="form-control" placeholder="Enter current password..." required style="width: 100%;" />
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">New Password *</label>
+            <input type="password" id="change-pwd-new" class="form-control" placeholder="Min 6 characters..." required style="width: 100%;" />
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label class="form-label" style="display: block; margin-bottom: 4px; font-weight: 600; color: var(--text-main);">Confirm New Password *</label>
+            <input type="password" id="change-pwd-confirm" class="form-control" placeholder="Repeat new password..." required style="width: 100%;" />
+          </div>
+
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary" onclick="ModalDialog.closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="SettingsView.submitChangePassword('${email}')">
+              <i class="fa-solid fa-lock"></i> Update Password
+            </button>
+          </div>
+        </div>
+      `
+    });
+  }
+
+  static async submitChangePassword(email) {
+    const currentPassword = document.getElementById('change-pwd-current')?.value;
+    const newPassword = document.getElementById('change-pwd-new')?.value;
+    const confirmPassword = document.getElementById('change-pwd-confirm')?.value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      ModalDialog.showNotification('All password fields are required.', 'warning');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ModalDialog.showNotification('New password must be at least 6 characters long.', 'warning');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      ModalDialog.showNotification('New passwords do not match.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await ApiService.changePassword(email, currentPassword, newPassword);
+      if (res && res.success) {
+        ModalDialog.closeModal();
+        ModalDialog.showNotification(`Password for ${email} updated successfully!`, 'success');
+        await this.loadAndRenderUsersList();
+      } else {
+        ModalDialog.showNotification(res.message || 'Failed to update password.', 'error');
+      }
+    } catch (err) {
+      ModalDialog.showNotification('Password update error: ' + err.message, 'error');
+    }
+  }
+
+  static async deleteUser(id, email) {
+    if (!confirm(`Are you sure you want to remove the user account "${email}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await ApiService.deleteUser(id, email);
+      if (res && res.success) {
+        ModalDialog.showNotification(`User account ${email} removed successfully.`, 'success');
+        await this.loadAndRenderUsersList();
+      } else {
+        ModalDialog.showNotification(res.error || 'Failed to delete user account.', 'error');
+      }
+    } catch (err) {
+      ModalDialog.showNotification('Delete error: ' + err.message, 'error');
     }
   }
 }

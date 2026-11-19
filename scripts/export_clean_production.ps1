@@ -152,12 +152,20 @@ foreach ($c in $cleanCollections) {
     Write-Utf8NoBom -FilePath (Join-Path $dstData $c) -Content $emptyArray
 }
 
-# Clean production user template (forces password creation on first boot)
+# Clean production user template (preconfigured standard admin & localhost accounts)
 $nowIso = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
 $cleanUserTemplate = @"
 [
   {
     "id": "usr_default",
+    "email": "FreeModelsClub@jdroidxy.com",
+    "password": "Admin@1234",
+    "mustChangePassword": false,
+    "role": "admin",
+    "createdAt": "$nowIso"
+  },
+  {
+    "id": "usr_admin_localhost",
     "email": "admin@localhost",
     "password": "ChangeMe@1234",
     "mustChangePassword": true,

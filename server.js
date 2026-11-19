@@ -203,6 +203,7 @@ app.get('/api/user/profiles', UserController.getUsers);
 app.get('/api/user/profile', UserController.getUserByEmail);
 app.put('/api/user/profile', UserController.updateUser);
 app.post('/api/user/profile', UserController.createUser);
+app.delete('/api/user/profile', UserController.deleteUser);
 
 // Direct Global Compatibility Aliases
 const ModelController = require('./src/controllers/ModelController');

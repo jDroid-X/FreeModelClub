@@ -62,6 +62,25 @@ class ApiService {
     return this.request('/api/auth/credentials');
   }
 
+  // User Management
+  static getUsers() {
+    return this.request('/api/user/profiles');
+  }
+
+  static createUser(userData) {
+    return this.request('/api/user/profile', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    });
+  }
+
+  static deleteUser(id, email) {
+    return this.request('/api/user/profile', {
+      method: 'DELETE',
+      body: JSON.stringify({ id, email })
+    });
+  }
+
   // Provider
   static checkProviderStatus() {
     return this.request('/api/providers/status');
